@@ -1,0 +1,43 @@
+# Editor configuration, see https://editorconfig.org
+root = true
+
+[*]
+charset = utf-8
+end_of_line = lf
+indent_size = 4
+indent_style = space
+insert_final_newline = true
+trim_trailing_whitespace = true
+
+[angular.json]
+indent_size = 2
+indent_style = space
+
+[nx.json]
+indent_size = 2
+indent_style = space
+
+[package.json]
+indent_size = 2
+indent_style = space
+
+[package-lock.json]
+indent_size = 2
+indent_style = space
+
+[*.md]
+max_line_length = off
+trim_trailing_whitespace = false
+
+[*.yaml]
+indent_size = 2
+indent_style = space
+
+[*.go]
+indent_style = tab
+
+[go.mod]
+indent_style = tab
+
+[go.sum]
+indent_style = tab
