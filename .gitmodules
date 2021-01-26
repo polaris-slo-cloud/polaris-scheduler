@@ -1,0 +1,3 @@
+[submodule "submodules/SLOC"]
+	path = submodules/SLOC
+	url = git@github.com:SLOCloud/SLOC.git
