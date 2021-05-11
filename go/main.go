@@ -16,6 +16,11 @@ limitations under the License.
 
 package main
 
+/*
+NOTE: To get multiple controller binaries, we can rename main.go and move it to a ./cmd directory.
+There we can have one entry file for each controller binary.
+*/
+
 import (
 	"flag"
 	"os"
