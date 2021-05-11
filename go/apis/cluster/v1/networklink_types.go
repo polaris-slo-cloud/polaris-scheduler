@@ -20,6 +20,9 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
+// All fields in these CRDs are required, except if marked as `// +optional`
+// +kubebuilder:validation:Required
+
 // CONTROLLER INFO: To create a controller for this CRD, run the kubebuilder command
 // kubebuilder create api --group cluster --version v1 --kind NetworkLink
 // again and answer "no" for the resource and "yes" for the controller.
@@ -27,19 +30,22 @@ import (
 // IMPORTANT: Run `make` and `make manifests` to regenerate code and YAML files after modifying this file.
 // NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
 
-// NetworkLinkSpec defines the desired state of NetworkLink
+// NetworkLinkSpec contains the specification of a NetworkLink.
+//
+// ToDo: Find a way to autogenerate a NetworkLink name from the node names (maybe in an admission webhook).
 type NetworkLinkSpec struct {
-	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
-	// Important: Run "make" to regenerate code after modifying this file
+	// The name of the first node connected by this network link.
+	NodeA string `json:"nodeA"`
 
-	// Foo is an example field of NetworkLink. Edit networklink_types.go to remove/update
-	Foo string `json:"foo,omitempty"`
+	// The name of the second node connected by this network link.
+	NodeB string `json:"nodeB"`
+
+	// The quality of service information about this network link.
+	QoS NetworkLinkQoS `json:",inline"`
 }
 
 // NetworkLinkStatus defines the observed state of NetworkLink
 type NetworkLinkStatus struct {
-	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
-	// Important: Run "make" to regenerate code after modifying this file
 }
 
 //+kubebuilder:object:root=true
