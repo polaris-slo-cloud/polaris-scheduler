@@ -1,6 +1,7 @@
 domain: k8s.rainbow-h2020.eu
 layout:
 - go.kubebuilder.io/v3
+multigroup: true
 projectName: rainbow
 repo: k8s.rainbow-h2020.eu/rainbow
 version: "3"
