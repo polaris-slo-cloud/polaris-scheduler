@@ -1,0 +1,6 @@
+domain: rainbow-h2020.eu
+layout:
+- go.kubebuilder.io/v3
+projectName: rainbow
+repo: rainbow-h2020.eu/gomod/rainbow
+version: "3"
