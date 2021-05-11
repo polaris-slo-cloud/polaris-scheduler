@@ -1,0 +1,7 @@
+apiVersion: cluster.k8s.rainbow-h2020.eu/v1
+kind: NetworkLink
+metadata:
+  name: networklink-sample
+spec:
+  # Add fields here
+  foo: bar
