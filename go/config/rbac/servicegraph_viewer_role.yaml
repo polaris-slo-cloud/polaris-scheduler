@@ -1,0 +1,20 @@
+# permissions for end users to view servicegraphs.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: servicegraph-viewer-role
+rules:
+- apiGroups:
+  - fogapps.k8s.rainbow-h2020.eu
+  resources:
+  - servicegraphs
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - fogapps.k8s.rainbow-h2020.eu
+  resources:
+  - servicegraphs/status
+  verbs:
+  - get

@@ -1,0 +1,7 @@
+apiVersion: fogapps.k8s.rainbow-h2020.eu/v1
+kind: ServiceGraph
+metadata:
+  name: servicegraph-sample
+spec:
+  # Add fields here
+  foo: bar
