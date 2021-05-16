@@ -6,14 +6,14 @@ import (
 
 // LinkProtocol is used to describe the type of protocol that will be used for the communication over a ServiceLink.
 //
-// +kubebuilder:validation:Enum=http;https;tcp;udp
+// +kubebuilder:validation:Enum=HTTP;HTTPS;TCP;UDP
 type LinkProtocol string
 
 var (
-	HttpProtocol  LinkProtocol = "http"
-	HttpsProtocol LinkProtocol = "https"
-	TcpProtocol   LinkProtocol = "tcp"
-	UdpProtocol   LinkProtocol = "udp"
+	HttpProtocol  LinkProtocol = "HTTP"
+	HttpsProtocol LinkProtocol = "HTTPS"
+	TcpProtocol   LinkProtocol = "TCP"
+	UdpProtocol   LinkProtocol = "UDP"
 )
 
 // LinkType describes requirements for the type of network link that a ServiceLink needs.

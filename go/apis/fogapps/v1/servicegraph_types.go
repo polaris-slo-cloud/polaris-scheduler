@@ -52,6 +52,13 @@ type ServiceGraphSpec struct {
 	//
 	// +optional
 	RainbowServices []RainbowService `json:"rainbowServices,omitempty"`
+
+	// ConfigMaps that are available to all components of the application.
+	//
+	// +optional
+	ConfigMaps []ConfigMap `json:"configMaps,omitempty"`
+
+	// ToDo: add secrets
 }
 
 // ServiceGraphStatus defines the observed state of ServiceGraph

@@ -56,6 +56,15 @@ type ServiceGraphNode struct {
 	// Configures how multiple instances of this node are created.
 	Replicas ReplicasConfig `json:"replicas"`
 
+	// Configures if ports should be exposed from this ServiceGraphNode.
+	//
+	// The exposed ports are available at the DNS name "<ServiceGraphNode.Name>.<ServiceGraphNamespace>.svc"
+	// For example, if a ServiceGraph is deployed the namespace "fog" and the ServiceGraphNode's name is "db",
+	// the DNS name would be "db.fog.svc"
+	//
+	// +optional
+	ExposedPorts *ExposedPorts `json:"exposedPorts,omitempty"`
+
 	// Allows to configure affinity to cluster nodes and affinity and anti-affinity
 	// to other ServiceGraphNodes (referred to as "pods" in the data structure).
 	//

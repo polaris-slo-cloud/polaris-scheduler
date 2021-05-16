@@ -2,12 +2,12 @@ package v1
 
 // ReplicaSetType defines the available types of replica sets.
 //
-// +kubebuilder:validation:Enum=simple;stateful
+// +kubebuilder:validation:Enum=Simple;Stateful
 type ReplicaSetType string
 
 var (
-	SimpleReplicaSet   ReplicaSetType = "simple"
-	StatefulReplicaSet ReplicaSetType = "stateful"
+	SimpleReplicaSet   ReplicaSetType = "Simple"
+	StatefulReplicaSet ReplicaSetType = "Stateful"
 )
 
 // ReplicasConfig specifies the minimum, maximum, and initial replica count,
@@ -36,11 +36,11 @@ type ReplicasConfig struct {
 	//
 	// The possibilities are:
 	//
-	// - "simple" (default) Creates and destroys instances of the service, treating them as stateless.
+	// - "Simple" (default) Creates and destroys instances of the service, treating them as stateless.
 	//
-	// - "stateful" Ensures that the set of replicas is ordered (i.e., replica 2 is always created before replica 3)
+	// - "Stateful" Ensures that the set of replicas is ordered (i.e., replica 2 is always created before replica 3)
 	// and that each specific replica is always connected to the same volumes it was originally connected to.
 	//
-	// +kubebuilder:default=simple
+	// +kubebuilder:default=Simple
 	SetType ReplicaSetType `json:"setType,omitempty"`
 }

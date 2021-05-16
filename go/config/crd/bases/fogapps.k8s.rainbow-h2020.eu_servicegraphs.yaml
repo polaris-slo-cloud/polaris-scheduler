@@ -37,6 +37,44 @@ spec:
           spec:
             description: ServiceGraphSpec defines the desired state of a ServiceGraph
             properties:
+              configMaps:
+                description: ConfigMaps that are available to all components of the
+                  application.
+                items:
+                  description: "ConfigMap is like the Kubernetes ConfigMap type, except
+                    that it is designed to be embedded into a ServiceGraph object.
+                    \n The code is a modified version of https://pkg.go.dev/k8s.io/api/core/v1#ConfigMap"
+                  properties:
+                    binaryData:
+                      additionalProperties:
+                        format: byte
+                        type: string
+                      description: BinaryData contains the binary data. Each key must
+                        consist of alphanumeric characters, '-', '_' or '.'. BinaryData
+                        can contain byte sequences that are not in the UTF-8 range.
+                        The keys stored in BinaryData must not overlap with the ones
+                        in the Data field, this is enforced during validation process.
+                      type: object
+                    data:
+                      additionalProperties:
+                        type: string
+                      description: Data contains the configuration data. Each key
+                        must consist of alphanumeric characters, '-', '_' or '.'.
+                        Values with non-UTF-8 byte sequences must use the BinaryData
+                        field. The keys stored in Data must not overlap with the keys
+                        in the BinaryData field, this is enforced during validation
+                        process.
+                      type: object
+                    immutable:
+                      default: false
+                      description: Immutable, if set to true, ensures that data stored
+                        in the ConfigMap cannot be updated. If not set to true, the
+                        field can be modified at any time.
+                      type: boolean
+                  required:
+                  - immutable
+                  type: object
+                type: array
               links:
                 description: The set of links between the nodes.
                 items:
@@ -86,10 +124,10 @@ spec:
                               description: The type of protocol that will be used
                                 for the communication over a ServiceLink.
                               enum:
-                              - http
-                              - https
-                              - tcp
-                              - udp
+                              - HTTP
+                              - HTTPS
+                              - TCP
+                              - UDP
                               type: string
                           type: object
                         packetLoss:
@@ -1958,6 +1996,100 @@ spec:
                         - name
                         type: object
                       type: array
+                    exposedPorts:
+                      description: "Configures if ports should be exposed from this
+                        ServiceGraphNode. \n The exposed ports are available at the
+                        DNS name \"<ServiceGraphNode.Name>.<ServiceGraphNamespace>.svc\"
+                        For example, if a ServiceGraph is deployed the namespace \"fog\"
+                        and the ServiceGraphNode's name is \"db\", the DNS name would
+                        be \"db.fog.svc\""
+                      properties:
+                        ports:
+                          description: Configures the ports that should be exposed.
+                          items:
+                            description: ServicePort contains information on service's
+                              port.
+                            properties:
+                              appProtocol:
+                                description: The application protocol for this port.
+                                  This field follows standard Kubernetes label syntax.
+                                  Un-prefixed names are reserved for IANA standard
+                                  service names (as per RFC-6335 and http://www.iana.org/assignments/service-names).
+                                  Non-standard protocols should use prefixed names
+                                  such as mycompany.com/my-custom-protocol. This is
+                                  a beta field that is guarded by the ServiceAppProtocol
+                                  feature gate and enabled by default.
+                                type: string
+                              name:
+                                description: The name of this port within the service.
+                                  This must be a DNS_LABEL. All ports within a ServiceSpec
+                                  must have unique names. When considering the endpoints
+                                  for a Service, this must match the 'name' field
+                                  in the EndpointPort. Optional if only one ServicePort
+                                  is defined on this service.
+                                type: string
+                              nodePort:
+                                description: 'The port on each node on which this
+                                  service is exposed when type is NodePort or LoadBalancer.  Usually
+                                  assigned by the system. If a value is specified,
+                                  in-range, and not in use it will be used, otherwise
+                                  the operation will fail.  If not specified, a port
+                                  will be allocated if this Service requires one.  If
+                                  this field is specified when creating a Service
+                                  which does not need it, creation will fail. This
+                                  field will be wiped when updating a Service to no
+                                  longer need it (e.g. changing type from NodePort
+                                  to ClusterIP). More info: https://kubernetes.io/docs/concepts/services-networking/service/#type-nodeport'
+                                format: int32
+                                type: integer
+                              port:
+                                description: The port that will be exposed by this
+                                  service.
+                                format: int32
+                                type: integer
+                              protocol:
+                                default: TCP
+                                description: The IP protocol for this port. Supports
+                                  "TCP", "UDP", and "SCTP". Default is TCP.
+                                type: string
+                              targetPort:
+                                anyOf:
+                                - type: integer
+                                - type: string
+                                description: 'Number or name of the port to access
+                                  on the pods targeted by the service. Number must
+                                  be in the range 1 to 65535. Name must be an IANA_SVC_NAME.
+                                  If this is a string, it will be looked up as a named
+                                  port in the target Pod''s container ports. If this
+                                  is not specified, the value of the ''port'' field
+                                  is used (an identity map). This field is ignored
+                                  for services with clusterIP=None, and should be
+                                  omitted or set equal to the ''port'' field. More
+                                  info: https://kubernetes.io/docs/concepts/services-networking/service/#defining-a-service'
+                                x-kubernetes-int-or-string: true
+                            required:
+                            - port
+                            type: object
+                          type: array
+                        type:
+                          default: ClusterInternal
+                          description: "Defines in which scope the ports will be exposed.
+                            The possibilities are: \n - \"ClusterInternal\" (default)
+                            Exposes the ports within the cluster only. \n - \"NodeExternal\"
+                            Exposes each port as an externally open port on every
+                            node in the cluster. Recommended only for debugging. \n
+                            - \"Ingress\" Exposes the ports using a load balanced
+                            Ingress controller. In this case, the IngressConfig field
+                            must be filled."
+                          enum:
+                          - ClusterInternal
+                          - NodeExternal
+                          - Ingress
+                          type: string
+                      required:
+                      - ports
+                      - type
+                      type: object
                     geoLocation:
                       description: Used to constrain the geographical locations where
                         this service may be deployed.
@@ -3127,7 +3259,7 @@ spec:
                             description: The service-specific configuration.
                             type: object
                             x-kubernetes-preserve-unknown-fields: true
-                          serviceType:
+                          type:
                             description: Defines the type of RAINBOW service.
                             properties:
                               apiVersion:
@@ -3141,7 +3273,7 @@ spec:
                             - kind
                             type: object
                         required:
-                        - serviceType
+                        - type
                         type: object
                       type: array
                     replicas:
@@ -3167,18 +3299,18 @@ spec:
                           minimum: 0
                           type: integer
                         setType:
-                          default: simple
+                          default: Simple
                           description: "Specifies the type of replica set that should
-                            be used. \n The possibilities are: \n - \"simple\" (default)
+                            be used. \n The possibilities are: \n - \"Simple\" (default)
                             Creates and destroys instances of the service, treating
-                            them as stateless. \n - \"stateful\" Ensures that the
+                            them as stateless. \n - \"Stateful\" Ensures that the
                             set of replicas is ordered (i.e., replica 2 is always
                             created before replica 3) and that each specific replica
                             is always connected to the same volumes it was originally
                             connected to."
                           enum:
-                          - simple
-                          - stateful
+                          - Simple
+                          - Stateful
                           type: string
                       required:
                       - max
@@ -4790,7 +4922,7 @@ spec:
                       description: The service-specific configuration.
                       type: object
                       x-kubernetes-preserve-unknown-fields: true
-                    serviceType:
+                    type:
                       description: Defines the type of RAINBOW service.
                       properties:
                         apiVersion:
@@ -4804,7 +4936,7 @@ spec:
                       - kind
                       type: object
                   required:
-                  - serviceType
+                  - type
                   type: object
                 type: array
               serviceAccountName:

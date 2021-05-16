@@ -4,8 +4,10 @@ package v1
 type RainbowService struct {
 
 	// Defines the type of RAINBOW service.
-	ServiceType ApiVersionKind `json:"serviceType"`
+	Type ApiVersionKind `json:"type"`
 
 	// The service-specific configuration.
+	//
+	// +optional
 	Config *ArbitraryObject `json:"config,omitempty"`
 }
