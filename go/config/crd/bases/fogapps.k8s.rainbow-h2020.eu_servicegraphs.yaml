@@ -143,16 +143,15 @@ spec:
                             description: The elasticity strategy that should be triggered
                               upon violations of the SLO.
                             properties:
-                              group:
+                              apiVersion:
+                                description: The API group and version of the type.
                                 type: string
                               kind:
-                                type: string
-                              version:
+                                description: The kind name of the type.
                                 type: string
                             required:
-                            - group
+                            - apiVersion
                             - kind
-                            - version
                             type: object
                           name:
                             description: "The name of this SLO instance. \n This must
@@ -162,16 +161,15 @@ spec:
                           sloType:
                             description: Describes the type of SLO.
                             properties:
-                              group:
+                              apiVersion:
+                                description: The API group and version of the type.
                                 type: string
                               kind:
-                                type: string
-                              version:
+                                description: The kind name of the type.
                                 type: string
                             required:
-                            - group
+                            - apiVersion
                             - kind
-                            - version
                             type: object
                         required:
                         - elasticityStrategy
@@ -3132,16 +3130,15 @@ spec:
                           serviceType:
                             description: Defines the type of RAINBOW service.
                             properties:
-                              group:
+                              apiVersion:
+                                description: The API group and version of the type.
                                 type: string
                               kind:
-                                type: string
-                              version:
+                                description: The kind name of the type.
                                 type: string
                             required:
-                            - group
+                            - apiVersion
                             - kind
-                            - version
                             type: object
                         required:
                         - serviceType
@@ -3205,16 +3202,15 @@ spec:
                             description: The elasticity strategy that should be triggered
                               upon violations of the SLO.
                             properties:
-                              group:
+                              apiVersion:
+                                description: The API group and version of the type.
                                 type: string
                               kind:
-                                type: string
-                              version:
+                                description: The kind name of the type.
                                 type: string
                             required:
-                            - group
+                            - apiVersion
                             - kind
-                            - version
                             type: object
                           name:
                             description: "The name of this SLO instance. \n This must
@@ -3224,16 +3220,15 @@ spec:
                           sloType:
                             description: Describes the type of SLO.
                             properties:
-                              group:
+                              apiVersion:
+                                description: The API group and version of the type.
                                 type: string
                               kind:
-                                type: string
-                              version:
+                                description: The kind name of the type.
                                 type: string
                             required:
-                            - group
+                            - apiVersion
                             - kind
-                            - version
                             type: object
                         required:
                         - elasticityStrategy
@@ -4798,16 +4793,15 @@ spec:
                     serviceType:
                       description: Defines the type of RAINBOW service.
                       properties:
-                        group:
+                        apiVersion:
+                          description: The API group and version of the type.
                           type: string
                         kind:
-                          type: string
-                        version:
+                          description: The kind name of the type.
                           type: string
                       required:
-                      - group
+                      - apiVersion
                       - kind
-                      - version
                       type: object
                   required:
                   - serviceType
@@ -4833,16 +4827,15 @@ spec:
                       description: The elasticity strategy that should be triggered
                         upon violations of the SLO.
                       properties:
-                        group:
+                        apiVersion:
+                          description: The API group and version of the type.
                           type: string
                         kind:
-                          type: string
-                        version:
+                          description: The kind name of the type.
                           type: string
                       required:
-                      - group
+                      - apiVersion
                       - kind
-                      - version
                       type: object
                     name:
                       description: "The name of this SLO instance. \n This must be
@@ -4852,16 +4845,15 @@ spec:
                     sloType:
                       description: Describes the type of SLO.
                       properties:
-                        group:
+                        apiVersion:
+                          description: The API group and version of the type.
                           type: string
                         kind:
-                          type: string
-                        version:
+                          description: The kind name of the type.
                           type: string
                       required:
-                      - group
+                      - apiVersion
                       - kind
-                      - version
                       type: object
                   required:
                   - elasticityStrategy
