@@ -24,7 +24,7 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	fogappsv1 "k8s.rainbow-h2020.eu/rainbow/apis/fogapps/v1"
+	fogapps "k8s.rainbow-h2020.eu/rainbow/apis/fogapps/v1"
 )
 
 // ServiceGraphReconciler reconciles a ServiceGraph object
@@ -34,23 +34,27 @@ type ServiceGraphReconciler struct {
 	Scheme *runtime.Scheme
 }
 
+// Permissions on ServiceGraphs:
 //+kubebuilder:rbac:groups=fogapps.k8s.rainbow-h2020.eu,resources=servicegraphs,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=fogapps.k8s.rainbow-h2020.eu,resources=servicegraphs/status,verbs=get;update;patch
 //+kubebuilder:rbac:groups=fogapps.k8s.rainbow-h2020.eu,resources=servicegraphs/finalizers,verbs=update
 
-// Reconcile is part of the main kubernetes reconciliation loop which aims to
-// move the current state of the cluster closer to the desired state.
-// TODO(user): Modify the Reconcile function to compare the state specified by
-// the ServiceGraph object against the actual cluster state, and then
-// perform operations to make the cluster state reflect the state specified by
-// the user.
-//
-// For more details, check Reconcile and its Result here:
-// - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.7.2/pkg/reconcile
-func (r *ServiceGraphReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-	_ = r.Log.WithValues("servicegraph", req.NamespacedName)
+// Permissions on Deployments and StatefulSets:
+//+kubebuilder:rbac:groups=apps/v1,resources=deployments;statefulsets,verbs=get;list;watch;create;update;patch;delete
 
-	// your logic here
+// Reconcile is triggered whenever a ServiceGraph is added, changed, or removed.
+//
+// Reconcile applies changes to the deployments in the cluster to ensure that they reflect the new state of the ServiceGraph object.
+func (me *ServiceGraphReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
+	log := me.Log.WithValues("Reconcile ServiceGraph", req.NamespacedName)
+
+	var serviceGraph fogapps.ServiceGraph
+	if err := me.Get(ctx, req.NamespacedName, &serviceGraph); err != nil {
+		log.Error(err, "Unable to fetch ServiceGraph")
+		return ctrl.Result{}, client.IgnoreNotFound(err)
+	}
+
+	// ToDo
 
 	return ctrl.Result{}, nil
 }
@@ -58,6 +62,6 @@ func (r *ServiceGraphReconciler) Reconcile(ctx context.Context, req ctrl.Request
 // SetupWithManager sets up the controller with the Manager.
 func (r *ServiceGraphReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
-		For(&fogappsv1.ServiceGraph{}).
+		For(&fogapps.ServiceGraph{}).
 		Complete(r)
 }

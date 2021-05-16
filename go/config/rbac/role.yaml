@@ -7,6 +7,19 @@ metadata:
   name: manager-role
 rules:
 - apiGroups:
+  - apps/v1
+  resources:
+  - deployments
+  - statefulsets
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
   - fogapps.k8s.rainbow-h2020.eu
   resources:
   - servicegraphs
