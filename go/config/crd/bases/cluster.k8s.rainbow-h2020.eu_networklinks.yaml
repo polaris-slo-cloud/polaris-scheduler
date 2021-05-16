@@ -45,13 +45,13 @@ spec:
                     default: 0
                     description: The end-to-end network delay (i.e., latency) of a
                       packet sent between the two nodes, connected by this NetworkLink.
-                    format: int64
+                    format: int32
                     minimum: 0
                     type: integer
                   packetDelayVariance:
                     default: 0
                     description: The variance of PacketDelayMsec (i.e., jitter).
-                    format: int64
+                    format: int32
                     minimum: 0
                     type: integer
                 required:
@@ -75,7 +75,7 @@ spec:
                       \n The reason for not using percent for this is that the Kubernetes
                       API does not support floating point numbers and people may need
                       more precise packet loss information than whole percents."
-                    format: int64
+                    format: int32
                     maximum: 10000
                     minimum: 0
                     type: integer
