@@ -436,7 +436,11 @@ func (in *ServiceGraphNode) DeepCopyInto(out *ServiceGraphNode) {
 		*out = new(ExposedPorts)
 		(*in).DeepCopyInto(*out)
 	}
-	in.Affinity.DeepCopyInto(&out.Affinity)
+	if in.Affinity != nil {
+		in, out := &in.Affinity, &out.Affinity
+		*out = new(corev1.Affinity)
+		(*in).DeepCopyInto(*out)
+	}
 	if in.SLOs != nil {
 		in, out := &in.SLOs, &out.SLOs
 		*out = make([]ServiceLevelObjective, len(*in))

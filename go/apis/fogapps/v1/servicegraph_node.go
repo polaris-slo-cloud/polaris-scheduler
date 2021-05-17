@@ -71,7 +71,7 @@ type ServiceGraphNode struct {
 	// to other ServiceGraphNodes (referred to as "pods" in the data structure).
 	//
 	// +optional
-	Affinity core.Affinity `json:"affinity,omitempty"`
+	Affinity *core.Affinity `json:"affinity,omitempty"`
 
 	// The SLOs defined for this ServiceGraphNode.
 	//
