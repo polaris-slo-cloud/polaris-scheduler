@@ -36,6 +36,7 @@ type ExposedPorts struct {
 	// In this case, the IngressConfig field must be filled.
 	//
 	// +kubebuilder:default=ClusterInternal
+	// +optional
 	Type PortExposureType `json:"type"`
 
 	// Configures the ports that should be exposed.

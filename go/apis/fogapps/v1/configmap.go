@@ -10,6 +10,7 @@ type ConfigMap struct {
 	// If not set to true, the field can be modified at any time.
 	//
 	// +kubebuilder:default=false
+	// +optional
 	Immutable bool `json:"immutable"`
 
 	// Data contains the configuration data.

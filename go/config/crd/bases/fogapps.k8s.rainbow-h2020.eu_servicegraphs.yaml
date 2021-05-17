@@ -71,8 +71,6 @@ spec:
                         in the ConfigMap cannot be updated. If not set to true, the
                         field can be modified at any time.
                       type: boolean
-                  required:
-                  - immutable
                   type: object
                 type: array
               links:
@@ -92,7 +90,6 @@ spec:
                             link.
                           properties:
                             maxPacketDelayMsec:
-                              default: 0
                               description: The maximum end-to-end network delay (i.e.,
                                 latency) of a packet sent between the two nodes, connected
                                 by this NetworkLink.
@@ -135,7 +132,6 @@ spec:
                             network link.
                           properties:
                             maxPacketLossBp:
-                              default: 0
                               description: "The maximum packet loss in basis points
                                 (bp). 1 bp = 0.01% \n The reason for not using percent
                                 for this is that the Kubernetes API does not support
@@ -145,6 +141,8 @@ spec:
                               maximum: 10000
                               minimum: 0
                               type: integer
+                          required:
+                          - maxPacketLossBp
                           type: object
                         throughput:
                           description: The throughput requirements for the network
@@ -157,7 +155,6 @@ spec:
                               minimum: 0
                               type: integer
                             minBandwidthKbps:
-                              default: 0
                               description: The minimum bandwidth of the network link
                                 in kilobits per second.
                               format: int64
@@ -2088,7 +2085,6 @@ spec:
                           type: string
                       required:
                       - ports
-                      - type
                       type: object
                     geoLocation:
                       description: Used to constrain the geographical locations where
@@ -3242,8 +3238,9 @@ spec:
                       type: object
                     nodeType:
                       default: ServiceNode
-                      description: Describes whether this node represents an application
-                        service or a user.
+                      description: 'Describes whether this node represents an application
+                        service or a user. The possible values are: "ServiceNode"
+                        (= default) and "UserNode".'
                       enum:
                       - UserNode
                       - ServiceNode
@@ -4907,7 +4904,6 @@ spec:
                   required:
                   - containers
                   - name
-                  - nodeType
                   - replicas
                   type: object
                 type: array

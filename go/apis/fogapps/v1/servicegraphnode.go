@@ -31,8 +31,10 @@ type ServiceGraphNode struct {
 	Name string `json:"name"`
 
 	// Describes whether this node represents an application service or a user.
+	// The possible values are: "ServiceNode" (= default) and "UserNode".
 	//
 	// +kubebuilder:default=ServiceNode
+	// +optional
 	NodeType ServiceGraphNodeType `json:"nodeType"`
 
 	// The labels that should be applied to the pods, created from this ServiceGraphNode.

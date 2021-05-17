@@ -42,7 +42,6 @@ spec:
                 description: The latency of the the network link.
                 properties:
                   packetDelayMsec:
-                    default: 0
                     description: The end-to-end network delay (i.e., latency) of a
                       packet sent between the two nodes, connected by this NetworkLink.
                     format: int32
@@ -56,7 +55,6 @@ spec:
                     type: integer
                 required:
                 - packetDelayMsec
-                - packetDelayVariance
                 type: object
               nodeA:
                 description: The name of the first node connected by this network
@@ -70,7 +68,6 @@ spec:
                 description: The average packet loss of this network link.
                 properties:
                   packetLossBp:
-                    default: 0
                     description: "The packet loss in basis points (bp). 1 bp = 0.01%
                       \n The reason for not using percent for this is that the Kubernetes
                       API does not support floating point numbers and people may need
@@ -106,7 +103,6 @@ spec:
                     type: integer
                 required:
                 - bandwidthKbps
-                - bandwidthVariance
                 type: object
             required:
             - latency

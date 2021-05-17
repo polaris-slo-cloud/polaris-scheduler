@@ -18,7 +18,8 @@ type ReplicasConfig struct {
 	//
 	// +kubebuilder:validation:Minimum=0
 	// +kubebuilder:default=1
-	Min int32 `json:"min,omitempty"`
+	// +optional
+	Min int32 `json:"min"`
 
 	// The maximum number of replicas.
 	//
@@ -28,8 +29,8 @@ type ReplicasConfig struct {
 	// The initial number of replicas that should be created upon deployment.
 	// Defaults to the same number as Min.
 	//
-	// +optional
 	// +kubebuilder:validation:Minimum=0
+	// +optional
 	InitialCount *int32 `json:"initialCount,omitempty"`
 
 	// Specifies the type of replica set that should be used.
@@ -42,5 +43,6 @@ type ReplicasConfig struct {
 	// and that each specific replica is always connected to the same volumes it was originally connected to.
 	//
 	// +kubebuilder:default=Simple
-	SetType ReplicaSetType `json:"setType,omitempty"`
+	// +optional
+	SetType ReplicaSetType `json:"setType"`
 }

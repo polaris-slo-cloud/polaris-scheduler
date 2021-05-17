@@ -28,7 +28,6 @@ type NetworkThroughputRequirements struct {
 	// The minimum bandwidth of the network link in kilobits per second.
 	//
 	// +kubebuilder:validation:Minimum=0
-	// +kubebuilder:default=0
 	MinBandwidthKbps int64 `json:"minBandwidthKbps"`
 
 	// The maximum variance of the bandwidth of the network link.
@@ -43,13 +42,12 @@ type NetworkLatencyRequirements struct {
 	// The maximum end-to-end network delay (i.e., latency) of a packet sent between the two nodes, connected by this NetworkLink.
 	//
 	// +kubebuilder:validation:Minimum=0
-	// +kubebuilder:default=0
 	MaxPacketDelayMsec int32 `json:"maxPacketDelayMsec"`
 
 	// The maximum variance of PacketDelayMsec (i.e., jitter).
 	//
 	// +kubebuilder:validation:Minimum=0
-	// ++optional
+	// +optional
 	MaxPacketDelayVariance *int32 `json:"maxPacketDelayVariance,omitempty"`
 }
 
@@ -63,6 +61,5 @@ type NetworkPacketLossRequirements struct {
 	//
 	// +kubebuilder:validation:Minimum=0
 	// +kubebuilder:validation:Maximum=10000
-	// +kubebuilder:default=0
-	MaxPacketLossBp int32 `json:"maxPacketLossBp,omitempty"`
+	MaxPacketLossBp int32 `json:"maxPacketLossBp"`
 }
