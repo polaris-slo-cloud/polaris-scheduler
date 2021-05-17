@@ -20,6 +20,13 @@ rules:
   - update
   - watch
 - apiGroups:
+  - apps/v1
+  resources:
+  - deployments/status
+  - statefulsets/status
+  verbs:
+  - get
+- apiGroups:
   - fogapps.k8s.rainbow-h2020.eu
   resources:
   - servicegraphs

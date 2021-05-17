@@ -121,7 +121,7 @@ func (me *ResourceChangesList) Size() int {
 	return len(me.Changes)
 }
 
-// AddChange adds the specified change to the list of changes.
-func (me *ResourceChangesList) AddChange(change ResourceChange) {
-	me.Changes = append(me.Changes, change)
+// AddChange adds the specified changes to the list of changes.
+func (me *ResourceChangesList) AddChanges(changes ...ResourceChange) {
+	me.Changes = append(me.Changes, changes...)
 }
