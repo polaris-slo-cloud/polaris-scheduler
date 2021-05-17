@@ -1,7 +1,124 @@
+# This is a modified version of the demo application used for the Fogify emulator.
+# Original Fogify demo: https://github.com/UCY-LINC-LAB/fogify-demo
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: taxi-demo
+---
 apiVersion: fogapps.k8s.rainbow-h2020.eu/v1
 kind: ServiceGraph
 metadata:
-  name: servicegraph-sample
+  name: taxi-demo
+  namespace: taxi-demo
 spec:
-  # Add fields here
-  foo: bar
+  nodes:
+    # Taxi Cloud Nodes
+    - name: taxi-cloud
+      labels:
+        app.kubernetes.io/name: taxi-test
+        app.kubernetes.io/version: "0.0.1"
+        app.kubernetes.io/component: taxi-cloud
+        app.kubernetes.io/instance: taxi-cloud
+      containers:
+        - name: taxi-async
+          image: gcr.io/google-containers/pause:3.2
+          resources:
+            limits:
+              memory: "1Gi"
+              cpu: "1000m"
+          env:
+            - name: NODE_TYPE
+              value: CLOUD_NODE
+      replicas:
+        max: 4
+      slos:
+        - name: cpu-usage
+          sloType:
+            apiVersion: slo.sloc.github.io/v1
+            kind: CPUUsageSloMapping
+          elasticityStrategy:
+            apiVersion: elasticity.sloc.github.io/v1
+            kind: HorizontalElasticityStrategy
+          sloConfig:
+            targetAvgCPUUtilizationPercentage: 70
+
+    # Taxi IoT Nodes
+    - name: taxi-iot
+      labels:
+        app.kubernetes.io/name: taxi-test
+        app.kubernetes.io/version: "0.0.1"
+        app.kubernetes.io/component: taxi-iot
+        app.kubernetes.io/instance: taxi-iot
+      containers:
+        - name: taxi
+          image: gcr.io/google-containers/pause:3.2
+          resources:
+            limits:
+              memory: "256Mi"
+              cpu: "250m"
+          env:
+            - name: NODE_TYPE
+              value: IOT_NODE
+      replicas:
+        min: 2
+        max: 10
+
+    # Taxi Edge Bronx Node
+    - name: taxi-edge-bronx
+      labels:
+        app.kubernetes.io/name: taxi-test
+        app.kubernetes.io/version: "0.0.1"
+        app.kubernetes.io/component: taxi-edge
+        app.kubernetes.io/instance: taxi-edge-bronx
+      containers:
+        - name: taxi
+          image: gcr.io/google-containers/pause:3.2
+          resources:
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+          env:
+            - name: NODE_TYPE
+              value: EDGE_NODE
+            - name: REGION
+              value: bronx
+      replicas:
+        max: 1
+
+    # Taxi Edge Brooklyn Node
+    - name: taxi-edge-brooklyn
+      labels:
+        app.kubernetes.io/name: taxi-test
+        app.kubernetes.io/version: "0.0.1"
+        app.kubernetes.io/component: taxi-edge
+        app.kubernetes.io/instance: taxi-edge-brooklyn
+      containers:
+        - name: taxi
+          image: gcr.io/google-containers/pause:3.2
+          resources:
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+          env:
+            - name: NODE_TYPE
+              value: EDGE_NODE
+            - name: REGION
+              value: brooklyn
+      replicas:
+        max: 1
+
+  links:
+    - source: taxi-iot
+      target: taxi-edge-bronx
+      qosRequirements:
+        linkType:
+          protocol: HTTP
+          minQualityClass: QC1Mbps
+        latency:
+          maxPacketDelayMsec: 100
+    - source: taxi-iot
+      target: taxi-edge-brooklyn
+    - source: taxi-edge-bronx
+      target: taxi-cloud
+    - source: taxi-edge-brooklyn
+      target: taxi-cloud

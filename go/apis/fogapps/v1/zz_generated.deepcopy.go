@@ -553,8 +553,13 @@ func (in *ServiceLevelObjective) DeepCopyInto(out *ServiceLevelObjective) {
 	*out = *in
 	out.SloType = in.SloType
 	out.ElasticityStrategy = in.ElasticityStrategy
-	if in.Config != nil {
-		in, out := &in.Config, &out.Config
+	if in.SloConfig != nil {
+		in, out := &in.SloConfig, &out.SloConfig
+		*out = new(ArbitraryObject)
+		**out = **in
+	}
+	if in.StaticElasticityStrategyConfig != nil {
+		in, out := &in.StaticElasticityStrategyConfig, &out.StaticElasticityStrategyConfig
 		*out = new(ArbitraryObject)
 		**out = **in
 	}

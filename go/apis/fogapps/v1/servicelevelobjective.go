@@ -16,5 +16,10 @@ type ServiceLevelObjective struct {
 	ElasticityStrategy ApiVersionKind `json:"elasticityStrategy"`
 
 	// The SLO-specific configuration.
-	Config *ArbitraryObject `json:"config,omitempty"`
+	SloConfig *ArbitraryObject `json:"sloConfig"`
+
+	// Static configuration to be passed to the chosen elasticity strategy.
+	//
+	// +optional
+	StaticElasticityStrategyConfig *ArbitraryObject `json:"staticElasticityStrategyConfig,omitempty"`
 }

@@ -170,10 +170,6 @@ spec:
                         description: ServiceLevelObjective an SLOs that is attached
                           to a ServiceGraph, a ServiceGraphNode, or a ServiceLink.
                         properties:
-                          config:
-                            description: The SLO-specific configuration.
-                            type: object
-                            x-kubernetes-preserve-unknown-fields: true
                           elasticityStrategy:
                             description: The elasticity strategy that should be triggered
                               upon violations of the SLO.
@@ -193,6 +189,10 @@ spec:
                               be unique within its containing list of SLOs (e.g.,
                               ServiceGraphNode.SLOs if this SLO is attached to a node)."
                             type: string
+                          sloConfig:
+                            description: The SLO-specific configuration.
+                            type: object
+                            x-kubernetes-preserve-unknown-fields: true
                           sloType:
                             description: Describes the type of SLO.
                             properties:
@@ -206,9 +206,15 @@ spec:
                             - apiVersion
                             - kind
                             type: object
+                          staticElasticityStrategyConfig:
+                            description: Static configuration to be passed to the
+                              chosen elasticity strategy.
+                            type: object
+                            x-kubernetes-preserve-unknown-fields: true
                         required:
                         - elasticityStrategy
                         - name
+                        - sloConfig
                         - sloType
                         type: object
                       type: array
@@ -3323,10 +3329,6 @@ spec:
                         description: ServiceLevelObjective an SLOs that is attached
                           to a ServiceGraph, a ServiceGraphNode, or a ServiceLink.
                         properties:
-                          config:
-                            description: The SLO-specific configuration.
-                            type: object
-                            x-kubernetes-preserve-unknown-fields: true
                           elasticityStrategy:
                             description: The elasticity strategy that should be triggered
                               upon violations of the SLO.
@@ -3346,6 +3348,10 @@ spec:
                               be unique within its containing list of SLOs (e.g.,
                               ServiceGraphNode.SLOs if this SLO is attached to a node)."
                             type: string
+                          sloConfig:
+                            description: The SLO-specific configuration.
+                            type: object
+                            x-kubernetes-preserve-unknown-fields: true
                           sloType:
                             description: Describes the type of SLO.
                             properties:
@@ -3359,9 +3365,15 @@ spec:
                             - apiVersion
                             - kind
                             type: object
+                          staticElasticityStrategyConfig:
+                            description: Static configuration to be passed to the
+                              chosen elasticity strategy.
+                            type: object
+                            x-kubernetes-preserve-unknown-fields: true
                         required:
                         - elasticityStrategy
                         - name
+                        - sloConfig
                         - sloType
                         type: object
                       type: array
@@ -4947,10 +4959,6 @@ spec:
                   description: ServiceLevelObjective an SLOs that is attached to a
                     ServiceGraph, a ServiceGraphNode, or a ServiceLink.
                   properties:
-                    config:
-                      description: The SLO-specific configuration.
-                      type: object
-                      x-kubernetes-preserve-unknown-fields: true
                     elasticityStrategy:
                       description: The elasticity strategy that should be triggered
                         upon violations of the SLO.
@@ -4970,6 +4978,10 @@ spec:
                         unique within its containing list of SLOs (e.g., ServiceGraphNode.SLOs
                         if this SLO is attached to a node)."
                       type: string
+                    sloConfig:
+                      description: The SLO-specific configuration.
+                      type: object
+                      x-kubernetes-preserve-unknown-fields: true
                     sloType:
                       description: Describes the type of SLO.
                       properties:
@@ -4983,9 +4995,15 @@ spec:
                       - apiVersion
                       - kind
                       type: object
+                    staticElasticityStrategyConfig:
+                      description: Static configuration to be passed to the chosen
+                        elasticity strategy.
+                      type: object
+                      x-kubernetes-preserve-unknown-fields: true
                   required:
                   - elasticityStrategy
                   - name
+                  - sloConfig
                   - sloType
                   type: object
                 type: array
