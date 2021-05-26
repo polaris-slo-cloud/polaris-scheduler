@@ -1,0 +1,20 @@
+# permissions for end users to view networklinks.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: networklink-viewer-role
+rules:
+- apiGroups:
+  - cluster.k8s.rainbow-h2020.eu
+  resources:
+  - networklinks
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - cluster.k8s.rainbow-h2020.eu
+  resources:
+  - networklinks/status
+  verbs:
+  - get

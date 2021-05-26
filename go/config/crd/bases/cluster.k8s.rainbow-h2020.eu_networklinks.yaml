@@ -1,0 +1,132 @@
+
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.4.1
+  creationTimestamp: null
+  name: networklinks.cluster.k8s.rainbow-h2020.eu
+spec:
+  group: cluster.k8s.rainbow-h2020.eu
+  names:
+    kind: NetworkLink
+    listKind: NetworkLinkList
+    plural: networklinks
+    singular: networklink
+  scope: Namespaced
+  versions:
+  - name: v1
+    schema:
+      openAPIV3Schema:
+        description: NetworkLink is the Schema for the networklinks API
+        properties:
+          apiVersion:
+            description: 'APIVersion defines the versioned schema of this representation
+              of an object. Servers should convert recognized schemas to the latest
+              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            type: string
+          kind:
+            description: 'Kind is a string value representing the REST resource this
+              object represents. Servers may infer this from the endpoint the client
+              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: "NetworkLinkSpec contains the specification of a NetworkLink.
+              \n ToDo: Find a way to autogenerate a NetworkLink name from the node
+              names (maybe in an admission webhook)."
+            properties:
+              latency:
+                description: The latency of the the network link.
+                properties:
+                  packetDelayMsec:
+                    default: 0
+                    description: The end-to-end network delay (i.e., latency) of a
+                      packet sent between the two nodes, connected by this NetworkLink.
+                    format: int64
+                    minimum: 0
+                    type: integer
+                  packetDelayVariance:
+                    default: 0
+                    description: The variance of PacketDelayMsec (i.e., jitter).
+                    format: int64
+                    minimum: 0
+                    type: integer
+                required:
+                - packetDelayMsec
+                - packetDelayVariance
+                type: object
+              nodeA:
+                description: The name of the first node connected by this network
+                  link.
+                type: string
+              nodeB:
+                description: The name of the second node connected by this network
+                  link.
+                type: string
+              packetLoss:
+                description: The average packet loss of this network link.
+                properties:
+                  packetLossBp:
+                    default: 0
+                    description: "The packet loss in basis points (bp). 1 bp = 0.01%
+                      \n The reason for not using percent for this is that the Kubernetes
+                      API does not support floating point numbers and people may need
+                      more precise packet loss information than whole percents."
+                    format: int64
+                    maximum: 10000
+                    minimum: 0
+                    type: integer
+                required:
+                - packetLossBp
+                type: object
+              qualityClass:
+                description: The advertised quality class of this network link
+                enum:
+                - QC1Mbps
+                - QC10Mbps
+                - QC1Gbps
+                type: string
+              throughput:
+                description: The throughput of the network link.
+                properties:
+                  bandwidthKbps:
+                    description: Describes the last known bandwidth of the network
+                      link in kilobits per second.
+                    format: int64
+                    minimum: 0
+                    type: integer
+                  bandwidthVariance:
+                    default: 0
+                    description: The variance of BandwidthKbps.
+                    format: int64
+                    minimum: 0
+                    type: integer
+                required:
+                - bandwidthKbps
+                - bandwidthVariance
+                type: object
+            required:
+            - latency
+            - nodeA
+            - nodeB
+            - packetLoss
+            - qualityClass
+            - throughput
+            type: object
+          status:
+            description: NetworkLinkStatus defines the observed state of NetworkLink
+            type: object
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}
+status:
+  acceptedNames:
+    kind: ""
+    plural: ""
+  conditions: []
+  storedVersions: []

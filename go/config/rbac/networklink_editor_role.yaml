@@ -1,0 +1,24 @@
+# permissions for end users to edit networklinks.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: networklink-editor-role
+rules:
+- apiGroups:
+  - cluster.k8s.rainbow-h2020.eu
+  resources:
+  - networklinks
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - cluster.k8s.rainbow-h2020.eu
+  resources:
+  - networklinks/status
+  verbs:
+  - get

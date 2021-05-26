@@ -1,0 +1,80 @@
+# This example contains network links for a cluster of four nodes.
+# The corresponding node topology graph looks like this:
+#
+#       kind-control-plane
+#         /          \
+#        /            \
+#       /              \
+# kind-worker         kind-worker-2
+#      \               /
+#       \             /
+#        \           /
+#        kind-worker-3
+#
+apiVersion: cluster.k8s.rainbow-h2020.eu/v1
+kind: NetworkLink
+metadata:
+  name: kind-control-plane-to-kind-worker
+spec:
+  nodeA: kind-control-plane
+  nodeB: kind-worker
+  qualityClass: QC1Gbps
+  throughput:
+    bandwidthKbps: 1000000
+    bandwidthVariance: 0
+  latency:
+    packetDelayMsec: 2
+    packetDelayVariance: 0
+  packetLoss:
+    packetLossBp: 0
+---
+apiVersion: cluster.k8s.rainbow-h2020.eu/v1
+kind: NetworkLink
+metadata:
+  name: kind-control-plane-to-kind-worker2
+spec:
+  nodeA: kind-control-plane
+  nodeB: kind-worker2
+  qualityClass: QC1Mbps
+  throughput:
+    bandwidthKbps: 1000
+    bandwidthVariance: 0
+  latency:
+    packetDelayMsec: 10
+    packetDelayVariance: 0
+  packetLoss:
+    packetLossBp: 10
+---
+apiVersion: cluster.k8s.rainbow-h2020.eu/v1
+kind: NetworkLink
+metadata:
+  name: kind-worker1-to-kind-worker3
+spec:
+  nodeA: kind-worker1
+  nodeB: kind-worker3
+  qualityClass: QC10Mbps
+  throughput:
+    bandwidthKbps: 10000
+    bandwidthVariance: 0
+  latency:
+    packetDelayMsec: 20
+    packetDelayVariance: 0
+  packetLoss:
+    packetLossBp: 0
+---
+apiVersion: cluster.k8s.rainbow-h2020.eu/v1
+kind: NetworkLink
+metadata:
+  name: kind-worker2-to-kind-worker3
+spec:
+  nodeA: kind-worker2
+  nodeB: kind-worker3
+  qualityClass: QC10Mbps
+  throughput:
+    bandwidthKbps: 10000
+    bandwidthVariance: 0
+  latency:
+    packetDelayMsec: 10
+    packetDelayVariance: 0
+  packetLoss:
+    packetLossBp: 0

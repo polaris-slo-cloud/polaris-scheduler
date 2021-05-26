@@ -1,0 +1,16 @@
+domain: k8s.rainbow-h2020.eu
+layout:
+- go.kubebuilder.io/v3
+multigroup: true
+projectName: rainbow
+repo: k8s.rainbow-h2020.eu/rainbow
+resources:
+- api:
+    crdVersion: v1
+    namespaced: true
+  domain: k8s.rainbow-h2020.eu
+  group: cluster
+  kind: NetworkLink
+  path: k8s.rainbow-h2020.eu/rainbow/apis/cluster/v1
+  version: v1
+version: "3"
