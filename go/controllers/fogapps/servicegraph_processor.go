@@ -83,6 +83,9 @@ func (me *serviceGraphProcessor) handleServiceNode(node *fogapps.ServiceGraphNod
 		return fmt.Errorf("could not set owner reference. Cause: %w", err)
 	}
 
-	me.changes.AddChanges(controllerutil.NewResourceAddition(newObj))
+	// Workaround until we implement updating
+	if len(me.childObjects.Deployments) == 0 {
+		me.changes.AddChanges(controllerutil.NewResourceAddition(newObj))
+	}
 	return nil
 }
