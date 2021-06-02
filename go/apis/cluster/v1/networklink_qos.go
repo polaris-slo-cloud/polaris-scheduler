@@ -30,6 +30,7 @@ type NetworkThroughput struct {
 	//
 	// +kubebuilder:validation:Minimum=0
 	// +kubebuilder:default=0
+	// +optional
 	BandwidthVariance int64 `json:"bandwidthVariance"`
 }
 
@@ -38,14 +39,14 @@ type NetworkLatency struct {
 	// The end-to-end network delay (i.e., latency) of a packet sent between the two nodes, connected by this NetworkLink.
 	//
 	// +kubebuilder:validation:Minimum=0
-	// +kubebuilder:default=0
-	PacketDelayMsec int64 `json:"packetDelayMsec"`
+	PacketDelayMsec int32 `json:"packetDelayMsec"`
 
 	// The variance of PacketDelayMsec (i.e., jitter).
 	//
 	// +kubebuilder:validation:Minimum=0
 	// +kubebuilder:default=0
-	PacketDelayVariance int64 `json:"packetDelayVariance"`
+	// +optional
+	PacketDelayVariance int32 `json:"packetDelayVariance"`
 }
 
 // NetworkPacketLoss describes the packet loss of a NetworkLink.
@@ -58,6 +59,5 @@ type NetworkPacketLoss struct {
 	//
 	// +kubebuilder:validation:Minimum=0
 	// +kubebuilder:validation:Maximum=10000
-	// +kubebuilder:default=0
-	PacketLossBp int64 `json:"packetLossBp"`
+	PacketLossBp int32 `json:"packetLossBp"`
 }

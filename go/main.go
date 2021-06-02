@@ -37,6 +37,8 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
 	clusterv1 "k8s.rainbow-h2020.eu/rainbow/apis/cluster/v1"
+	fogappsv1 "k8s.rainbow-h2020.eu/rainbow/apis/fogapps/v1"
+	fogappscontrollers "k8s.rainbow-h2020.eu/rainbow/controllers/fogapps"
 	//+kubebuilder:scaffold:imports
 )
 
@@ -49,6 +51,7 @@ func init() {
 	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
 
 	utilruntime.Must(clusterv1.AddToScheme(scheme))
+	utilruntime.Must(fogappsv1.AddToScheme(scheme))
 	//+kubebuilder:scaffold:scheme
 }
 
@@ -82,6 +85,14 @@ func main() {
 		os.Exit(1)
 	}
 
+	if err = (&fogappscontrollers.ServiceGraphReconciler{
+		Client: mgr.GetClient(),
+		Log:    ctrl.Log.WithName("controllers").WithName("fogapps").WithName("ServiceGraph"),
+		Scheme: mgr.GetScheme(),
+	}).SetupWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create controller", "controller", "ServiceGraph")
+		os.Exit(1)
+	}
 	//+kubebuilder:scaffold:builder
 
 	if err := mgr.AddHealthzCheck("healthz", healthz.Ping); err != nil {

@@ -1,0 +1,24 @@
+# permissions for end users to edit servicegraphs.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: servicegraph-editor-role
+rules:
+- apiGroups:
+  - fogapps.k8s.rainbow-h2020.eu
+  resources:
+  - servicegraphs
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - fogapps.k8s.rainbow-h2020.eu
+  resources:
+  - servicegraphs/status
+  verbs:
+  - get

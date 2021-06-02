@@ -1,0 +1,54 @@
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  creationTimestamp: null
+  name: manager-role
+rules:
+- apiGroups:
+  - apps/v1
+  resources:
+  - deployments
+  - statefulsets
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - apps/v1
+  resources:
+  - deployments/status
+  - statefulsets/status
+  verbs:
+  - get
+- apiGroups:
+  - fogapps.k8s.rainbow-h2020.eu
+  resources:
+  - servicegraphs
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - fogapps.k8s.rainbow-h2020.eu
+  resources:
+  - servicegraphs/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - fogapps.k8s.rainbow-h2020.eu
+  resources:
+  - servicegraphs/status
+  verbs:
+  - get
+  - patch
+  - update

@@ -1,0 +1,86 @@
+# The examples in this file are meant to be used as documentation in presentation slides, etc.
+# They cannot be applied to a cluster, because details have intentionally been left out
+
+apiVersion: fogapps.k8s.rainbow-h2020.eu/v1
+kind: ServiceGraph
+metadata:
+  name: my-fog-app
+  namespace: demo # All resources are created in this namespace
+spec:
+  nodes:
+    # List of ServiceGraphNodes
+    - name: road-side-unit
+      containers:
+        ...
+      volumes:
+        ...
+      replicas:
+        ...
+
+  links:
+    # List of directed ServiceLinks that connect the above nodes.
+    - source: road-side-unit
+      target: traffic-light
+      qosRequirements:
+        ...
+
+  slos:
+    # Application-wide Service Level Objectives
+
+  rainbowServices:
+    # Application-wide RAINBOW services
+---
+nodes: # List of ServiceGraphNodes
+  - name: road-side-unit
+    containers:
+      # List of Kubernetes Container objects
+      - name: road-side-unit-coordinator
+        image: rainbow-h2020/road-side-unit-coordinator:latest
+        resources:
+          limits:
+            memory: "1Gi"
+            cpu: "1000m"
+        volumeMounts:
+          - mountPath: /cache
+            name: cache-volume
+    volumes:
+      # List of Kubernetes Volume objects
+      - name: cache-volume
+        emptyDir: {}
+    replicas:
+      # Configures the instance counts.
+      min: 1
+      max: 10
+      initialCount: 2
+      setType: simple
+
+    trustRequirements: ...
+    nodeHardware: ...
+    slos: ...
+    geoLocation: ...
+---
+links:
+  - source: road-side-unit
+    target: traffic-light
+    qosRequirements:
+      latency:
+          maxPacketDelayMsec: 100
+      throughput: ...
+      packetLoss: ...
+    trustRequirements:
+      ...
+---
+nodes:
+  - name: road-side-unit
+    # ...
+    slos:
+      # List of SLOs
+      - name: cpu-usage
+        sloType:
+          apiVersion: slo.sloc.github.io/v1
+          kind: CPUUsageSloMapping
+        elasticityStrategy:
+          apiVersion: elasticity.sloc.github.io/v1
+          kind: HorizontalElasticityStrategy
+        sloConfig:
+          targetAvgCPUUtilizationPercentage: 70
