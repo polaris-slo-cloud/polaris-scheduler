@@ -1,6 +1,6 @@
 module k8s.rainbow-h2020.eu/rainbow/scheduler
 
-go 1.15
+go 1.16
 
 require (
 	github.com/go-openapi/spec v0.19.5 // indirect
@@ -49,4 +49,5 @@ replace (
 )
 
 // controller-runtime would cause problems with an incompatible transitive dependency.
+// This requires Go 1.16+
 exclude sigs.k8s.io/controller-runtime v0.8.3

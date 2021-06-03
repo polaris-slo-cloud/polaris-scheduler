@@ -12,16 +12,21 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-FROM golang:1.15.8
+FROM golang:1.16
+
+# Important: The Docker context's root directory is not the `go/scheduler` directory,
+# but the `go` directory instead, because the scheduler depends on the orchestrator module.
+
+WORKDIR /go/src/k8s.rainbow-h2020.eu/rainbow
+COPY . .
 
 WORKDIR /go/src/k8s.rainbow-h2020.eu/rainbow/scheduler
-COPY . .
 ARG RELEASE_VERSION
 RUN RELEASE_VERSION=${RELEASE_VERSION} make build-scheduler
 
 FROM alpine:3.12
 
-COPY ./manifests/rainbow-scheduler/default-rainbow-scheduler-config.yaml /etc/rainbow-scheduler/default-rainbow-scheduler-config.yaml
+COPY ./scheduler/manifests/rainbow-scheduler/default-rainbow-scheduler-config.yaml /etc/rainbow-scheduler/default-rainbow-scheduler-config.yaml
 COPY --from=0 /go/src/k8s.rainbow-h2020.eu/rainbow/scheduler/bin/rainbow-scheduler /bin/rainbow-scheduler
 
 WORKDIR /bin

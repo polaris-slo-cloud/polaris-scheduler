@@ -16,7 +16,7 @@
 COMMONENVVAR=GOOS=$(shell uname -s | tr A-Z a-z) GOARCH=$(subst x86_64,amd64,$(patsubst i%86,386,$(shell uname -m)))
 BUILDENVVAR=CGO_ENABLED=0
 
-PROJECT_VERSION=0.0.13
+PROJECT_VERSION=0.0.14
 
 LOCAL_REGISTRY=localhost:5000/rainbow
 LOCAL_IMAGE=rainbow-scheduler:latest
@@ -55,12 +55,12 @@ build-scheduler-debug: autogen debug-config
 	$(COMMONENVVAR) $(BUILDENVVAR) go build -gcflags="all=-N -l" -ldflags '-X k8s.io/component-base/version.gitVersion=$(VERSION)' -o bin/rainbow-scheduler cmd/scheduler/main.go
 
 .PHONY: local-image
-local-image: clean
-	docker build -f ./build/scheduler/Dockerfile --build-arg RELEASE_VERSION="$(RELEASE_VERSION)" -t $(LOCAL_REGISTRY)/$(LOCAL_IMAGE) .
+local-image:
+	docker build -f ./build/scheduler/Dockerfile --build-arg RELEASE_VERSION="$(RELEASE_VERSION)" -t $(LOCAL_REGISTRY)/$(LOCAL_IMAGE) ..
 
 .PHONY: release-image
-release-image: clean
-	docker build -f ./build/scheduler/Dockerfile --build-arg RELEASE_VERSION="$(RELEASE_VERSION)" -t $(RELEASE_REGISTRY)/$(RELEASE_IMAGE) .
+release-image:
+	docker build -f ./build/scheduler/Dockerfile --build-arg RELEASE_VERSION="$(RELEASE_VERSION)" -t $(RELEASE_REGISTRY)/$(RELEASE_IMAGE) ..
 
 # .PHONY: push-release-image
 # push-release-image: release-image
