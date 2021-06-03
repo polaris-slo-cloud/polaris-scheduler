@@ -47,3 +47,6 @@ replace (
 	k8s.io/sample-apiserver => k8s.io/sample-apiserver v0.20.7
 	k8s.rainbow-h2020.eu/rainbow/orchestration => ../orchestration
 )
+
+// controller-runtime would cause problems with an incompatible transitive dependency.
+exclude sigs.k8s.io/controller-runtime v0.8.3
