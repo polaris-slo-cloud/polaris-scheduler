@@ -17,6 +17,7 @@ require (
 	k8s.io/kube-openapi v0.0.0-20201113171705-d219536bb9fd
 	k8s.io/kube-scheduler v0.20.7 // indirect
 	k8s.io/kubernetes v1.20.7
+	k8s.rainbow-h2020.eu/rainbow/orchestration v0.0.1
 )
 
 replace (
@@ -45,4 +46,5 @@ replace (
 	k8s.io/metrics => k8s.io/metrics v0.20.7
 	k8s.io/mount-utils => k8s.io/mount-utils v0.20.7
 	k8s.io/sample-apiserver => k8s.io/sample-apiserver v0.20.7
+	k8s.rainbow-h2020.eu/rainbow/orchestration => ../orchestration
 )

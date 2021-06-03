@@ -4,15 +4,8 @@ import (
 	"sync"
 
 	v1 "k8s.io/api/core/v1"
-	"k8s.io/kubernetes/pkg/scheduler/framework"
-	"rainbow-h2020.eu/gomod/rainbow-scheduler/pkg/model/graph/labeledgraph"
+	"k8s.rainbow-h2020.eu/rainbow/orchestration/pkg/model/graph/labeledgraph"
 )
-
-const (
-	stateKeyBase = "rainbow-h2020/ServiceGraph/"
-)
-
-var _ framework.StateData = &ServiceGraph{}
 
 // ServiceGraph is a representation of an application as an undirected graph.
 type ServiceGraph struct {
@@ -26,12 +19,6 @@ type ServiceGraph struct {
 	Mutex *sync.RWMutex
 }
 
-// GetServiceGraphStateKey returns the key, under which the pod application's ServiceGraph can be stored in the framework.CycleState.
-func GetServiceGraphStateKey(pod *v1.Pod) framework.StateKey {
-	// The CycleState is unique for every pod, so using just the base key should be fine.
-	return stateKeyBase
-}
-
 // NewServiceGraph creates a new instance of ServiceGraph.
 func NewServiceGraph(namespace, appName string) *ServiceGraph {
 	return &ServiceGraph{
@@ -39,13 +26,6 @@ func NewServiceGraph(namespace, appName string) *ServiceGraph {
 		namespace:    namespace,
 		appName:      appName,
 		Mutex:        &sync.RWMutex{},
-	}
-}
-
-// Clone creates a shallow copy of this ServiceGraph.
-func (me *ServiceGraph) Clone() framework.StateData {
-	return &ServiceGraph{
-		LabeledGraph: me.LabeledGraph,
 	}
 }
 

@@ -1,7 +1,7 @@
 package regiongraph
 
 import (
-	"rainbow-h2020.eu/gomod/rainbow-scheduler/pkg/model/graph/labeledgraph"
+	"k8s.rainbow-h2020.eu/rainbow/orchestration/pkg/model/graph/labeledgraph"
 )
 
 // RegionGraph is a representation of a RAINBOW region as a weighted undirected graph.

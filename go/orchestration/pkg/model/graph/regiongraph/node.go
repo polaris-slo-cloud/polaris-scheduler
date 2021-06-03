@@ -1,7 +1,7 @@
 package regiongraph
 
 import (
-	"rainbow-h2020.eu/gomod/rainbow-scheduler/pkg/model/graph/labeledgraph"
+	"k8s.rainbow-h2020.eu/rainbow/orchestration/pkg/model/graph/labeledgraph"
 )
 
 // KubernetesNodeInfo provides information about a Kubernetes node in the cluster.

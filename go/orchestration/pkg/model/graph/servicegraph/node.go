@@ -1,8 +1,8 @@
 package servicegraph
 
 import (
-	"rainbow-h2020.eu/gomod/rainbow-scheduler/pkg/model/graph/labeledgraph"
-	"rainbow-h2020.eu/gomod/rainbow-scheduler/pkg/model/graph/regiongraph"
+	"k8s.rainbow-h2020.eu/rainbow/orchestration/pkg/model/graph/labeledgraph"
+	"k8s.rainbow-h2020.eu/rainbow/orchestration/pkg/model/graph/regiongraph"
 )
 
 // MicroserviceNodeInfo provides information about a microservice in a RAINBOW application.
