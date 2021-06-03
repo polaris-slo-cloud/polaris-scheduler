@@ -22,13 +22,13 @@ import (
 	"k8s.io/component-base/logs"
 	"k8s.io/kubernetes/cmd/kube-scheduler/app"
 
-	"rainbow-h2020.eu/gomod/rainbow-scheduler/pkg/schedulerplugins/atomicdeployment"
-	"rainbow-h2020.eu/gomod/rainbow-scheduler/pkg/schedulerplugins/latency"
-	"rainbow-h2020.eu/gomod/rainbow-scheduler/pkg/schedulerplugins/nodecost"
-	"rainbow-h2020.eu/gomod/rainbow-scheduler/pkg/schedulerplugins/podspernode"
-	"rainbow-h2020.eu/gomod/rainbow-scheduler/pkg/schedulerplugins/prioritymqsort"
-	"rainbow-h2020.eu/gomod/rainbow-scheduler/pkg/schedulerplugins/reserve"
-	"rainbow-h2020.eu/gomod/rainbow-scheduler/pkg/schedulerplugins/servicegraph"
+	"k8s.rainbow-h2020.eu/rainbow/scheduler/pkg/schedulerplugins/atomicdeployment"
+	"k8s.rainbow-h2020.eu/rainbow/scheduler/pkg/schedulerplugins/latency"
+	"k8s.rainbow-h2020.eu/rainbow/scheduler/pkg/schedulerplugins/nodecost"
+	"k8s.rainbow-h2020.eu/rainbow/scheduler/pkg/schedulerplugins/podspernode"
+	"k8s.rainbow-h2020.eu/rainbow/scheduler/pkg/schedulerplugins/prioritymqsort"
+	"k8s.rainbow-h2020.eu/rainbow/scheduler/pkg/schedulerplugins/reserve"
+	"k8s.rainbow-h2020.eu/rainbow/scheduler/pkg/schedulerplugins/servicegraph"
 )
 
 func main() {

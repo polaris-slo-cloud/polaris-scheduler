@@ -9,7 +9,7 @@ import (
 	"k8s.io/kubernetes/pkg/scheduler/framework"
 	"k8s.rainbow-h2020.eu/rainbow/orchestration/pkg/model/graph/servicegraph"
 	"k8s.rainbow-h2020.eu/rainbow/orchestration/pkg/services/servicegraphmanager"
-	"rainbow-h2020.eu/gomod/rainbow-scheduler/pkg/util"
+	"k8s.rainbow-h2020.eu/rainbow/scheduler/pkg/util"
 )
 
 const (

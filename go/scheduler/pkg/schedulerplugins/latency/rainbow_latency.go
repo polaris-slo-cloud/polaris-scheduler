@@ -12,7 +12,7 @@ import (
 	"k8s.rainbow-h2020.eu/rainbow/orchestration/pkg/model/graph/regiongraph"
 	"k8s.rainbow-h2020.eu/rainbow/orchestration/pkg/model/graph/servicegraph"
 	"k8s.rainbow-h2020.eu/rainbow/orchestration/pkg/services/regionmanager"
-	"rainbow-h2020.eu/gomod/rainbow-scheduler/pkg/util"
+	"k8s.rainbow-h2020.eu/rainbow/scheduler/pkg/util"
 )
 
 const (

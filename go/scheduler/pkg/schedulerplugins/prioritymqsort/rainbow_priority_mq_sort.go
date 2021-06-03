@@ -4,7 +4,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	framework "k8s.io/kubernetes/pkg/scheduler/framework"
 	kubequeuesort "k8s.io/kubernetes/pkg/scheduler/framework/plugins/queuesort"
-	"rainbow-h2020.eu/gomod/rainbow-scheduler/pkg/util"
+	"k8s.rainbow-h2020.eu/rainbow/scheduler/pkg/util"
 )
 
 const (

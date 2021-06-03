@@ -14,7 +14,7 @@
 # limitations under the License.
 FROM golang:1.15.8
 
-WORKDIR /go/src/rainbow-h2020.eu/gomod/rainbow-scheduler
+WORKDIR /go/src/k8s.rainbow-h2020.eu/rainbow/scheduler
 COPY . .
 ARG RELEASE_VERSION
 RUN RELEASE_VERSION=${RELEASE_VERSION} make build-scheduler-debug
@@ -22,7 +22,7 @@ RUN RELEASE_VERSION=${RELEASE_VERSION} make build-scheduler-debug
 FROM alpine:3.12
 
 COPY ./manifests/rainbow-scheduler/default-rainbow-scheduler-config.yaml /etc/rainbow-scheduler/default-rainbow-scheduler-config.yaml
-COPY --from=0 /go/src/rainbow-h2020.eu/gomod/rainbow-scheduler/bin/rainbow-scheduler /bin/rainbow-scheduler
+COPY --from=0 /go/src/k8s.rainbow-h2020.eu/rainbow/scheduler/bin/rainbow-scheduler /bin/rainbow-scheduler
 
 WORKDIR /bin
 CMD ["rainbow-scheduler"]

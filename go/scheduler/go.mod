@@ -1,4 +1,4 @@
-module rainbow-h2020.eu/gomod/rainbow-scheduler
+module k8s.rainbow-h2020.eu/rainbow/scheduler
 
 go 1.15
 

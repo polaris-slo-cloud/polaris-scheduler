@@ -24,15 +24,15 @@ CODEGEN_PKG=${CODEGEN_PKG:-$(cd "${SCRIPT_ROOT}"; ls -d -1 ./vendor/k8s.io/code-
 
 bash "${CODEGEN_PKG}"/generate-internal-groups.sh \
   "deepcopy,defaulter,conversion" \
-  rainbow-h2020.eu/gomod/rainbow-scheduler/pkg/generated \
-  rainbow-h2020.eu/gomod/rainbow-scheduler/pkg/apis \
-  rainbow-h2020.eu/gomod/rainbow-scheduler/pkg/apis \
+  k8s.rainbow-h2020.eu/rainbow/scheduler/pkg/generated \
+  k8s.rainbow-h2020.eu/rainbow/scheduler/pkg/apis \
+  k8s.rainbow-h2020.eu/rainbow/scheduler/pkg/apis \
   "config:v1beta1" \
   --go-header-file "${SCRIPT_ROOT}"/hack/boilerplate/boilerplate.generatego.txt
 
 bash "${CODEGEN_PKG}"/generate-groups.sh \
   all \
-  rainbow-h2020.eu/gomod/rainbow-scheduler/pkg/generated \
-  rainbow-h2020.eu/gomod/rainbow-scheduler/pkg/apis \
+  k8s.rainbow-h2020.eu/rainbow/scheduler/pkg/generated \
+  k8s.rainbow-h2020.eu/rainbow/scheduler/pkg/apis \
   "scheduling:v1alpha1" \
   --go-header-file "${SCRIPT_ROOT}"/hack/boilerplate/boilerplate.generatego.txt

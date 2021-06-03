@@ -49,7 +49,7 @@ runTests() {
   kube::log::status "Running integration test cases"
 
   # TODO: make args customizable.
-  go test -mod=vendor rainbow-h2020.eu/gomod/rainbow-scheduler/test/integration/...
+  go test -mod=vendor k8s.rainbow-h2020.eu/rainbow/scheduler/test/integration/...
 
   cleanup
 }

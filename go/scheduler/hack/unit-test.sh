@@ -24,5 +24,5 @@ source "${SCRIPT_ROOT}/hack/lib/init.sh"
 
 # TODO: make args customizable.
 go test -mod=vendor \
-  rainbow-h2020.eu/gomod/rainbow-scheduler/cmd/... \
-  rainbow-h2020.eu/gomod/rainbow-scheduler/pkg/...
+  k8s.rainbow-h2020.eu/rainbow/scheduler/cmd/... \
+  k8s.rainbow-h2020.eu/rainbow/scheduler/pkg/...

@@ -9,7 +9,7 @@ import (
 	"k8s.io/klog/v2"
 	framework "k8s.io/kubernetes/pkg/scheduler/framework"
 	"k8s.rainbow-h2020.eu/rainbow/orchestration/pkg/services/regionmanager"
-	"rainbow-h2020.eu/gomod/rainbow-scheduler/pkg/util"
+	"k8s.rainbow-h2020.eu/rainbow/scheduler/pkg/util"
 )
 
 const (
