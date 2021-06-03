@@ -1,6 +1,11 @@
 # RAINBOW Kubernetes Controllers
 
-This directory contains RAINBOW's Kubernetes controllers and CRDs written in Go.
+This directory contains all RAINBOW's Kubernetes controllers and CRDs written in Go, except for the scheduler.
+
+There are some RAINBOW-specific data structures that are used in the controllers:
+
+* Service Graph
+* Node Topology Graph
 
 ## Node Topology Graph
 
