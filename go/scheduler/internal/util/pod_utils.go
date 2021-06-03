@@ -7,6 +7,7 @@ import (
 
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/kubernetes/pkg/scheduler/framework"
+	"k8s.rainbow-h2020.eu/rainbow/orchestration/pkg/kubeutil"
 )
 
 const (
@@ -21,7 +22,7 @@ const (
 
 // GetPodMicroserviceType returns the type of microservice that the pod is supposed to host.
 func GetPodMicroserviceType(pod *v1.Pod) (string, bool) {
-	return GetLabel(&pod.ObjectMeta, microserviceTypeLabel)
+	return kubeutil.GetLabel(&pod.ObjectMeta, microserviceTypeLabel)
 }
 
 // IsPodMessageQueue returns true if the specified pod is supposed to host a message queue.
@@ -32,7 +33,7 @@ func IsPodMessageQueue(pod *v1.Pod) bool {
 
 // GetAppName returns the name of the app that the pod belongs to.
 func GetAppName(pod *v1.Pod) (string, error) {
-	appName, ok := GetLabel(&pod.ObjectMeta, appNameLabel)
+	appName, ok := kubeutil.GetLabel(&pod.ObjectMeta, appNameLabel)
 	if ok {
 		return appName, nil
 	}
@@ -42,7 +43,7 @@ func GetAppName(pod *v1.Pod) (string, error) {
 // GetPodMaxDelay gets the max delay in milliseconds that has been configured for the pod.
 // If no max delay is defined for the Pod, a default value (MaxInt64) is returned.
 func GetPodMaxDelay(pod *v1.Pod) int64 {
-	delayMsStr, ok := GetLabel(&pod.ObjectMeta, maxDelayMsLabel)
+	delayMsStr, ok := kubeutil.GetLabel(&pod.ObjectMeta, maxDelayMsLabel)
 	if ok {
 		maxDelay, err := strconv.ParseInt(delayMsStr, 10, 64)
 		if err == nil {
@@ -55,7 +56,7 @@ func GetPodMaxDelay(pod *v1.Pod) int64 {
 // GetPodInstanceLabel gets the instance label from the pod.
 // This is used to identify the pod's not in the ServiceGraph.
 func GetPodInstanceLabel(pod *v1.Pod) (string, error) {
-	instanceLabel, ok := GetLabel(&pod.ObjectMeta, instanceNameLabel)
+	instanceLabel, ok := kubeutil.GetLabel(&pod.ObjectMeta, instanceNameLabel)
 	if ok {
 		return instanceLabel, nil
 	}

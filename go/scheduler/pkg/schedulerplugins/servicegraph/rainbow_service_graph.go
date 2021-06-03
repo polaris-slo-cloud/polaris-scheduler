@@ -9,7 +9,7 @@ import (
 	"k8s.io/kubernetes/pkg/scheduler/framework"
 	"k8s.rainbow-h2020.eu/rainbow/orchestration/pkg/model/graph/servicegraph"
 	"k8s.rainbow-h2020.eu/rainbow/orchestration/pkg/services/servicegraphmanager"
-	"k8s.rainbow-h2020.eu/rainbow/scheduler/pkg/util"
+	"k8s.rainbow-h2020.eu/rainbow/scheduler/internal/util"
 )
 
 const (
@@ -65,6 +65,6 @@ func (me *RainbowServiceGraph) PreFilter(ctx context.Context, state *framework.C
 		return framework.AsStatus(err)
 	}
 
-	state.Write(servicegraph.GetServiceGraphStateKey(p), serviceGraph)
+	util.WriteServiceGraphToState(p, state, serviceGraph)
 	return framework.NewStatus(framework.Success)
 }

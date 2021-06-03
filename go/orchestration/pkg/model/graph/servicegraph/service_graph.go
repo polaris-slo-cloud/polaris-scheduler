@@ -3,7 +3,6 @@ package servicegraph
 import (
 	"sync"
 
-	v1 "k8s.io/api/core/v1"
 	"k8s.rainbow-h2020.eu/rainbow/orchestration/pkg/model/graph/labeledgraph"
 )
 

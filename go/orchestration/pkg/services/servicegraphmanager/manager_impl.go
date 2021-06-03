@@ -1,10 +1,14 @@
 package servicegraphmanager
 
 import (
+	"fmt"
+	"math"
+	"strconv"
+
 	"gonum.org/v1/gonum/graph"
 	v1 "k8s.io/api/core/v1"
+	"k8s.rainbow-h2020.eu/rainbow/orchestration/pkg/kubeutil"
 	"k8s.rainbow-h2020.eu/rainbow/orchestration/pkg/model/graph/servicegraph"
-	"k8s.rainbow-h2020.eu/rainbow/orchestration/pkg/util"
 )
 
 var (
@@ -33,19 +37,21 @@ func (me *serviceGraphManagerImpl) ServiceGraph(pod *v1.Pod) (*servicegraph.Serv
 	return me.mockServiceGraph, nil
 }
 
+// ToDo: Lots of mocked stuff here - remove that.
+
 func (me *serviceGraphManagerImpl) buildServiceGraph(pod *v1.Pod) (*servicegraph.ServiceGraph, error) {
-	appName, err := util.GetAppName(pod)
+	appName, err := getAppName(pod)
 	if err != nil {
 		return nil, err
 	}
-	namespace := util.GetNamespace(&pod.ObjectMeta)
+	namespace := kubeutil.GetNamespace(&pod.ObjectMeta)
 	svcGraph := servicegraph.NewServiceGraph(namespace, appName)
 	svcGraph.SetMaxDelayMs(800)
 
 	mqNode := svcGraph.AddNewNode(
 		"message-queue-0",
 		&servicegraph.MicroserviceNodeInfo{
-			MicroserviceType:           util.MicroserviceTypeMessageQueue,
+			MicroserviceType:           microserviceTypeMessageQueue,
 			MaxLatencyToMessageQueueMs: 0,
 		},
 	)
@@ -98,7 +104,7 @@ func (me *serviceGraphManagerImpl) buildServiceGraph(pod *v1.Pod) (*servicegraph
 }
 
 func (me *serviceGraphManagerImpl) updateMaxDelay(svcGraph *servicegraph.ServiceGraph, pod *v1.Pod) {
-	label, err := util.GetPodInstanceLabel(pod)
+	label, err := getPodInstanceLabel(pod)
 	if err != nil {
 		return
 	}
@@ -108,8 +114,61 @@ func (me *serviceGraphManagerImpl) updateMaxDelay(svcGraph *servicegraph.Service
 		return
 	}
 
-	maxDelayMs := util.GetPodMaxDelay(pod)
+	maxDelayMs := getPodMaxDelay(pod)
 	svcGraph.Mutex.Lock()
 	node.MicroserviceNodeInfo().MaxLatencyToMessageQueueMs = maxDelayMs
 	svcGraph.Mutex.Unlock()
+}
+
+const (
+	// microserviceTypeMessageQueue is the string constant used to identify a message queue pod.
+	microserviceTypeMessageQueue = "message-queue"
+
+	microserviceTypeLabel = "app.kubernetes.io/component"
+	appNameLabel          = "app.kubernetes.io/name"
+	instanceNameLabel     = "app.kubernetes.io/instance"
+	maxDelayMsLabel       = "rainbow-h2020.eu/max-delay-ms"
+)
+
+// GetPodMicroserviceType returns the type of microservice that the pod is supposed to host.
+func getPodMicroserviceType(pod *v1.Pod) (string, bool) {
+	return kubeutil.GetLabel(&pod.ObjectMeta, microserviceTypeLabel)
+}
+
+// isPodMessageQueue returns true if the specified pod is supposed to host a message queue.
+func isPodMessageQueue(pod *v1.Pod) bool {
+	msType, exists := getPodMicroserviceType(pod)
+	return exists && msType == microserviceTypeMessageQueue
+}
+
+// GetAppName returns the name of the app that the pod belongs to.
+func getAppName(pod *v1.Pod) (string, error) {
+	appName, ok := kubeutil.GetLabel(&pod.ObjectMeta, appNameLabel)
+	if ok {
+		return appName, nil
+	}
+	return appName, fmt.Errorf("The pod has no %s label", appNameLabel)
+}
+
+// GetPodMaxDelay gets the max delay in milliseconds that has been configured for the pod.
+// If no max delay is defined for the Pod, a default value (MaxInt64) is returned.
+func getPodMaxDelay(pod *v1.Pod) int64 {
+	delayMsStr, ok := kubeutil.GetLabel(&pod.ObjectMeta, maxDelayMsLabel)
+	if ok {
+		maxDelay, err := strconv.ParseInt(delayMsStr, 10, 64)
+		if err == nil {
+			return maxDelay
+		}
+	}
+	return math.MaxInt64
+}
+
+// GetPodInstanceLabel gets the instance label from the pod.
+// This is used to identify the pod's not in the ServiceGraph.
+func getPodInstanceLabel(pod *v1.Pod) (string, error) {
+	instanceLabel, ok := kubeutil.GetLabel(&pod.ObjectMeta, instanceNameLabel)
+	if ok {
+		return instanceLabel, nil
+	}
+	return instanceLabel, fmt.Errorf("The pod has no %s label", instanceNameLabel)
 }
