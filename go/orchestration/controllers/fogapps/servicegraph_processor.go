@@ -4,9 +4,9 @@ import (
 	"fmt"
 
 	"github.com/go-logr/logr"
-	fogapps "k8s.rainbow-h2020.eu/rainbow/apis/fogapps/v1"
-	svcGraphUtil "k8s.rainbow-h2020.eu/rainbow/internal/servicegraphutil"
-	"k8s.rainbow-h2020.eu/rainbow/pkg/controllerutil"
+	fogapps "k8s.rainbow-h2020.eu/rainbow/orchestration/apis/fogapps/v1"
+	svcGraphUtil "k8s.rainbow-h2020.eu/rainbow/orchestration/internal/servicegraphutil"
+	"k8s.rainbow-h2020.eu/rainbow/orchestration/pkg/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 

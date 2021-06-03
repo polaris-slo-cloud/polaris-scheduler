@@ -1,7 +1,7 @@
 package v1
 
 import (
-	cluster "k8s.rainbow-h2020.eu/rainbow/apis/cluster/v1"
+	cluster "k8s.rainbow-h2020.eu/rainbow/orchestration/apis/cluster/v1"
 )
 
 // LinkProtocol is used to describe the type of protocol that will be used for the communication over a ServiceLink.

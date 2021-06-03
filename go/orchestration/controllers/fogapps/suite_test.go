@@ -30,7 +30,7 @@ import (
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
-	fogappsv1 "k8s.rainbow-h2020.eu/rainbow/apis/fogapps/v1"
+	fogappsv1 "k8s.rainbow-h2020.eu/rainbow/orchestration/apis/fogapps/v1"
 	//+kubebuilder:scaffold:imports
 )
 

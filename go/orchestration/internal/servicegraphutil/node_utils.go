@@ -6,8 +6,8 @@ import (
 	apps "k8s.io/api/apps/v1"
 	core "k8s.io/api/core/v1"
 	meta "k8s.io/apimachinery/pkg/apis/meta/v1"
-	fogapps "k8s.rainbow-h2020.eu/rainbow/apis/fogapps/v1"
-	"k8s.rainbow-h2020.eu/rainbow/internal/util"
+	fogapps "k8s.rainbow-h2020.eu/rainbow/orchestration/apis/fogapps/v1"
+	"k8s.rainbow-h2020.eu/rainbow/orchestration/internal/util"
 )
 
 const (

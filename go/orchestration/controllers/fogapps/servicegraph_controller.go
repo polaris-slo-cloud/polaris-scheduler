@@ -27,7 +27,7 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	fogapps "k8s.rainbow-h2020.eu/rainbow/apis/fogapps/v1"
+	fogapps "k8s.rainbow-h2020.eu/rainbow/orchestration/apis/fogapps/v1"
 )
 
 var (

@@ -36,9 +36,9 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
-	clusterv1 "k8s.rainbow-h2020.eu/rainbow/apis/cluster/v1"
-	fogappsv1 "k8s.rainbow-h2020.eu/rainbow/apis/fogapps/v1"
-	fogappscontrollers "k8s.rainbow-h2020.eu/rainbow/controllers/fogapps"
+	clusterv1 "k8s.rainbow-h2020.eu/rainbow/orchestration/apis/cluster/v1"
+	fogappsv1 "k8s.rainbow-h2020.eu/rainbow/orchestration/apis/fogapps/v1"
+	fogappscontrollers "k8s.rainbow-h2020.eu/rainbow/orchestration/controllers/fogapps"
 	//+kubebuilder:scaffold:imports
 )
 

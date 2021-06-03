@@ -1,4 +1,4 @@
-module k8s.rainbow-h2020.eu/rainbow
+module k8s.rainbow-h2020.eu/rainbow/orchestration
 
 go 1.15
 
