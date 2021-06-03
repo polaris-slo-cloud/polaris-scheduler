@@ -1,0 +1,43 @@
+{
+    "configurations": [
+        {
+            // Runs the scheduler on the local machine in debug mode, using the configuration in bin/config/kubernetes.
+            "name": "Local: Debug Scheduler",
+            "type": "go",
+            "preLaunchTask": "build-debug",
+            "request": "launch",
+            "mode": "exec",
+            "program": "${workspaceFolder}/bin/rainbow-scheduler",
+            "args": [
+                "--config=${workspaceFolder}/bin/default-rainbow-scheduler-config.yaml",
+                "--authentication-kubeconfig=${workspaceFolder}/bin/config/kubernetes/scheduler.conf",
+                "--authorization-kubeconfig=${workspaceFolder}/bin/config/kubernetes/scheduler.conf",
+                "--bind-address=127.0.0.1",
+                "--port=0",
+                // Writes the active configuration to a file and exits.
+                // "--write-config-to=${workspaceFolder}/bin/active-config.yaml",
+                "--v=4"
+            ]
+        },
+        {
+            // Deploys and runs the scheduler as a pod in a Kubernetes Cluster using the Google Cloud Code VS Code extension.
+            // This option does not fully work yet - the debugger cannot find the local source code. See https://github.com/GoogleCloudPlatform/cloud-code-vscode/issues/358
+            "name": "Kubernetes: Run/Debug Scheduler",
+            "type": "cloudcode.kubernetes",
+            "request": "launch",
+            "skaffoldConfig": "${workspaceFolder}/skaffold.yaml",
+            "watch": false,
+            "cleanUp": true,
+            "portForward": true,
+            "imageRegistry": "localhost:5000",
+            "debug": [
+                {
+                    "image": "rainbowh2020/rainbow-scheduler",
+                    "sourceFileMap": {
+                        "${workspaceFolder}": "/bin"
+                    }
+                }
+            ]
+        }
+    ]
+}

@@ -1,5 +1,12 @@
 # More info: https://docs.docker.com/engine/reference/builder/#dockerignore-file
-# Ignore all files which are not go type
-!**/*.go
-!**/*.mod
-!**/*.sum
+**/.git*
+!**/.gitkeep
+**/node_modules
+**/dist
+**/tmp
+**/bin
+**/.vscode
+**/*.out
+
+# The orchestrator module does not use vendoring and the scheduler uses it only for the code generators (see https://github.com/kubernetes-sigs/scheduler-plugins/blob/2a41bbcdeb63499c4bdc345d562a112dda2bf173/.gitignore#L7)
+**/vendor

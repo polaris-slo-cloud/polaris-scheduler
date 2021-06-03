@@ -1,0 +1,27 @@
+apiVersion: skaffold/v2beta10
+kind: Config
+metadata:
+  name: rainbow-scheduler
+build:
+  artifacts:
+    - image: rainbowh2020/rainbow-scheduler
+      context: .
+      docker:
+        dockerfile: build/scheduler/Dockerfile.debug
+        buildArgs:
+          RELEASE_VERSION: 20201222-v47.11.0
+  tagPolicy:
+    customTemplate:
+      template: "{{.DATE}}-{{.GIT_VERSION}}"
+      components:
+      - name: DATE
+        dateTime:
+          format: "20060102150405"
+          timezone: "UTC"
+      - name: GIT_VERSION
+        gitCommit:
+          variant: Tags
+deploy:
+  kubectl:
+    manifests:
+      - manifests/rainbow-scheduler/rainbow-scheduler.yaml

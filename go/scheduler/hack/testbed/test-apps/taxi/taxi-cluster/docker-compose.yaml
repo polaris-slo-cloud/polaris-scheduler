@@ -1,0 +1,165 @@
+version: "3.8"
+# Maybe the networks interfere with Fogify?
+# networks:
+#   k8s-cluster:
+#     driver: bridge
+#     driver_opts:
+#       com.docker.network.bridge.enable_ip_masquerade: "true"
+services:
+  control-plane:
+    image: rainbowh2020/k8s-test-cluster:latest
+    hostname: control-plane
+    labels:
+      eu.rainbow-h2020.node-type: control-plane
+    environment:
+      K8S_NODE_TYPE: control-plane
+      NODE_TYPE: CLOUD_NODE # Fogify node type
+    # networks:
+    #   - k8s-cluster
+    ports:
+      - "36443:6443"
+      # RabbitMQ ports
+      - "5672:31672"
+      - "15672:32672"
+    volumes:
+      # Ensures that pods, logs etc. are not on the container filesystem.
+      - "/var"
+      # Some K8s things want to read /lib/modules.
+      - "/lib/modules:/lib/modules:ro"
+      # The kubeconfig file will be placed here.
+      - "./data/kubeconfig:/rainbow/kubeconfig:rw"
+    tmpfs:
+      - "/tmp" # various things depend on working /tmp
+      - "/run" # systemd wants a writable /run
+    deploy:
+      # (optional) Specify a resource limit for this container.
+      # Remove these resource limits when running in Fogify, because it has its own resource limits management.
+      resources:
+        limits:
+          cpus: 4
+          memory: 4G
+    privileged: true
+    security_opt:
+      - "seccomp=unconfined"
+      - "apparmor=unconfined"
+    restart: "on-failure:1"
+  worker0:
+    image: rainbowh2020/k8s-test-cluster:latest
+    depends_on:
+      - control-plane
+    labels:
+      eu.rainbow-h2020.node-type: worker
+    environment:
+      K8S_NODE_TYPE: worker
+      NODE_TYPE: EDGE_NODE #Fogify node type
+      REGION: bronx
+    # networks:
+    #   - k8s-cluster
+    volumes:
+      # Ensures that pods, logs etc. are not on the container filesystem.
+      - "/var"
+      # Some K8s things want to read /lib/modules.
+      - "/lib/modules:/lib/modules:ro"
+      # The kubeconfig from the control-plane
+      - "./data/kubeconfig:/rainbow/kubeconfig:ro"
+    tmpfs:
+      - "/tmp" # various things depend on working /tmp
+      - "/run" # systemd wants a writable /run
+    deploy:
+      # (optional) Specify a resource limit for this container.
+      # Remove these resource limits when running in Fogify, because it has its own resource limits management.
+      resources:
+        limits:
+          cpus: 2
+          memory: 2G
+    privileged: true
+    security_opt:
+      - "seccomp=unconfined"
+      - "apparmor=unconfined"
+    restart: "on-failure:1"
+  worker1:
+    image: rainbowh2020/k8s-test-cluster:latest
+    depends_on:
+      - control-plane
+    labels:
+      eu.rainbow-h2020.node-type: worker
+    environment:
+      K8S_NODE_TYPE: worker
+      NODE_TYPE: EDGE_NODE #Fogify node type
+      REGION: brooklyn
+    # networks:
+    #   - k8s-cluster
+    volumes:
+      # Ensures that pods, logs etc. are not on the container filesystem.
+      - "/var"
+      # Some K8s things want to read /lib/modules.
+      - "/lib/modules:/lib/modules:ro"
+      # The kubeconfig from the control-plane
+      - "./data/kubeconfig:/rainbow/kubeconfig:ro"
+    tmpfs:
+      - "/tmp" # various things depend on working /tmp
+      - "/run" # systemd wants a writable /run
+    deploy:
+      # (optional) Specify a resource limit for this container.
+      # Remove these resource limits when running in Fogify, because it has its own resource limits management.
+      resources:
+        limits:
+          cpus: 2
+          memory: 2G
+    privileged: true
+    security_opt:
+      - "seccomp=unconfined"
+      - "apparmor=unconfined"
+    restart: "on-failure:1"
+x-fogify:
+  nodes:
+    - name: cloud-server-node
+      capabilities:
+        processor:
+          cores: 4
+          clock_speed: 1400
+        memory: 4G
+    - name: edge-node
+      capabilities:
+        processor:
+          cores: 2
+          clock_speed: 1400
+        memory: 2G
+  networks:
+    - name: internet
+      uplink:
+        bandwidth: 10Mbps
+        latency:
+          delay: 50ms
+        drop: 0.1%
+      downlink:
+        bandwidth: 5Mbps
+        latency:
+          delay: 50ms
+    - name: edge-net-1
+      bidirectional:
+        bandwidth: 100Mbps
+        latency:
+          delay: 5ms
+        drop: 0.1%
+  topology:
+    - node: cloud-server-node
+      service: control-plane
+      label: cloud-server
+      replicas: 1
+      networks:
+        - internet
+    - node: edge-node
+      service: worker0
+      label: worker0
+      replicas: 1
+      networks:
+        - edge-net-1
+        - internet
+    - node: edge-node
+      service: worker1
+      label: worker1
+      replicas: 1
+      networks:
+        - edge-net-1
+        - internet
