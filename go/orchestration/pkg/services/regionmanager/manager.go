@@ -1,7 +1,7 @@
 package regionmanager
 
 import (
-	"rainbow-h2020.eu/gomod/rainbow-scheduler/pkg/model/graph/regiongraph"
+	"k8s.rainbow-h2020.eu/rainbow/orchestration/pkg/model/graph/regiongraph"
 )
 
 var (

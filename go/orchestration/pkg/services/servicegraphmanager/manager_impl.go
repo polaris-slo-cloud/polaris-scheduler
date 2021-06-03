@@ -3,8 +3,8 @@ package servicegraphmanager
 import (
 	"gonum.org/v1/gonum/graph"
 	v1 "k8s.io/api/core/v1"
-	"rainbow-h2020.eu/gomod/rainbow-scheduler/pkg/model/graph/servicegraph"
-	"rainbow-h2020.eu/gomod/rainbow-scheduler/pkg/util"
+	"k8s.rainbow-h2020.eu/rainbow/orchestration/pkg/model/graph/servicegraph"
+	"k8s.rainbow-h2020.eu/rainbow/orchestration/pkg/util"
 )
 
 var (

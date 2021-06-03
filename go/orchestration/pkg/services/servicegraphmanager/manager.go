@@ -2,7 +2,7 @@ package servicegraphmanager
 
 import (
 	v1 "k8s.io/api/core/v1"
-	"rainbow-h2020.eu/gomod/rainbow-scheduler/pkg/model/graph/servicegraph"
+	"k8s.rainbow-h2020.eu/rainbow/orchestration/pkg/model/graph/servicegraph"
 )
 
 var (

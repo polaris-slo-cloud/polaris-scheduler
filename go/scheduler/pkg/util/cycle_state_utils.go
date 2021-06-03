@@ -3,7 +3,7 @@ package util
 import (
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/kubernetes/pkg/scheduler/framework"
-	"rainbow-h2020.eu/gomod/rainbow-scheduler/pkg/model/graph/servicegraph"
+	"k8s.rainbow-h2020.eu/rainbow/orchestration/pkg/model/graph/servicegraph"
 )
 
 // GetServiceGraphFromState gets the ServiceGraph of the specified pod's application from the CycleState.

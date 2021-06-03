@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"gonum.org/v1/gonum/graph"
-	"rainbow-h2020.eu/gomod/rainbow-scheduler/pkg/model/graph/regiongraph"
+	"k8s.rainbow-h2020.eu/rainbow/orchestration/pkg/model/graph/regiongraph"
 )
 
 const (
