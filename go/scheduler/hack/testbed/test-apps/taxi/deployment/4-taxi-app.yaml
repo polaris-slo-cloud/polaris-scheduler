@@ -1,0 +1,166 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  namespace: taxi-test
+  name: taxi-cloud
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: taxi-test
+      app.kubernetes.io/version: "0.0.1"
+      app.kubernetes.io/component: taxi-cloud
+      app.kubernetes.io/instance: taxi-cloud-0
+      app: taxi-cloud
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: taxi-test
+        app.kubernetes.io/version: "0.0.1"
+        app.kubernetes.io/component: taxi-cloud
+        app.kubernetes.io/instance: taxi-cloud-0
+        rainbow-h2020.eu/max-delay-ms: "200"
+        app: taxi-cloud
+    spec:
+      schedulerName: rainbow-scheduler
+      nodeSelector:
+        # Force this deployment to be run in the cloud.
+        node-role.kubernetes.io/cloud: ""
+      containers:
+        - name: taxi-async
+          image: rainbowh2020/taxi-async:0.0.1
+          resources:
+            limits:
+              memory: "1Gi"
+              cpu: "1000m"
+              rainbow-h2020.eu/fake-memory: 1024
+              rainbow-h2020.eu/fake-cpu: 1000
+          env:
+            - name: MQ_HOST
+              value: rabbitmq
+            - name: NODE_TYPE
+              value: CLOUD_NODE
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  namespace: taxi-test
+  name: taxi-iot
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: taxi-test
+      app.kubernetes.io/version: "0.0.1"
+      app.kubernetes.io/component: taxi-iot
+      app.kubernetes.io/instance: taxi-iot-0
+      app: taxi-iot
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: taxi-test
+        app.kubernetes.io/version: "0.0.1"
+        app.kubernetes.io/component: taxi-iot
+        app.kubernetes.io/instance: taxi-iot-0
+        rainbow-h2020.eu/max-delay-ms: "50"
+        app: taxi-iot
+    spec:
+      schedulerName: rainbow-scheduler
+      containers:
+        - name: taxi-async
+          image: rainbowh2020/taxi-async:0.0.1
+          resources:
+            limits:
+              memory: "256Mi"
+              cpu: "250m"
+              rainbow-h2020.eu/fake-memory: 256
+              rainbow-h2020.eu/fake-cpu: 250
+          env:
+            - name: MQ_HOST
+              value: rabbitmq
+            - name: NODE_TYPE
+              value: IOT_NODE
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  namespace: taxi-test
+  name: taxi-edge-bronx
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: taxi-test
+      app.kubernetes.io/version: "0.0.1"
+      app.kubernetes.io/component: taxi-edge
+      app.kubernetes.io/instance: taxi-edge-bronx
+      app: taxi-edge-bronx
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: taxi-test
+        app.kubernetes.io/version: "0.0.1"
+        app.kubernetes.io/component: taxi-edge
+        app.kubernetes.io/instance: taxi-edge-bronx
+        rainbow-h2020.eu/max-delay-ms: "50"
+        app: taxi-edge-bronx
+    spec:
+      schedulerName: rainbow-scheduler
+      containers:
+        - name: taxi-async
+          image: rainbowh2020/taxi-async:0.0.1
+          resources:
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+              rainbow-h2020.eu/fake-memory: 512
+              rainbow-h2020.eu/fake-cpu: 500
+          env:
+            - name: MQ_HOST
+              value: rabbitmq
+            - name: NODE_TYPE
+              value: EDGE_NODE
+            - name: REGION
+              value: bronx
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  namespace: taxi-test
+  name: taxi-edge-brooklyn
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: taxi-test
+      app.kubernetes.io/version: "0.0.1"
+      app.kubernetes.io/component: taxi-edge
+      app.kubernetes.io/instance: taxi-edge-brooklyn
+      app: taxi-edge-brooklyn
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: taxi-test
+        app.kubernetes.io/version: "0.0.1"
+        app.kubernetes.io/component: taxi-edge
+        app.kubernetes.io/instance: taxi-edge-brooklyn
+        rainbow-h2020.eu/max-delay-ms: "50"
+        app: taxi-edge-brooklyn
+    spec:
+      schedulerName: rainbow-scheduler
+      containers:
+        - name: taxi-async
+          image: rainbowh2020/taxi-async:0.0.1
+          resources:
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+              rainbow-h2020.eu/fake-memory: 512
+              rainbow-h2020.eu/fake-cpu: 500
+          env:
+            - name: MQ_HOST
+              value: rabbitmq
+            - name: NODE_TYPE
+              value: EDGE_NODE
+            - name: REGION
+              value: brooklyn

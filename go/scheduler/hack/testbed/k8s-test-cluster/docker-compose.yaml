@@ -1,0 +1,88 @@
+version: "3.8"
+networks:
+  k8s-cluster:
+    driver: bridge
+    driver_opts:
+      com.docker.network.bridge.enable_ip_masquerade: "true"
+services:
+  control-plane:
+    image: kindest/node:v1.20.0
+    hostname: control-plane
+    labels:
+      eu.rainbow-h2020.node-type: control-plane
+    environment:
+      K8S_NODE_TYPE: control-plane
+    networks:
+      - k8s-cluster
+    ports:
+      - "36443:6443"
+    volumes:
+      # Ensures that pods, logs etc. are not on the container filesystem.
+      - "/var"
+      # Some K8s things want to read /lib/modules.
+      - "/lib/modules:/lib/modules:ro"
+      # Our entry point
+      - "./rainbow/rainbow-entrypoint.sh:/rainbow/rainbow-entrypoint.sh:ro"
+      # The config data obtained from kind
+      - "./rainbow/control-plane-node/kubeadm.conf.template:/rainbow/control-plane-node/kubeadm.conf.template:ro"
+      - "./rainbow/control-plane-node/rainbow-control-node-setup.sh:/rainbow/control-plane-node/rainbow-control-node-setup.sh:ro"
+      - "./rainbow/control-plane-node/manifests:/rainbow/control-plane-node/manifests:ro"
+      # The kubeconfig file will be placed here.
+      - "./data/kubeconfig:/rainbow/kubeconfig:rw"
+    tmpfs:
+      - "/tmp" # various things depend on working /tmp
+      - "/run" # systemd wants a writable /run
+    deploy:
+      # (optional) Specify a resource limit for this container.
+      # Remove these resource limits when running in Fogify, because it has its own resource limits management.
+      resources:
+        limits:
+          cpus: 4
+          memory: 4G
+    privileged: true
+    security_opt:
+      - "seccomp=unconfined"
+      - "apparmor=unconfined"
+    entrypoint:
+      - /rainbow/rainbow-entrypoint.sh
+    restart: "on-failure:1"
+  worker0:
+    image: kindest/node:v1.20.0
+    hostname: worker0
+    depends_on:
+      - control-plane
+    labels:
+      eu.rainbow-h2020.node-type: worker
+    environment:
+      K8S_NODE_TYPE: worker
+    networks:
+      - k8s-cluster
+    volumes:
+      # Ensures that pods, logs etc. are not on the container filesystem.
+      - "/var"
+      # Some K8s things want to read /lib/modules.
+      - "/lib/modules:/lib/modules:ro"
+      # Our entry point
+      - "./rainbow/rainbow-entrypoint.sh:/rainbow/rainbow-entrypoint.sh:ro"
+      # The config data obtained from kind
+      - "./rainbow/worker-node/kubeadm.conf.template:/rainbow/worker-node/kubeadm.conf.template:ro"
+      - "./rainbow/worker-node/rainbow-worker-node-setup.sh:/rainbow/worker-node/rainbow-worker-node-setup.sh:ro"
+      # The kubeconfig from the control-plane
+      - "./data/kubeconfig:/rainbow/kubeconfig:ro"
+    tmpfs:
+      - "/tmp" # various things depend on working /tmp
+      - "/run" # systemd wants a writable /run
+    deploy:
+      # (optional) Specify a resource limit for this container.
+      # Remove these resource limits when running in Fogify, because it has its own resource limits management.
+      resources:
+        limits:
+          cpus: 2
+          memory: 2G
+    privileged: true
+    security_opt:
+      - "seccomp=unconfined"
+      - "apparmor=unconfined"
+    entrypoint:
+      - /rainbow/rainbow-entrypoint.sh
+    restart: "on-failure:1"
