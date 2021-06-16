@@ -2,20 +2,33 @@ package fogapps
 
 import (
 	"fmt"
+	"reflect"
 
 	"github.com/go-logr/logr"
+	apps "k8s.io/api/apps/v1"
 	fogapps "k8s.rainbow-h2020.eu/rainbow/orchestration/apis/fogapps/v1"
 	svcGraphUtil "k8s.rainbow-h2020.eu/rainbow/orchestration/internal/servicegraphutil"
 	"k8s.rainbow-h2020.eu/rainbow/orchestration/pkg/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
+type serviceGraphChildObjectMaps struct {
+	Deployments  map[string]*apps.Deployment
+	StatefulSets map[string]*apps.StatefulSet
+}
+
 type serviceGraphProcessor struct {
-	svcGraph     *fogapps.ServiceGraph
-	childObjects *serviceGraphChildObjects
-	log          logr.Logger
-	setOwnerFn   controllerutil.SetOwnerReferenceFn
-	changes      *controllerutil.ResourceChangesList
+	svcGraph *fogapps.ServiceGraph
+
+	// The child objects that already existed prior to this processing.
+	existingChildObjects *serviceGraphChildObjects
+
+	// The child objects that were created during this processing.
+	newChildObjects serviceGraphChildObjectMaps
+
+	log        logr.Logger
+	setOwnerFn controllerutil.SetOwnerReferenceFn
+	changes    *controllerutil.ResourceChangesList
 }
 
 // ProcessServiceGraph assembles a list of changes that need to be applied due to the specified ServiceGraph.
@@ -27,7 +40,7 @@ func ProcessServiceGraph(
 ) (*controllerutil.ResourceChangesList, error) {
 	graphProcessor := newServiceGraphProcessor(graph, childObjects, log, setOwnerFn)
 
-	if err := graphProcessor.assembleNodeChanges(); err != nil {
+	if err := graphProcessor.assembleGraphChanges(); err != nil {
 		return nil, err
 	}
 
@@ -41,19 +54,51 @@ func newServiceGraphProcessor(
 	setOwnerFn controllerutil.SetOwnerReferenceFn,
 ) *serviceGraphProcessor {
 	return &serviceGraphProcessor{
-		svcGraph:     graph,
-		childObjects: childObjects,
-		log:          log,
-		setOwnerFn:   setOwnerFn,
-		changes:      controllerutil.NewResourceChangesList(),
+		svcGraph:             graph,
+		existingChildObjects: childObjects,
+		newChildObjects: serviceGraphChildObjectMaps{
+			Deployments:  make(map[string]*apps.Deployment),
+			StatefulSets: make(map[string]*apps.StatefulSet),
+		},
+		log:        log,
+		setOwnerFn: setOwnerFn,
+		changes:    controllerutil.NewResourceChangesList(),
 	}
 }
 
-func (me *serviceGraphProcessor) assembleNodeChanges() error {
+// assembleGraphChanges assembles the list of changes that need to be made to align the cluster state with
+// the state of the ServiceGraph.
+//
+// We use the following approach:
+// 1. Iterate through the ServiceGraph and create the child objects (Deployments, StatefulSets, SLOs, etc.), as if the graph were new.
+// 2. Iterate through the lists of existing child objects and check if a corresponding new child object exists. We have the following options
+// 		- If a corresponding new child object exists, check if there are any changes between the two specs.
+//		  If there are changes, create a ResourceUpdate. In any case, remove the new child object from the newChildObjects map.
+// 		- Otherwise, create a ResourceDeletion.
+// 3. For all new child objects that are still in the newChildObjects map, create a ResourceAddition.
+func (me *serviceGraphProcessor) assembleGraphChanges() error {
+	if err := me.createChildObjectsForServiceGraph(); err != nil {
+		return err
+	}
+
+	if err := me.assembleUpdatesForDeployments(); err != nil {
+		return err
+	}
+	if err := me.assembleUpdatesForStatefulSets(); err != nil {
+		return err
+	}
+	if err := me.assembleAdditions(); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (me *serviceGraphProcessor) createChildObjectsForServiceGraph() error {
 	for _, node := range me.svcGraph.Spec.Nodes {
 		switch node.NodeType {
 		case fogapps.ServiceNode:
-			if err := me.handleServiceNode(&node); err != nil {
+			if err := me.createChildObjectsForServiceNode(&node); err != nil {
 				return err
 			}
 		case fogapps.UserNode:
@@ -65,15 +110,19 @@ func (me *serviceGraphProcessor) assembleNodeChanges() error {
 	return nil
 }
 
-func (me *serviceGraphProcessor) handleServiceNode(node *fogapps.ServiceGraphNode) error {
+func (me *serviceGraphProcessor) createChildObjectsForServiceNode(node *fogapps.ServiceGraphNode) error {
 	var newObj client.Object
+	var deployment *apps.Deployment
+	var statefulSet *apps.StatefulSet
 	var err error
 
 	switch node.Replicas.SetType {
 	case fogapps.SimpleReplicaSet:
-		newObj, err = svcGraphUtil.CreateDeployment(node, me.svcGraph)
+		deployment, err = svcGraphUtil.CreateDeployment(node, me.svcGraph)
+		newObj = deployment
 	case fogapps.StatefulReplicaSet:
-		newObj, err = svcGraphUtil.CreateStatefulSet(node, me.svcGraph)
+		statefulSet, err = svcGraphUtil.CreateStatefulSet(node, me.svcGraph)
+		newObj = statefulSet
 	}
 
 	if err != nil {
@@ -83,9 +132,59 @@ func (me *serviceGraphProcessor) handleServiceNode(node *fogapps.ServiceGraphNod
 		return fmt.Errorf("could not set owner reference. Cause: %w", err)
 	}
 
-	// Workaround until we implement updating
-	if len(me.childObjects.Deployments) == 0 {
-		me.changes.AddChanges(controllerutil.NewResourceAddition(newObj))
+	if deployment != nil {
+		me.newChildObjects.Deployments[deployment.Name] = deployment
+	} else if statefulSet != nil {
+		me.newChildObjects.StatefulSets[statefulSet.Name] = statefulSet
+	}
+
+	return nil
+}
+
+func (me *serviceGraphProcessor) assembleUpdatesForDeployments() error {
+	for _, existingDeployment := range me.existingChildObjects.Deployments {
+		if newDeployment, ok := me.newChildObjects.Deployments[existingDeployment.Name]; ok {
+
+			if !reflect.DeepEqual(existingDeployment.Spec, newDeployment.Spec) {
+				// Deployment was changed, we need to update it
+				newDeployment.ObjectMeta = existingDeployment.ObjectMeta
+				me.changes.AddChanges(controllerutil.NewResourceUpdate(newDeployment))
+			}
+
+			delete(me.newChildObjects.Deployments, newDeployment.Name)
+		} else {
+			// The corresponding ServiceGraphNode was deleted, so we delete the Deployment
+			me.changes.AddChanges(controllerutil.NewResourceDeletion(&existingDeployment))
+		}
+	}
+	return nil
+}
+
+func (me *serviceGraphProcessor) assembleUpdatesForStatefulSets() error {
+	for _, existingStatefulSet := range me.existingChildObjects.StatefulSets {
+		if newStatefulSet, ok := me.newChildObjects.StatefulSets[existingStatefulSet.Name]; ok {
+
+			if !reflect.DeepEqual(existingStatefulSet.Spec, newStatefulSet.Spec) {
+				// StatefulSet was changed, we need to update it
+				newStatefulSet.ObjectMeta = existingStatefulSet.ObjectMeta
+				me.changes.AddChanges(controllerutil.NewResourceUpdate(newStatefulSet))
+			}
+
+			delete(me.newChildObjects.StatefulSets, newStatefulSet.Name)
+		} else {
+			// The corresponding ServiceGraphNode was deleted, so we delete the StatefulSet
+			me.changes.AddChanges(controllerutil.NewResourceDeletion(&existingStatefulSet))
+		}
+	}
+	return nil
+}
+
+func (me *serviceGraphProcessor) assembleAdditions() error {
+	for _, value := range me.newChildObjects.Deployments {
+		me.changes.AddChanges(controllerutil.NewResourceAddition(value))
+	}
+	for _, value := range me.newChildObjects.StatefulSets {
+		me.changes.AddChanges(controllerutil.NewResourceAddition(value))
 	}
 	return nil
 }

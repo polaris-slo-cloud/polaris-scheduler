@@ -45,7 +45,7 @@ spec:
         min: 1
         max: 4
         initialCount: 2
-        setType: simple
+        setType: Simple
       slos:
         # SLOs for this node.
         - name: cpu-usage
