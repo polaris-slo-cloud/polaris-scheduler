@@ -3304,13 +3304,14 @@ spec:
                         setType:
                           default: Simple
                           description: "Specifies the type of replica set that should
-                            be used. \n The possibilities are: \n - \"Simple\" (default)
-                            Creates and destroys instances of the service, treating
-                            them as stateless. \n - \"Stateful\" Ensures that the
-                            set of replicas is ordered (i.e., replica 2 is always
-                            created before replica 3) and that each specific replica
-                            is always connected to the same volumes it was originally
-                            connected to."
+                            be used. For a ServiceGraphNode this cannot be changed
+                            after the node has been submitted to the orchestrator
+                            \n The possibilities are: \n - \"Simple\" (default) Creates
+                            and destroys instances of the service, treating them as
+                            stateless. \n - \"Stateful\" Ensures that the set of replicas
+                            is ordered (i.e., replica 2 is always created before replica
+                            3) and that each specific replica is always connected
+                            to the same volumes it was originally connected to."
                           enum:
                           - Simple
                           - Stateful
