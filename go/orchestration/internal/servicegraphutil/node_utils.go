@@ -14,8 +14,6 @@ const (
 	RainbowGeneratedPodLabelName = "rainbow-generated-pod-label"
 )
 
-// ToDo: StatefulSet and check what else needs to be done
-
 // CreatePodSpec creates a PodSpec from the specified node.
 func CreatePodTemplate(node *fogapps.ServiceGraphNode, graph *fogapps.ServiceGraph) (*core.PodTemplateSpec, error) {
 	podTemplate := core.PodTemplateSpec{
@@ -38,35 +36,57 @@ func CreatePodTemplate(node *fogapps.ServiceGraphNode, graph *fogapps.ServiceGra
 
 // CreateDeployment creates a Deployment form the specified node.
 func CreateDeployment(node *fogapps.ServiceGraphNode, graph *fogapps.ServiceGraph) (*apps.Deployment, error) {
-	deployment := apps.Deployment{
-		ObjectMeta: meta.ObjectMeta{
-			Name:        node.Name,
-			Namespace:   graph.Namespace,
-			Labels:      getPodLabels(node, graph),
-			Annotations: make(map[string]string),
-		},
-		Spec: apps.DeploymentSpec{
-			Selector: &meta.LabelSelector{
-				MatchLabels: getPodLabels(node, graph),
-			},
-		},
-	}
-
 	podTemplate, err := CreatePodTemplate(node, graph)
 	if err != nil {
 		return nil, err
 	}
-	deployment.Spec.Template = *podTemplate
-
 	replicas := getInitialReplicas(node)
-	deployment.Spec.Replicas = &replicas
+
+	deployment := apps.Deployment{
+		ObjectMeta: *createObjectMeta(node, graph),
+		Spec: apps.DeploymentSpec{
+			Selector: createLabelSelector(node, graph),
+			Template: *podTemplate,
+			Replicas: &replicas,
+		},
+	}
 
 	return &deployment, nil
 }
 
 // CreateStatefulSet creates a StatefulSet form the specified node.
 func CreateStatefulSet(node *fogapps.ServiceGraphNode, graph *fogapps.ServiceGraph) (*apps.StatefulSet, error) {
-	return nil, fmt.Errorf("not yet implemented")
+	podTemplate, err := CreatePodTemplate(node, graph)
+	if err != nil {
+		return nil, err
+	}
+	replicas := getInitialReplicas(node)
+
+	statefulSet := apps.StatefulSet{
+		ObjectMeta: *createObjectMeta(node, graph),
+		Spec: apps.StatefulSetSpec{
+			Selector: createLabelSelector(node, graph),
+			Template: *podTemplate,
+			Replicas: &replicas,
+		},
+	}
+
+	return &statefulSet, nil
+}
+
+func createObjectMeta(node *fogapps.ServiceGraphNode, graph *fogapps.ServiceGraph) *meta.ObjectMeta {
+	return &meta.ObjectMeta{
+		Name:        node.Name,
+		Namespace:   graph.Namespace,
+		Labels:      getPodLabels(node, graph),
+		Annotations: make(map[string]string),
+	}
+}
+
+func createLabelSelector(node *fogapps.ServiceGraphNode, graph *fogapps.ServiceGraph) *meta.LabelSelector {
+	return &meta.LabelSelector{
+		MatchLabels: getPodLabels(node, graph),
+	}
 }
 
 func getInitialReplicas(node *fogapps.ServiceGraphNode) int32 {
