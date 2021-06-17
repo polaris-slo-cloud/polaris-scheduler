@@ -62,7 +62,8 @@ type ServiceGraphNode struct {
 	//
 	// The exposed ports are available at the DNS name "<ServiceGraphNode.Name>.<ServiceGraphNamespace>.svc"
 	// For example, if a ServiceGraph is deployed the namespace "fog" and the ServiceGraphNode's name is "db",
-	// the DNS name would be "db.fog.svc"
+	// the DNS name would be "db.fog.svc". For other services within the same ServiceGraph "<ServiceGraphNode.Name>"
+	// is enough (e.g., "db").
 	//
 	// +optional
 	ExposedPorts *ExposedPorts `json:"exposedPorts,omitempty"`
