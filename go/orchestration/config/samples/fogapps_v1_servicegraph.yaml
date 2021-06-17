@@ -46,6 +46,12 @@ spec:
         max: 4
         initialCount: 2
         setType: Simple
+      exposedPorts:
+        # Configures ports exposed by this ServiceGraphNode
+        type: ClusterInternal
+        ports:
+          - name: main
+            port: 8080
       slos:
         # SLOs for this node.
         - name: cpu-usage

@@ -48,4 +48,5 @@ type ExposedPorts struct {
 	// We will probably only need the `Rules`and possibly the `TLS` fields, because the `DefaultBackend` is the ServiceGraphNode, where
 	// the `ExposedPorts` are configured. For the rules, we could use the names of other service graph nodes instead of services,
 	// but the services need to be created there using `ExposedPorts` of course.
+	// Add this link to the docs: https://kubernetes.io/docs/concepts/services-networking/ingress/
 }

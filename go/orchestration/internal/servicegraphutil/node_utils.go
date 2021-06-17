@@ -1,17 +1,10 @@
 package servicegraphutil
 
 import (
-	"fmt"
-
 	apps "k8s.io/api/apps/v1"
 	core "k8s.io/api/core/v1"
 	meta "k8s.io/apimachinery/pkg/apis/meta/v1"
 	fogapps "k8s.rainbow-h2020.eu/rainbow/orchestration/apis/fogapps/v1"
-	"k8s.rainbow-h2020.eu/rainbow/orchestration/internal/util"
-)
-
-const (
-	RainbowGeneratedPodLabelName = "rainbow-generated-pod-label"
 )
 
 // CreatePodSpec creates a PodSpec from the specified node.
@@ -43,7 +36,7 @@ func CreateDeployment(node *fogapps.ServiceGraphNode, graph *fogapps.ServiceGrap
 	replicas := getInitialReplicas(node)
 
 	deployment := apps.Deployment{
-		ObjectMeta: *createObjectMeta(node, graph),
+		ObjectMeta: *createNodeObjectMeta(node, graph),
 		Spec: apps.DeploymentSpec{
 			Selector: createLabelSelector(node, graph),
 			Template: *podTemplate,
@@ -63,7 +56,7 @@ func CreateStatefulSet(node *fogapps.ServiceGraphNode, graph *fogapps.ServiceGra
 	replicas := getInitialReplicas(node)
 
 	statefulSet := apps.StatefulSet{
-		ObjectMeta: *createObjectMeta(node, graph),
+		ObjectMeta: *createNodeObjectMeta(node, graph),
 		Spec: apps.StatefulSetSpec{
 			Selector: createLabelSelector(node, graph),
 			Template: *podTemplate,
@@ -72,15 +65,6 @@ func CreateStatefulSet(node *fogapps.ServiceGraphNode, graph *fogapps.ServiceGra
 	}
 
 	return &statefulSet, nil
-}
-
-func createObjectMeta(node *fogapps.ServiceGraphNode, graph *fogapps.ServiceGraph) *meta.ObjectMeta {
-	return &meta.ObjectMeta{
-		Name:        node.Name,
-		Namespace:   graph.Namespace,
-		Labels:      getPodLabels(node, graph),
-		Annotations: make(map[string]string),
-	}
 }
 
 func createLabelSelector(node *fogapps.ServiceGraphNode, graph *fogapps.ServiceGraph) *meta.LabelSelector {
@@ -101,12 +85,4 @@ func getServiceAccountName(node *fogapps.ServiceGraphNode, graph *fogapps.Servic
 		return node.ServiceAccountName
 	}
 	return graph.Spec.ServiceAccountName
-}
-
-func getPodLabels(node *fogapps.ServiceGraphNode, graph *fogapps.ServiceGraph) map[string]string {
-	labels := util.DeepCopyStringMap(node.PodLabels)
-	if len(labels) == 0 {
-		labels[RainbowGeneratedPodLabelName] = fmt.Sprintf("%s.%s.generated", graph.Name, node.Name)
-	}
-	return labels
 }
