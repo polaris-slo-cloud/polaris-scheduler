@@ -13,6 +13,8 @@ const (
 )
 
 // createNodeObjectMeta creates an ObjectMeta for resources that are created from a ServiceGraphNode.
+//
+// The returned object needs to be passed to updateNodeObjectMeta() as well to set the updateable fields.
 func createNodeObjectMeta(node *fogapps.ServiceGraphNode, graph *fogapps.ServiceGraph) *meta.ObjectMeta {
 	return &meta.ObjectMeta{
 		Name:        node.Name,
@@ -20,6 +22,11 @@ func createNodeObjectMeta(node *fogapps.ServiceGraphNode, graph *fogapps.Service
 		Labels:      getPodLabels(node, graph),
 		Annotations: make(map[string]string),
 	}
+}
+
+// updateNodeObjectMeta updates an existing ObjectMeta for ServiceGraphNode derived resources.
+func updateNodeObjectMeta(objectMeta *meta.ObjectMeta, node *fogapps.ServiceGraphNode, graph *fogapps.ServiceGraph) {
+	objectMeta.Labels = getPodLabels(node, graph)
 }
 
 // getPodLabels gets the labels for a pod generated from a ServiceGraphNode.

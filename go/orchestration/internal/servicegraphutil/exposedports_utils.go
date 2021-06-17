@@ -14,11 +14,11 @@ type ServiceAndIngressPair struct {
 	Ingress *networking.Ingress
 }
 
-// CreateServiceAndIngress creates a Service and Ingress, if necessary, for the specified ServiceGraphNode.
-func CreateServiceAndIngress(node *fogapps.ServiceGraphNode, graph *fogapps.ServiceGraph) (ServiceAndIngressPair, error) {
+// CreateServiceAndIngress creates a new ServiceAndIngressPair, for the specified ServiceGraphNode.
+func CreateServiceAndIngress(node *fogapps.ServiceGraphNode, graph *fogapps.ServiceGraph) (*ServiceAndIngressPair, error) {
 	ret := ServiceAndIngressPair{}
 	if node.ExposedPorts == nil {
-		return ret, fmt.Errorf("cannot create ServiceAndIngressPair, because node.ExposedPorts is nil")
+		return nil, fmt.Errorf("cannot create ServiceAndIngressPair, because node.ExposedPorts is nil")
 	}
 
 	ret.Service = createService(node, graph)
@@ -27,10 +27,43 @@ func CreateServiceAndIngress(node *fogapps.ServiceGraphNode, graph *fogapps.Serv
 		ret.Ingress = createIngress(node, graph, ret.Service)
 	}
 
-	return ret, nil
+	return &ret, nil
+}
+
+// UpdateServiceAndIngress updates an existing ServiceAndIngressPair for the specified ServiceGraphNode.
+func UpdateServiceAndIngress(serviceAndIngress *ServiceAndIngressPair, node *fogapps.ServiceGraphNode, graph *fogapps.ServiceGraph) (*ServiceAndIngressPair, error) {
+	if node.ExposedPorts == nil {
+		serviceAndIngress.Service = nil
+		serviceAndIngress.Ingress = nil
+		return serviceAndIngress, nil
+	}
+
+	serviceAndIngress.Service = updateService(serviceAndIngress.Service, node, graph)
+
+	if node.ExposedPorts.Type == fogapps.PortExposureIngress {
+		if serviceAndIngress.Ingress != nil {
+			serviceAndIngress.Ingress = updateIngress(serviceAndIngress.Ingress, node, graph, serviceAndIngress.Service)
+		} else {
+			serviceAndIngress.Ingress = createIngress(node, graph, serviceAndIngress.Service)
+		}
+	} else {
+		// Ingress is not desired, so we need to delete any existing ingress
+		serviceAndIngress.Ingress = nil
+	}
+
+	return serviceAndIngress, nil
 }
 
 func createService(node *fogapps.ServiceGraphNode, graph *fogapps.ServiceGraph) *core.Service {
+	service := core.Service{
+		ObjectMeta: *createNodeObjectMeta(node, graph),
+		Spec:       core.ServiceSpec{},
+	}
+
+	return updateService(&service, node, graph)
+}
+
+func updateService(service *core.Service, node *fogapps.ServiceGraphNode, graph *fogapps.ServiceGraph) *core.Service {
 	var serviceType core.ServiceType
 	if node.ExposedPorts.Type == fogapps.PortExposureNodeExternal {
 		serviceType = core.ServiceTypeNodePort
@@ -38,30 +71,36 @@ func createService(node *fogapps.ServiceGraphNode, graph *fogapps.ServiceGraph) 
 		serviceType = core.ServiceTypeClusterIP
 	}
 
-	return &core.Service{
-		ObjectMeta: *createNodeObjectMeta(node, graph),
-		Spec: core.ServiceSpec{
-			Selector: getPodLabels(node, graph),
-			Type:     serviceType,
-			Ports:    node.ExposedPorts.Ports,
-		},
-	}
+	updateNodeObjectMeta(&service.ObjectMeta, node, graph)
+	service.Spec.Selector = getPodLabels(node, graph)
+	service.Spec.Type = serviceType
+	service.Spec.Ports = node.ExposedPorts.Ports
+
+	return service
 }
 
 func createIngress(node *fogapps.ServiceGraphNode, graph *fogapps.ServiceGraph, service *core.Service) *networking.Ingress {
+	ingress := networking.Ingress{
+		ObjectMeta: *createNodeObjectMeta(node, graph),
+		Spec:       networking.IngressSpec{},
+	}
+
+	return updateIngress(&ingress, node, graph, service)
+}
+
+func updateIngress(ingress *networking.Ingress, node *fogapps.ServiceGraphNode, graph *fogapps.ServiceGraph, service *core.Service) *networking.Ingress {
 	defaultPort := service.Spec.Ports[0]
 
-	return &networking.Ingress{
-		ObjectMeta: *createNodeObjectMeta(node, graph),
-		Spec: networking.IngressSpec{
-			DefaultBackend: &networking.IngressBackend{
-				Service: &networking.IngressServiceBackend{
-					Name: service.Name,
-					Port: networking.ServiceBackendPort{
-						Number: defaultPort.Port,
-					},
-				},
+	updateNodeObjectMeta(&ingress.ObjectMeta, node, graph)
+	ingress.Spec.DefaultBackend = &networking.IngressBackend{
+		Service: &networking.IngressServiceBackend{
+			Name: service.Name,
+			Port: networking.ServiceBackendPort{
+				Number: defaultPort.Port,
 			},
 		},
 	}
+	ingress.Spec.Rules = nil
+
+	return ingress
 }

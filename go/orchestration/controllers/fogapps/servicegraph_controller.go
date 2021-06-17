@@ -78,6 +78,7 @@ func (me *ServiceGraphReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 
 	var serviceGraph fogapps.ServiceGraph
 	if err := me.Get(ctx, req.NamespacedName, &serviceGraph); err != nil {
+		// ToDo: Detect if ServiceGraph has been deleted to avoid reporting an error in this case.
 		log.Error(err, "Unable to fetch ServiceGraph")
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}

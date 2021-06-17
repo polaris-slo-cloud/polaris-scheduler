@@ -25,7 +25,7 @@ type serviceGraphProcessor struct {
 	svcGraph *fogapps.ServiceGraph
 
 	// The child objects that already existed prior to this processing.
-	existingChildObjects *serviceGraphChildObjects
+	existingChildObjects serviceGraphChildObjectMaps
 
 	// The child objects that were created during this processing.
 	newChildObjects serviceGraphChildObjectMaps
@@ -51,13 +51,33 @@ func ProcessServiceGraph(
 	return graphProcessor.changes, nil
 }
 
-func newServiceGraphChildObjectMaps() serviceGraphChildObjectMaps {
-	return serviceGraphChildObjectMaps{
+func newServiceGraphChildObjectMaps(lists *serviceGraphChildObjects) serviceGraphChildObjectMaps {
+	maps := serviceGraphChildObjectMaps{
 		Deployments:  make(map[string]*apps.Deployment),
 		StatefulSets: make(map[string]*apps.StatefulSet),
 		Services:     make(map[string]*core.Service),
 		Ingresses:    make(map[string]*networking.Ingress),
 	}
+
+	if lists != nil {
+		for i, item := range lists.Deployments {
+			// item is apparently an object that is allocated for the loop and overwritten with
+			// the values of lists.Deployments[i], which means that the address of item is
+			// the same on every iteration.
+			maps.Deployments[item.Name] = &lists.Deployments[i]
+		}
+		for i, item := range lists.StatefulSets {
+			maps.StatefulSets[item.Name] = &lists.StatefulSets[i]
+		}
+		for i, item := range lists.Services {
+			maps.Services[item.Name] = &lists.Services[i]
+		}
+		for i, item := range lists.Ingresses {
+			maps.Ingresses[item.Name] = &lists.Ingresses[i]
+		}
+	}
+
+	return maps
 }
 
 func newServiceGraphProcessor(
@@ -68,8 +88,8 @@ func newServiceGraphProcessor(
 ) *serviceGraphProcessor {
 	return &serviceGraphProcessor{
 		svcGraph:             graph,
-		existingChildObjects: childObjects,
-		newChildObjects:      newServiceGraphChildObjectMaps(),
+		existingChildObjects: newServiceGraphChildObjectMaps(childObjects),
+		newChildObjects:      newServiceGraphChildObjectMaps(nil),
 		log:                  log,
 		setOwnerFn:           setOwnerFn,
 		changes:              controllerutil.NewResourceChangesList(),
@@ -80,7 +100,7 @@ func newServiceGraphProcessor(
 // the state of the ServiceGraph.
 //
 // We use the following approach:
-// 1. Iterate through the ServiceGraph and create the child objects (Deployments, StatefulSets, SLOs, etc.), as if the graph were new.
+// 1. Iterate through the ServiceGraph and create or update the child objects (Deployments, StatefulSets, SLOs, etc.) and store them in newChildObjects.
 // 2. Iterate through the lists of existing child objects and check if a corresponding new child object exists. We have the following options
 // 		- If a corresponding new child object exists, check if there are any changes between the two specs.
 //		  If there are changes, create a ResourceUpdate. In any case, remove the new child object from the newChildObjects map.
@@ -118,7 +138,7 @@ func (me *serviceGraphProcessor) createChildObjectsForServiceGraph() error {
 				return err
 			}
 		case fogapps.UserNode:
-			// ToDo
+			// Nothing to be done here.
 		default:
 			return fmt.Errorf("unknown ServiceGraphNode.NodeType: %s", node.NodeType)
 		}
@@ -127,50 +147,111 @@ func (me *serviceGraphProcessor) createChildObjectsForServiceGraph() error {
 }
 
 func (me *serviceGraphProcessor) createChildObjectsForServiceNode(node *fogapps.ServiceGraphNode) error {
-	var newObj client.Object
-	var deployment *apps.Deployment
-	var statefulSet *apps.StatefulSet
 	var err error
 
 	switch node.Replicas.SetType {
 	case fogapps.SimpleReplicaSet:
-		deployment, err = svcGraphUtil.CreateDeployment(node, me.svcGraph)
-		newObj = deployment
+		err = me.createOrUpdateDeployment(node)
 	case fogapps.StatefulReplicaSet:
-		statefulSet, err = svcGraphUtil.CreateStatefulSet(node, me.svcGraph)
-		newObj = statefulSet
+		err = me.createOrUpdateStatefulSet(node)
 	}
 
 	if err != nil {
 		return err
 	}
-	if err := me.setOwner(newObj); err != nil {
+
+	// If ExposedPorts are set, create or update the Service and Ingress.
+	// If no ExposedPorts are set, not creating any Service or Ingress will cause any existing ones to be deleted later.
+	if node.ExposedPorts != nil {
+		if err = me.createOrUpdateServiceAndIngress(node); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (me *serviceGraphProcessor) createOrUpdateDeployment(node *fogapps.ServiceGraphNode) error {
+	var deployment *apps.Deployment
+	var err error
+
+	if existingDeployment, isUpdate := me.existingChildObjects.Deployments[node.Name]; isUpdate {
+		deployment, err = svcGraphUtil.UpdateDeployment(existingDeployment.DeepCopy(), node, me.svcGraph)
+	} else {
+		if deployment, err = svcGraphUtil.CreateDeployment(node, me.svcGraph); err != nil {
+			return err
+		}
+		err = me.setOwner(deployment)
+	}
+
+	if err != nil {
 		return err
 	}
 
-	if deployment != nil {
-		me.newChildObjects.Deployments[deployment.Name] = deployment
-	} else if statefulSet != nil {
-		me.newChildObjects.StatefulSets[statefulSet.Name] = statefulSet
+	me.newChildObjects.Deployments[deployment.Name] = deployment
+	return nil
+}
+
+func (me *serviceGraphProcessor) createOrUpdateStatefulSet(node *fogapps.ServiceGraphNode) error {
+	var statefulSet *apps.StatefulSet
+	var err error
+
+	if existingStatefulSet, isUpdate := me.existingChildObjects.StatefulSets[node.Name]; isUpdate {
+		statefulSet, err = svcGraphUtil.UpdateStatefulSet(existingStatefulSet.DeepCopy(), node, me.svcGraph)
+	} else {
+		if statefulSet, err = svcGraphUtil.CreateStatefulSet(node, me.svcGraph); err != nil {
+			return err
+		}
+		err = me.setOwner(statefulSet)
 	}
 
-	if node.ExposedPorts != nil {
-		if serviceAndIngress, err := svcGraphUtil.CreateServiceAndIngress(node, me.svcGraph); err == nil {
+	if err != nil {
+		return err
+	}
+
+	me.newChildObjects.StatefulSets[statefulSet.Name] = statefulSet
+	return nil
+}
+
+func (me *serviceGraphProcessor) createOrUpdateServiceAndIngress(node *fogapps.ServiceGraphNode) error {
+	existingServiceAndIngress := &svcGraphUtil.ServiceAndIngressPair{}
+	var serviceAndIngress *svcGraphUtil.ServiceAndIngressPair
+	var err error
+
+	// Check if we have an existing Service and Ingress.
+	if existingService, ok := me.existingChildObjects.Services[node.Name]; ok {
+		existingServiceAndIngress.Service = existingService.DeepCopy()
+	}
+	if existingIngress, ok := me.existingChildObjects.Ingresses[node.Name]; ok {
+		existingServiceAndIngress.Ingress = existingIngress.DeepCopy()
+	}
+
+	if existingServiceAndIngress.Service != nil || existingServiceAndIngress.Ingress != nil {
+		serviceAndIngress, err = svcGraphUtil.UpdateServiceAndIngress(existingServiceAndIngress, node, me.svcGraph)
+	} else {
+		if serviceAndIngress, err = svcGraphUtil.CreateServiceAndIngress(node, me.svcGraph); err == nil {
 			if serviceAndIngress.Service != nil {
-				if err := me.setOwner(serviceAndIngress.Service); err != nil {
+				if err = me.setOwner(serviceAndIngress.Service); err != nil {
 					return err
 				}
-				me.newChildObjects.Services[serviceAndIngress.Service.Name] = serviceAndIngress.Service
 			}
 			if serviceAndIngress.Ingress != nil {
 				if err := me.setOwner(serviceAndIngress.Ingress); err != nil {
 					return err
 				}
-				me.newChildObjects.Ingresses[serviceAndIngress.Ingress.Name] = serviceAndIngress.Ingress
 			}
-		} else {
-			return err
 		}
+	}
+
+	if err != nil {
+		return err
+	}
+
+	if serviceAndIngress.Service != nil {
+		me.newChildObjects.Services[serviceAndIngress.Service.Name] = serviceAndIngress.Service
+	}
+	if serviceAndIngress.Ingress != nil {
+		me.newChildObjects.Ingresses[serviceAndIngress.Ingress.Name] = serviceAndIngress.Ingress
 	}
 
 	return nil
@@ -185,18 +266,21 @@ func (me *serviceGraphProcessor) setOwner(childObj client.Object) error {
 
 func (me *serviceGraphProcessor) assembleUpdatesForDeployments() error {
 	for _, existingDeployment := range me.existingChildObjects.Deployments {
-		if newDeployment, ok := me.newChildObjects.Deployments[existingDeployment.Name]; ok {
+		if updatedDeployment, ok := me.newChildObjects.Deployments[existingDeployment.Name]; ok {
 
-			if !reflect.DeepEqual(existingDeployment.Spec, newDeployment.Spec) {
+			// ToDo: Containers are currently never equal, because Kubernetes sets some values, which are unset in new containers.
+			// containersEqual := reflect.DeepEqual(existingDeployment.Spec.Template.Spec.Containers, updatedDeployment.Spec.Template.Spec.Containers)
+			// _ = containersEqual
+
+			if !reflect.DeepEqual(existingDeployment.Spec, updatedDeployment.Spec) {
 				// Deployment was changed, we need to update it
-				newDeployment.ObjectMeta = existingDeployment.ObjectMeta
-				me.changes.AddChanges(controllerutil.NewResourceUpdate(newDeployment))
+				me.changes.AddChanges(controllerutil.NewResourceUpdate(updatedDeployment))
 			}
 
-			delete(me.newChildObjects.Deployments, newDeployment.Name)
+			delete(me.newChildObjects.Deployments, updatedDeployment.Name)
 		} else {
 			// The corresponding ServiceGraphNode was deleted, so we delete the Deployment
-			me.changes.AddChanges(controllerutil.NewResourceDeletion(&existingDeployment))
+			me.changes.AddChanges(controllerutil.NewResourceDeletion(existingDeployment))
 		}
 	}
 	return nil
@@ -204,18 +288,17 @@ func (me *serviceGraphProcessor) assembleUpdatesForDeployments() error {
 
 func (me *serviceGraphProcessor) assembleUpdatesForStatefulSets() error {
 	for _, existingStatefulSet := range me.existingChildObjects.StatefulSets {
-		if newStatefulSet, ok := me.newChildObjects.StatefulSets[existingStatefulSet.Name]; ok {
+		if updatedStatefulSet, ok := me.newChildObjects.StatefulSets[existingStatefulSet.Name]; ok {
 
-			if !reflect.DeepEqual(existingStatefulSet.Spec, newStatefulSet.Spec) {
+			if !reflect.DeepEqual(existingStatefulSet.Spec, updatedStatefulSet.Spec) {
 				// StatefulSet was changed, we need to update it
-				newStatefulSet.ObjectMeta = existingStatefulSet.ObjectMeta
-				me.changes.AddChanges(controllerutil.NewResourceUpdate(newStatefulSet))
+				me.changes.AddChanges(controllerutil.NewResourceUpdate(updatedStatefulSet))
 			}
 
-			delete(me.newChildObjects.StatefulSets, newStatefulSet.Name)
+			delete(me.newChildObjects.StatefulSets, updatedStatefulSet.Name)
 		} else {
 			// The corresponding ServiceGraphNode was deleted, so we delete the StatefulSet
-			me.changes.AddChanges(controllerutil.NewResourceDeletion(&existingStatefulSet))
+			me.changes.AddChanges(controllerutil.NewResourceDeletion(existingStatefulSet))
 		}
 	}
 	return nil
@@ -223,18 +306,17 @@ func (me *serviceGraphProcessor) assembleUpdatesForStatefulSets() error {
 
 func (me *serviceGraphProcessor) assembleUpdatesForServices() error {
 	for _, existingService := range me.existingChildObjects.Services {
-		if newService, ok := me.newChildObjects.Services[existingService.Name]; ok {
+		if updatedService, ok := me.newChildObjects.Services[existingService.Name]; ok {
 
-			if !reflect.DeepEqual(existingService.Spec, newService.Spec) {
+			if !reflect.DeepEqual(existingService.Spec, updatedService.Spec) {
 				// Service was changed, we need to update it
-				newService.ObjectMeta = existingService.ObjectMeta
-				me.changes.AddChanges(controllerutil.NewResourceUpdate(newService))
+				me.changes.AddChanges(controllerutil.NewResourceUpdate(updatedService))
 			}
 
-			delete(me.newChildObjects.Services, newService.Name)
+			delete(me.newChildObjects.Services, updatedService.Name)
 		} else {
 			// The corresponding ServiceGraphNode was deleted, so we delete the Service
-			me.changes.AddChanges(controllerutil.NewResourceDeletion(&existingService))
+			me.changes.AddChanges(controllerutil.NewResourceDeletion(existingService))
 		}
 	}
 	return nil
@@ -242,18 +324,17 @@ func (me *serviceGraphProcessor) assembleUpdatesForServices() error {
 
 func (me *serviceGraphProcessor) assembleUpdatesForIngresses() error {
 	for _, existingIngress := range me.existingChildObjects.Ingresses {
-		if newIngress, ok := me.newChildObjects.Ingresses[existingIngress.Name]; ok {
+		if updatedIngress, ok := me.newChildObjects.Ingresses[existingIngress.Name]; ok {
 
-			if !reflect.DeepEqual(existingIngress.Spec, newIngress.Spec) {
+			if !reflect.DeepEqual(existingIngress.Spec, updatedIngress.Spec) {
 				// Ingress was changed, we need to update it
-				newIngress.ObjectMeta = existingIngress.ObjectMeta
-				me.changes.AddChanges(controllerutil.NewResourceUpdate(newIngress))
+				me.changes.AddChanges(controllerutil.NewResourceUpdate(updatedIngress))
 			}
 
-			delete(me.newChildObjects.Ingresses, newIngress.Name)
+			delete(me.newChildObjects.Ingresses, updatedIngress.Name)
 		} else {
 			// The corresponding ServiceGraphNode was deleted, so we delete the Ingress
-			me.changes.AddChanges(controllerutil.NewResourceDeletion(&existingIngress))
+			me.changes.AddChanges(controllerutil.NewResourceDeletion(existingIngress))
 		}
 	}
 	return nil
