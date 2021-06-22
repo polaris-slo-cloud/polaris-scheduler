@@ -41,3 +41,6 @@ indent_style = tab
 
 [go.sum]
 indent_style = tab
+
+[Makefile]
+indent_style = tab
