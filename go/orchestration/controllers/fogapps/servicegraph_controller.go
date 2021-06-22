@@ -22,17 +22,19 @@ import (
 
 	"github.com/go-logr/logr"
 	apps "k8s.io/api/apps/v1"
+	core "k8s.io/api/core/v1"
+	networking "k8s.io/api/networking/v1"
 	meta "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	fogapps "k8s.rainbow-h2020.eu/rainbow/orchestration/apis/fogapps/v1"
+	fogappsCRDs "k8s.rainbow-h2020.eu/rainbow/orchestration/apis/fogapps/v1"
 )
 
 var (
 	ownerKey         = ".metadata.controller"
-	fogAppsGVString  = fogapps.GroupVersion.String()
+	fogAppsGVString  = fogappsCRDs.GroupVersion.String()
 	serviceGraphKind = "ServiceGraph"
 )
 
@@ -47,6 +49,8 @@ type ServiceGraphReconciler struct {
 type serviceGraphChildObjects struct {
 	Deployments  []apps.Deployment
 	StatefulSets []apps.StatefulSet
+	Services     []core.Service
+	Ingresses    []networking.Ingress
 }
 
 // Permissions on ServiceGraphs:
@@ -58,14 +62,23 @@ type serviceGraphChildObjects struct {
 //+kubebuilder:rbac:groups=apps/v1,resources=deployments;statefulsets,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=apps/v1,resources=deployments/status;statefulsets/status,verbs=get
 
+// Permissions on Services:
+//+kubebuilder:rbac:groups=v1,resources=services,verbs=get;list;watch;create;update;patch;delete
+//+kubebuilder:rbac:groups=v1,resources=services/status,verbs=get
+
+// Permissions on Ingresses:
+//+kubebuilder:rbac:groups=networking.k8s.io/v1,resources=ingresses,verbs=get;list;watch;create;update;patch;delete
+//+kubebuilder:rbac:groups=networking.k8s.io/v1,resources=ingresses/status,verbs=get
+
 // Reconcile is triggered whenever a ServiceGraph is added, changed, or removed.
 //
 // Reconcile applies changes to the deployments in the cluster to ensure that they reflect the new state of the ServiceGraph object.
 func (me *ServiceGraphReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	log := me.Log.WithValues("Reconcile ServiceGraph", req.NamespacedName)
 
-	var serviceGraph fogapps.ServiceGraph
+	var serviceGraph fogappsCRDs.ServiceGraph
 	if err := me.Get(ctx, req.NamespacedName, &serviceGraph); err != nil {
+		// ToDo: Detect if ServiceGraph has been deleted to avoid reporting an error in this case.
 		log.Error(err, "Unable to fetch ServiceGraph")
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
@@ -99,8 +112,6 @@ func (me *ServiceGraphReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 
 // SetupWithManager sets up the controller with the Manager.
 func (me *ServiceGraphReconciler) SetupWithManager(mgr ctrl.Manager) error {
-	// ToDo: Add further indices for faster lookup.
-
 	var indexerFn client.IndexerFunc = func(rawObj client.Object) []string {
 		owner := meta.GetControllerOf(rawObj)
 		if owner == nil {
@@ -119,9 +130,15 @@ func (me *ServiceGraphReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	if err := mgr.GetFieldIndexer().IndexField(context.Background(), &apps.StatefulSet{}, ownerKey, indexerFn); err != nil {
 		return err
 	}
+	if err := mgr.GetFieldIndexer().IndexField(context.Background(), &core.Service{}, ownerKey, indexerFn); err != nil {
+		return err
+	}
+	if err := mgr.GetFieldIndexer().IndexField(context.Background(), &networking.Ingress{}, ownerKey, indexerFn); err != nil {
+		return err
+	}
 
 	return ctrl.NewControllerManagedBy(mgr).
-		For(&fogapps.ServiceGraph{}).
+		For(&fogappsCRDs.ServiceGraph{}).
 		Owns(&apps.Deployment{}).
 		Owns(&apps.StatefulSet{}).
 		Complete(me)
@@ -142,6 +159,18 @@ func (me *ServiceGraphReconciler) fetchChildObjects(ctx context.Context, req ctr
 		return nil, fmt.Errorf("unable to load child StatefulSets. Cause: %w", err)
 	}
 	children.StatefulSets = statefulSets.Items
+
+	var services core.ServiceList
+	if err := me.List(ctx, &services, client.InNamespace(req.Namespace), client.MatchingFields{ownerKey: req.Name}); err != nil {
+		return nil, fmt.Errorf("unable to load child Services. Cause: %w", err)
+	}
+	children.Services = services.Items
+
+	var ingresses networking.IngressList
+	if err := me.List(ctx, &ingresses, client.InNamespace(req.Namespace), client.MatchingFields{ownerKey: req.Name}); err != nil {
+		return nil, fmt.Errorf("unable to load child Ingresses. Cause: %w", err)
+	}
+	children.Ingresses = ingresses.Items
 
 	return &children, nil
 }

@@ -7,12 +7,15 @@ metadata:
 ---
 apiVersion: fogapps.k8s.rainbow-h2020.eu/v1
 kind: ServiceGraph
+
 metadata:
   name: taxi-demo
-  namespace: taxi-demo
+  namespace: taxi-demo # All resources are created in this namespace
+
 spec:
+  # List of ServiceGraphNodes
   nodes:
-    # Taxi Cloud Nodes
+    # Taxi Cloud Node
     - name: taxi-cloud
       labels:
         app.kubernetes.io/name: taxi-test
@@ -29,9 +32,28 @@ spec:
           env:
             - name: NODE_TYPE
               value: CLOUD_NODE
+          volumeMounts:
+            # Not needed by taxi-cloud, but to have a more complete example.
+            - mountPath: /cache
+              name: cache-volume
+      volumes:
+        # List of Kubernetes Volume objects
+        - name: cache-volume
+          emptyDir: {}
       replicas:
+        # Configures the instance counts.
+        min: 1
         max: 4
+        initialCount: 2
+        setType: Simple
+      exposedPorts:
+        # Configures ports exposed by this ServiceGraphNode
+        type: ClusterInternal
+        ports:
+          - name: main
+            port: 8080
       slos:
+        # SLOs for this node.
         - name: cpu-usage
           sloType:
             apiVersion: slo.sloc.github.io/v1
@@ -42,7 +64,7 @@ spec:
           sloConfig:
             targetAvgCPUUtilizationPercentage: 70
 
-    # Taxi IoT Nodes
+    # Taxi IoT Node
     - name: taxi-iot
       labels:
         app.kubernetes.io/name: taxi-test
@@ -107,6 +129,7 @@ spec:
       replicas:
         max: 1
 
+  # List of directed ServiceLinks that connect the above nodes.
   links:
     - source: taxi-iot
       target: taxi-edge-bronx
@@ -122,3 +145,9 @@ spec:
       target: taxi-cloud
     - source: taxi-edge-brooklyn
       target: taxi-cloud
+
+  # Application-wide Service Level Objectives
+  # slos:
+
+  # Application-wide RAINBOW services
+  # rainbowServices:

@@ -1,92 +1,95 @@
 package servicegraphutil
 
 import (
-	"fmt"
-
 	apps "k8s.io/api/apps/v1"
 	core "k8s.io/api/core/v1"
 	meta "k8s.io/apimachinery/pkg/apis/meta/v1"
-	fogapps "k8s.rainbow-h2020.eu/rainbow/orchestration/apis/fogapps/v1"
-	"k8s.rainbow-h2020.eu/rainbow/orchestration/internal/util"
+	fogappsCRDs "k8s.rainbow-h2020.eu/rainbow/orchestration/apis/fogapps/v1"
 )
-
-const (
-	RainbowGeneratedPodLabelName = "rainbow-generated-pod-label"
-)
-
-// ToDo: StatefulSet and check what else needs to be done
 
 // CreatePodSpec creates a PodSpec from the specified node.
-func CreatePodTemplate(node *fogapps.ServiceGraphNode, graph *fogapps.ServiceGraph) (*core.PodTemplateSpec, error) {
+func CreatePodTemplate(node *fogappsCRDs.ServiceGraphNode, graph *fogappsCRDs.ServiceGraph) (*core.PodTemplateSpec, error) {
 	podTemplate := core.PodTemplateSpec{
-		ObjectMeta: meta.ObjectMeta{
-			Labels: getPodLabels(node, graph),
-		},
-		Spec: core.PodSpec{
-			InitContainers: node.InitContainers,
-			Containers:     node.Containers,
-			Volumes:        node.Volumes,
-		},
-	}
-
-	if serviceAccountName := getServiceAccountName(node, graph); serviceAccountName != nil {
-		podTemplate.Spec.ServiceAccountName = *serviceAccountName
+		ObjectMeta: meta.ObjectMeta{},
+		Spec:       core.PodSpec{},
 	}
 
 	return &podTemplate, nil
 }
 
-// CreateDeployment creates a Deployment form the specified node.
-func CreateDeployment(node *fogapps.ServiceGraphNode, graph *fogapps.ServiceGraph) (*apps.Deployment, error) {
+// CreateDeployment creates a new Deployment from the specified node.
+func CreateDeployment(node *fogappsCRDs.ServiceGraphNode, graph *fogappsCRDs.ServiceGraph) (*apps.Deployment, error) {
 	deployment := apps.Deployment{
-		ObjectMeta: meta.ObjectMeta{
-			Name:        node.Name,
-			Namespace:   graph.Namespace,
-			Labels:      getPodLabels(node, graph),
-			Annotations: make(map[string]string),
-		},
-		Spec: apps.DeploymentSpec{
-			Selector: &meta.LabelSelector{
-				MatchLabels: getPodLabels(node, graph),
-			},
-		},
+		ObjectMeta: *createNodeObjectMeta(node, graph),
+		Spec:       apps.DeploymentSpec{},
 	}
 
-	podTemplate, err := CreatePodTemplate(node, graph)
-	if err != nil {
-		return nil, err
-	}
-	deployment.Spec.Template = *podTemplate
+	return UpdateDeployment(&deployment, node, graph)
+}
 
+// UpdateDeployment updates an existing Deployment, based on the specified node.
+func UpdateDeployment(deployment *apps.Deployment, node *fogappsCRDs.ServiceGraphNode, graph *fogappsCRDs.ServiceGraph) (*apps.Deployment, error) {
 	replicas := getInitialReplicas(node)
+
+	updateNodeObjectMeta(&deployment.ObjectMeta, node, graph)
+	updatePodTemplate(&deployment.Spec.Template, node, graph)
+	deployment.Spec.Selector = createLabelSelector(node, graph)
 	deployment.Spec.Replicas = &replicas
 
-	return &deployment, nil
+	return deployment, nil
 }
 
-// CreateStatefulSet creates a StatefulSet form the specified node.
-func CreateStatefulSet(node *fogapps.ServiceGraphNode, graph *fogapps.ServiceGraph) (*apps.StatefulSet, error) {
-	return nil, fmt.Errorf("not yet implemented")
+// CreateStatefulSet creates a StatefulSet from the specified node.
+func CreateStatefulSet(node *fogappsCRDs.ServiceGraphNode, graph *fogappsCRDs.ServiceGraph) (*apps.StatefulSet, error) {
+	statefulSet := apps.StatefulSet{
+		ObjectMeta: *createNodeObjectMeta(node, graph),
+		Spec:       apps.StatefulSetSpec{},
+	}
+
+	return UpdateStatefulSet(&statefulSet, node, graph)
 }
 
-func getInitialReplicas(node *fogapps.ServiceGraphNode) int32 {
+// UpdateStatefulSet updates an existing StatefulSet, based on the specified node.
+func UpdateStatefulSet(statefulSet *apps.StatefulSet, node *fogappsCRDs.ServiceGraphNode, graph *fogappsCRDs.ServiceGraph) (*apps.StatefulSet, error) {
+	replicas := getInitialReplicas(node)
+
+	updateNodeObjectMeta(&statefulSet.ObjectMeta, node, graph)
+	updatePodTemplate(&statefulSet.Spec.Template, node, graph)
+	statefulSet.Spec.Selector = createLabelSelector(node, graph)
+	statefulSet.Spec.Replicas = &replicas
+
+	return statefulSet, nil
+}
+
+func updatePodTemplate(podTemplate *core.PodTemplateSpec, node *fogappsCRDs.ServiceGraphNode, graph *fogappsCRDs.ServiceGraph) {
+	podTemplate.ObjectMeta.Labels = getPodLabels(node, graph)
+	podTemplate.Spec.InitContainers = node.InitContainers
+	podTemplate.Spec.Containers = node.Containers
+	podTemplate.Spec.Volumes = node.Volumes
+
+	if serviceAccountName := getServiceAccountName(node, graph); serviceAccountName != nil {
+		podTemplate.Spec.ServiceAccountName = *serviceAccountName
+	} else {
+		podTemplate.Spec.ServiceAccountName = ""
+	}
+}
+
+func createLabelSelector(node *fogappsCRDs.ServiceGraphNode, graph *fogappsCRDs.ServiceGraph) *meta.LabelSelector {
+	return &meta.LabelSelector{
+		MatchLabels: getPodLabels(node, graph),
+	}
+}
+
+func getInitialReplicas(node *fogappsCRDs.ServiceGraphNode) int32 {
 	if node.Replicas.InitialCount != nil {
 		return *node.Replicas.InitialCount
 	}
 	return node.Replicas.Min
 }
 
-func getServiceAccountName(node *fogapps.ServiceGraphNode, graph *fogapps.ServiceGraph) *string {
+func getServiceAccountName(node *fogappsCRDs.ServiceGraphNode, graph *fogappsCRDs.ServiceGraph) *string {
 	if node.ServiceAccountName != nil {
 		return node.ServiceAccountName
 	}
 	return graph.Spec.ServiceAccountName
-}
-
-func getPodLabels(node *fogapps.ServiceGraphNode, graph *fogapps.ServiceGraph) map[string]string {
-	labels := util.DeepCopyStringMap(node.PodLabels)
-	if len(labels) == 0 {
-		labels[RainbowGeneratedPodLabelName] = fmt.Sprintf("%s.%s.generated", graph.Name, node.Name)
-	}
-	return labels
 }

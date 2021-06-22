@@ -2005,7 +2005,8 @@ spec:
                         DNS name \"<ServiceGraphNode.Name>.<ServiceGraphNamespace>.svc\"
                         For example, if a ServiceGraph is deployed the namespace \"fog\"
                         and the ServiceGraphNode's name is \"db\", the DNS name would
-                        be \"db.fog.svc\""
+                        be \"db.fog.svc\". For other services within the same ServiceGraph
+                        \"<ServiceGraphNode.Name>\" is enough (e.g., \"db\")."
                       properties:
                         ports:
                           description: Configures the ports that should be exposed.
@@ -2082,8 +2083,9 @@ spec:
                             Exposes each port as an externally open port on every
                             node in the cluster. Recommended only for debugging. \n
                             - \"Ingress\" Exposes the ports using a load balanced
-                            Ingress controller. In this case, the IngressConfig field
-                            must be filled."
+                            Ingress controller with the first port of this node being
+                            the default backend. To configure additional rules, the
+                            IngressConfig field (ToDo) must be filled."
                           enum:
                           - ClusterInternal
                           - NodeExternal
@@ -3304,13 +3306,14 @@ spec:
                         setType:
                           default: Simple
                           description: "Specifies the type of replica set that should
-                            be used. \n The possibilities are: \n - \"Simple\" (default)
-                            Creates and destroys instances of the service, treating
-                            them as stateless. \n - \"Stateful\" Ensures that the
-                            set of replicas is ordered (i.e., replica 2 is always
-                            created before replica 3) and that each specific replica
-                            is always connected to the same volumes it was originally
-                            connected to."
+                            be used. For a ServiceGraphNode this cannot be changed
+                            after the node has been submitted to the orchestrator
+                            \n The possibilities are: \n - \"Simple\" (default) Creates
+                            and destroys instances of the service, treating them as
+                            stateless. \n - \"Stateful\" Ensures that the set of replicas
+                            is ordered (i.e., replica 2 is always created before replica
+                            3) and that each specific replica is always connected
+                            to the same volumes it was originally connected to."
                           enum:
                           - Simple
                           - Stateful

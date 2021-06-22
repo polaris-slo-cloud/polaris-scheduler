@@ -34,6 +34,7 @@ type ReplicasConfig struct {
 	InitialCount *int32 `json:"initialCount,omitempty"`
 
 	// Specifies the type of replica set that should be used.
+	// For a ServiceGraphNode this cannot be changed after the node has been submitted to the orchestrator
 	//
 	// The possibilities are:
 	//
