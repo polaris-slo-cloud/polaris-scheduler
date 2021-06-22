@@ -17,7 +17,7 @@ var _ = Describe("ServiceGraphController", func() {
 
 		It("Creates the deployment resources", func() {
 			graph := createServiceGraph(fogappsCRDs.SimpleReplicaSet)
-			Expect(graph).To(Equal(nil))
+			Expect(graph).To(BeNil())
 		})
 	})
 
