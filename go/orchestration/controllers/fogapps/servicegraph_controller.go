@@ -29,12 +29,12 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	fogapps "k8s.rainbow-h2020.eu/rainbow/orchestration/apis/fogapps/v1"
+	fogappsCRDs "k8s.rainbow-h2020.eu/rainbow/orchestration/apis/fogapps/v1"
 )
 
 var (
 	ownerKey         = ".metadata.controller"
-	fogAppsGVString  = fogapps.GroupVersion.String()
+	fogAppsGVString  = fogappsCRDs.GroupVersion.String()
 	serviceGraphKind = "ServiceGraph"
 )
 
@@ -76,7 +76,7 @@ type serviceGraphChildObjects struct {
 func (me *ServiceGraphReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	log := me.Log.WithValues("Reconcile ServiceGraph", req.NamespacedName)
 
-	var serviceGraph fogapps.ServiceGraph
+	var serviceGraph fogappsCRDs.ServiceGraph
 	if err := me.Get(ctx, req.NamespacedName, &serviceGraph); err != nil {
 		// ToDo: Detect if ServiceGraph has been deleted to avoid reporting an error in this case.
 		log.Error(err, "Unable to fetch ServiceGraph")
@@ -138,7 +138,7 @@ func (me *ServiceGraphReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	}
 
 	return ctrl.NewControllerManagedBy(mgr).
-		For(&fogapps.ServiceGraph{}).
+		For(&fogappsCRDs.ServiceGraph{}).
 		Owns(&apps.Deployment{}).
 		Owns(&apps.StatefulSet{}).
 		Complete(me)

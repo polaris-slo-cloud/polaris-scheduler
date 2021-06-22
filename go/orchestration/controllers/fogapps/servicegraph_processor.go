@@ -8,7 +8,7 @@ import (
 	apps "k8s.io/api/apps/v1"
 	core "k8s.io/api/core/v1"
 	networking "k8s.io/api/networking/v1"
-	fogapps "k8s.rainbow-h2020.eu/rainbow/orchestration/apis/fogapps/v1"
+	fogappsCRDs "k8s.rainbow-h2020.eu/rainbow/orchestration/apis/fogapps/v1"
 	svcGraphUtil "k8s.rainbow-h2020.eu/rainbow/orchestration/internal/servicegraphutil"
 	"k8s.rainbow-h2020.eu/rainbow/orchestration/pkg/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -22,7 +22,7 @@ type serviceGraphChildObjectMaps struct {
 }
 
 type serviceGraphProcessor struct {
-	svcGraph *fogapps.ServiceGraph
+	svcGraph *fogappsCRDs.ServiceGraph
 
 	// The child objects that already existed prior to this processing.
 	existingChildObjects serviceGraphChildObjectMaps
@@ -37,7 +37,7 @@ type serviceGraphProcessor struct {
 
 // ProcessServiceGraph assembles a list of changes that need to be applied due to the specified ServiceGraph.
 func ProcessServiceGraph(
-	graph *fogapps.ServiceGraph,
+	graph *fogappsCRDs.ServiceGraph,
 	childObjects *serviceGraphChildObjects,
 	log logr.Logger,
 	setOwnerFn controllerutil.SetOwnerReferenceFn,
@@ -81,7 +81,7 @@ func newServiceGraphChildObjectMaps(lists *serviceGraphChildObjects) serviceGrap
 }
 
 func newServiceGraphProcessor(
-	graph *fogapps.ServiceGraph,
+	graph *fogappsCRDs.ServiceGraph,
 	childObjects *serviceGraphChildObjects,
 	log logr.Logger,
 	setOwnerFn controllerutil.SetOwnerReferenceFn,
@@ -133,11 +133,11 @@ func (me *serviceGraphProcessor) assembleGraphChanges() error {
 func (me *serviceGraphProcessor) createChildObjectsForServiceGraph() error {
 	for _, node := range me.svcGraph.Spec.Nodes {
 		switch node.NodeType {
-		case fogapps.ServiceNode:
+		case fogappsCRDs.ServiceNode:
 			if err := me.createChildObjectsForServiceNode(&node); err != nil {
 				return err
 			}
-		case fogapps.UserNode:
+		case fogappsCRDs.UserNode:
 			// Nothing to be done here.
 		default:
 			return fmt.Errorf("unknown ServiceGraphNode.NodeType: %s", node.NodeType)
@@ -146,13 +146,13 @@ func (me *serviceGraphProcessor) createChildObjectsForServiceGraph() error {
 	return nil
 }
 
-func (me *serviceGraphProcessor) createChildObjectsForServiceNode(node *fogapps.ServiceGraphNode) error {
+func (me *serviceGraphProcessor) createChildObjectsForServiceNode(node *fogappsCRDs.ServiceGraphNode) error {
 	var err error
 
 	switch node.Replicas.SetType {
-	case fogapps.SimpleReplicaSet:
+	case fogappsCRDs.SimpleReplicaSet:
 		err = me.createOrUpdateDeployment(node)
-	case fogapps.StatefulReplicaSet:
+	case fogappsCRDs.StatefulReplicaSet:
 		err = me.createOrUpdateStatefulSet(node)
 	}
 
@@ -171,7 +171,7 @@ func (me *serviceGraphProcessor) createChildObjectsForServiceNode(node *fogapps.
 	return nil
 }
 
-func (me *serviceGraphProcessor) createOrUpdateDeployment(node *fogapps.ServiceGraphNode) error {
+func (me *serviceGraphProcessor) createOrUpdateDeployment(node *fogappsCRDs.ServiceGraphNode) error {
 	var deployment *apps.Deployment
 	var err error
 
@@ -192,7 +192,7 @@ func (me *serviceGraphProcessor) createOrUpdateDeployment(node *fogapps.ServiceG
 	return nil
 }
 
-func (me *serviceGraphProcessor) createOrUpdateStatefulSet(node *fogapps.ServiceGraphNode) error {
+func (me *serviceGraphProcessor) createOrUpdateStatefulSet(node *fogappsCRDs.ServiceGraphNode) error {
 	var statefulSet *apps.StatefulSet
 	var err error
 
@@ -213,7 +213,7 @@ func (me *serviceGraphProcessor) createOrUpdateStatefulSet(node *fogapps.Service
 	return nil
 }
 
-func (me *serviceGraphProcessor) createOrUpdateServiceAndIngress(node *fogapps.ServiceGraphNode) error {
+func (me *serviceGraphProcessor) createOrUpdateServiceAndIngress(node *fogappsCRDs.ServiceGraphNode) error {
 	existingServiceAndIngress := &svcGraphUtil.ServiceAndIngressPair{}
 	var serviceAndIngress *svcGraphUtil.ServiceAndIngressPair
 	var err error

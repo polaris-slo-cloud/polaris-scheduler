@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	meta "k8s.io/apimachinery/pkg/apis/meta/v1"
-	fogapps "k8s.rainbow-h2020.eu/rainbow/orchestration/apis/fogapps/v1"
+	fogappsCRDs "k8s.rainbow-h2020.eu/rainbow/orchestration/apis/fogapps/v1"
 	"k8s.rainbow-h2020.eu/rainbow/orchestration/internal/util"
 )
 
@@ -15,7 +15,7 @@ const (
 // createNodeObjectMeta creates an ObjectMeta for resources that are created from a ServiceGraphNode.
 //
 // The returned object needs to be passed to updateNodeObjectMeta() as well to set the updateable fields.
-func createNodeObjectMeta(node *fogapps.ServiceGraphNode, graph *fogapps.ServiceGraph) *meta.ObjectMeta {
+func createNodeObjectMeta(node *fogappsCRDs.ServiceGraphNode, graph *fogappsCRDs.ServiceGraph) *meta.ObjectMeta {
 	return &meta.ObjectMeta{
 		Name:        node.Name,
 		Namespace:   graph.Namespace,
@@ -25,12 +25,12 @@ func createNodeObjectMeta(node *fogapps.ServiceGraphNode, graph *fogapps.Service
 }
 
 // updateNodeObjectMeta updates an existing ObjectMeta for ServiceGraphNode derived resources.
-func updateNodeObjectMeta(objectMeta *meta.ObjectMeta, node *fogapps.ServiceGraphNode, graph *fogapps.ServiceGraph) {
+func updateNodeObjectMeta(objectMeta *meta.ObjectMeta, node *fogappsCRDs.ServiceGraphNode, graph *fogappsCRDs.ServiceGraph) {
 	objectMeta.Labels = getPodLabels(node, graph)
 }
 
 // getPodLabels gets the labels for a pod generated from a ServiceGraphNode.
-func getPodLabels(node *fogapps.ServiceGraphNode, graph *fogapps.ServiceGraph) map[string]string {
+func getPodLabels(node *fogappsCRDs.ServiceGraphNode, graph *fogappsCRDs.ServiceGraph) map[string]string {
 	labels := util.DeepCopyStringMap(node.PodLabels)
 	if len(labels) == 0 {
 		labels[RainbowGeneratedPodLabelName] = fmt.Sprintf("%s.%s.generated", graph.Name, node.Name)

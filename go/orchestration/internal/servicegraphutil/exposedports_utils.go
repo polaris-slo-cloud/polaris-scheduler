@@ -5,7 +5,7 @@ import (
 
 	core "k8s.io/api/core/v1"
 	networking "k8s.io/api/networking/v1"
-	fogapps "k8s.rainbow-h2020.eu/rainbow/orchestration/apis/fogapps/v1"
+	fogappsCRDs "k8s.rainbow-h2020.eu/rainbow/orchestration/apis/fogapps/v1"
 )
 
 // ServiceAndIngressPair contains the Service for a ServiceGraphNode and Ingress, if present.
@@ -15,7 +15,7 @@ type ServiceAndIngressPair struct {
 }
 
 // CreateServiceAndIngress creates a new ServiceAndIngressPair, for the specified ServiceGraphNode.
-func CreateServiceAndIngress(node *fogapps.ServiceGraphNode, graph *fogapps.ServiceGraph) (*ServiceAndIngressPair, error) {
+func CreateServiceAndIngress(node *fogappsCRDs.ServiceGraphNode, graph *fogappsCRDs.ServiceGraph) (*ServiceAndIngressPair, error) {
 	ret := ServiceAndIngressPair{}
 	if node.ExposedPorts == nil {
 		return nil, fmt.Errorf("cannot create ServiceAndIngressPair, because node.ExposedPorts is nil")
@@ -23,7 +23,7 @@ func CreateServiceAndIngress(node *fogapps.ServiceGraphNode, graph *fogapps.Serv
 
 	ret.Service = createService(node, graph)
 
-	if node.ExposedPorts.Type == fogapps.PortExposureIngress {
+	if node.ExposedPorts.Type == fogappsCRDs.PortExposureIngress {
 		ret.Ingress = createIngress(node, graph, ret.Service)
 	}
 
@@ -31,7 +31,7 @@ func CreateServiceAndIngress(node *fogapps.ServiceGraphNode, graph *fogapps.Serv
 }
 
 // UpdateServiceAndIngress updates an existing ServiceAndIngressPair for the specified ServiceGraphNode.
-func UpdateServiceAndIngress(serviceAndIngress *ServiceAndIngressPair, node *fogapps.ServiceGraphNode, graph *fogapps.ServiceGraph) (*ServiceAndIngressPair, error) {
+func UpdateServiceAndIngress(serviceAndIngress *ServiceAndIngressPair, node *fogappsCRDs.ServiceGraphNode, graph *fogappsCRDs.ServiceGraph) (*ServiceAndIngressPair, error) {
 	if node.ExposedPorts == nil {
 		serviceAndIngress.Service = nil
 		serviceAndIngress.Ingress = nil
@@ -40,7 +40,7 @@ func UpdateServiceAndIngress(serviceAndIngress *ServiceAndIngressPair, node *fog
 
 	serviceAndIngress.Service = updateService(serviceAndIngress.Service, node, graph)
 
-	if node.ExposedPorts.Type == fogapps.PortExposureIngress {
+	if node.ExposedPorts.Type == fogappsCRDs.PortExposureIngress {
 		if serviceAndIngress.Ingress != nil {
 			serviceAndIngress.Ingress = updateIngress(serviceAndIngress.Ingress, node, graph, serviceAndIngress.Service)
 		} else {
@@ -54,7 +54,7 @@ func UpdateServiceAndIngress(serviceAndIngress *ServiceAndIngressPair, node *fog
 	return serviceAndIngress, nil
 }
 
-func createService(node *fogapps.ServiceGraphNode, graph *fogapps.ServiceGraph) *core.Service {
+func createService(node *fogappsCRDs.ServiceGraphNode, graph *fogappsCRDs.ServiceGraph) *core.Service {
 	service := core.Service{
 		ObjectMeta: *createNodeObjectMeta(node, graph),
 		Spec:       core.ServiceSpec{},
@@ -63,9 +63,9 @@ func createService(node *fogapps.ServiceGraphNode, graph *fogapps.ServiceGraph) 
 	return updateService(&service, node, graph)
 }
 
-func updateService(service *core.Service, node *fogapps.ServiceGraphNode, graph *fogapps.ServiceGraph) *core.Service {
+func updateService(service *core.Service, node *fogappsCRDs.ServiceGraphNode, graph *fogappsCRDs.ServiceGraph) *core.Service {
 	var serviceType core.ServiceType
-	if node.ExposedPorts.Type == fogapps.PortExposureNodeExternal {
+	if node.ExposedPorts.Type == fogappsCRDs.PortExposureNodeExternal {
 		serviceType = core.ServiceTypeNodePort
 	} else {
 		serviceType = core.ServiceTypeClusterIP
@@ -79,7 +79,7 @@ func updateService(service *core.Service, node *fogapps.ServiceGraphNode, graph 
 	return service
 }
 
-func createIngress(node *fogapps.ServiceGraphNode, graph *fogapps.ServiceGraph, service *core.Service) *networking.Ingress {
+func createIngress(node *fogappsCRDs.ServiceGraphNode, graph *fogappsCRDs.ServiceGraph, service *core.Service) *networking.Ingress {
 	ingress := networking.Ingress{
 		ObjectMeta: *createNodeObjectMeta(node, graph),
 		Spec:       networking.IngressSpec{},
@@ -88,7 +88,7 @@ func createIngress(node *fogapps.ServiceGraphNode, graph *fogapps.ServiceGraph, 
 	return updateIngress(&ingress, node, graph, service)
 }
 
-func updateIngress(ingress *networking.Ingress, node *fogapps.ServiceGraphNode, graph *fogapps.ServiceGraph, service *core.Service) *networking.Ingress {
+func updateIngress(ingress *networking.Ingress, node *fogappsCRDs.ServiceGraphNode, graph *fogappsCRDs.ServiceGraph, service *core.Service) *networking.Ingress {
 	defaultPort := service.Spec.Ports[0]
 
 	updateNodeObjectMeta(&ingress.ObjectMeta, node, graph)
