@@ -2,25 +2,10 @@
 
 This directory contains all RAINBOW's Kubernetes controllers and CRDs written in Go, except for the scheduler.
 
-There are some RAINBOW-specific data structures that are used in the controllers:
+There are some RAINBOW-specific data structures that are used in the controllers (see [docs](../../docs) for further details):
 
 * Service Graph
 * Node Topology Graph
-
-## Node Topology Graph
-
-RAINBOW needs to know the node topology graph of the cluster.
-For this graph, the set of nodes and links are stored separately:
-
-* The set of nodes is the standard list of Nodes obtainable through the Kubernetes API.
-* The set of links uses the RAINBOW `NetworkLink` CRD.
-
-Both lists together can be used to construct a node topology graph.
-The advantage of not storing one big node topology graph CRD is that the graph's elements can be updated separately whenever new metrics are available.
-
-Each `NetworkLink` connects two nodes that have a direct network connection to each other.
-In the CRD there are two fields `nodeA` and `nodeB`, which refer to the names of these nodes.
-Each link `nodeA <-> nodeB` exists only once - the admission webhook generates the name of a link automatically by sorting the two node names alphabetically and concatenating them, thus, ensuring that a link with `nodeA` and `nodeB` swapped is not stored as a duplicate. 
 
 
 ## Testbed
