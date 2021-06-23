@@ -25,15 +25,15 @@ Each link `nodeA <-> nodeB` exists only once - the admission webhook generates t
 
 ## Testbed
 
-The testbed found in [hack/kind-cluster-with-local-registry](./hack/kind-cluster-with-local-registry) uses [kind](https://kind.sigs.k8s.io) to create a local Kubernetes cluster in Docker containers.
+The testbed found in [hack/kind-cluster](./hack/kind-cluster) uses [kind](https://kind.sigs.k8s.io) to create a local Kubernetes cluster in Docker containers.
 Any other Kubernetes cluster may be used as well - it only needs to be set as the current context in `kubectl`.
 
 To run the RAINBOW controller in the testbed, execute the following steps:
 
-1. Open a terminal in the folder [hack/kind-cluster-with-local-registry](./hack/kind-cluster-with-local-registry) and run
+1. Open a terminal in the folder [hack/kind-cluster](./hack/kind-cluster) and run
     ```sh
     # Creates a test cluster consisting of 4 nodes and a private Docker registry.
-    ./start-kind-with-local-registry.sh
+    ./start-kind-cluster.sh
     ```
 
 1. To build the controller, open a terminal in the `go` root directory of this repository and run
