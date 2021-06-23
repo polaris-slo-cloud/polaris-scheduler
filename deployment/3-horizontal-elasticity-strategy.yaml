@@ -1,0 +1,614 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  labels:
+    control-plane: controller-manager
+  name: polaris
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.4.1
+  creationTimestamp: null
+  name: costefficiencyslomappings.slo.polaris-slo-cloud.github.io
+spec:
+  group: slo.polaris-slo-cloud.github.io
+  names:
+    kind: CostEfficiencySloMapping
+    listKind: CostEfficiencySloMappingList
+    plural: costefficiencyslomappings
+    singular: costefficiencyslomapping
+  scope: Namespaced
+  versions:
+  - name: v1
+    schema:
+      openAPIV3Schema:
+        description: CostEfficiencySloMapping is the Schema for the costefficiencyslomappings API
+        properties:
+          apiVersion:
+            description: 'APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            type: string
+          kind:
+            description: 'Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: CostEfficiencySloMappingSpec defines the desired state of CostEfficiencySloMapping
+            properties:
+              elasticityStrategy:
+                description: Specifies the type of ElasticityStrategy to use for this SLO mapping.
+                properties:
+                  apiVersion:
+                    description: The API group and version of the ElasticityStrategy.
+                    type: string
+                  kind:
+                    description: The kind of ElasticityStrategy.
+                    type: string
+                required:
+                - apiVersion
+                - kind
+                type: object
+              sloConfig:
+                description: CostEfficiencySloConfig contains the configuration for a CostEfficiencySloMappingSpec.
+                properties:
+                  minRequestsPercentile;omitempty:
+                    description: The minimum percentile of requests that should be handled within the time threshold.
+                    format: int32
+                    type: integer
+                  responseTimeThresholdMs:
+                    description: The number of milliseconds, within which the requests should be handled.
+                    format: int32
+                    minimum: 0
+                    type: integer
+                  targetCostEfficiency:
+                    description: The desired cost efficiency.
+                    format: int32
+                    minimum: 0
+                    type: integer
+                required:
+                - responseTimeThresholdMs
+                - targetCostEfficiency
+                type: object
+              staticElasticityStrategyConfig:
+                description: "Any static configuration parameters, which are unknown to the SLO, but which may be required to configure the chosen kind of elasticity strategy should be specified here. They will be copied over into the spec of the elasticity strategy. \n // Note that the Go deepCopy() method will only be able to create shallow copies of this field, because it does not know its internal structure."
+                type: object
+                x-kubernetes-preserve-unknown-fields: true
+              targetRef:
+                description: Specifies the target on which to execute the elasticity strategy.
+                properties:
+                  apiVersion:
+                    description: API version of the referent
+                    type: string
+                  kind:
+                    description: 'Kind of the referent; More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds"'
+                    type: string
+                  name:
+                    description: 'Name of the referent; More info: http://kubernetes.io/docs/user-guide/identifiers#names'
+                    type: string
+                required:
+                - kind
+                - name
+                type: object
+            required:
+            - elasticityStrategy
+            - sloConfig
+            - targetRef
+            type: object
+          status:
+            description: CostEfficiencySloMappingStatus defines the observed state of CostEfficiencySloMapping
+            type: object
+        type: object
+    served: true
+    storage: true
+status:
+  acceptedNames:
+    kind: ""
+    plural: ""
+  conditions: []
+  storedVersions: []
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.4.1
+  creationTimestamp: null
+  name: cpuusageslomappings.slo.polaris-slo-cloud.github.io
+spec:
+  group: slo.polaris-slo-cloud.github.io
+  names:
+    kind: CPUUsageSloMapping
+    listKind: CPUUsageSloMappingList
+    plural: cpuusageslomappings
+    singular: cpuusageslomapping
+  scope: Namespaced
+  versions:
+  - name: v1
+    schema:
+      openAPIV3Schema:
+        description: CPUUsageSloMapping is the Schema for the cpuusageslomappings API
+        properties:
+          apiVersion:
+            description: 'APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            type: string
+          kind:
+            description: 'Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: CPUUsageSloMappingSpec is used to apply a CPUUsageSLO to a target workload.
+            properties:
+              elasticityStrategy:
+                description: Specifies the type of ElasticityStrategy to use for this SLO mapping.
+                properties:
+                  apiVersion:
+                    description: The API group and version of the ElasticityStrategy.
+                    type: string
+                  kind:
+                    description: The kind of ElasticityStrategy.
+                    type: string
+                required:
+                - apiVersion
+                - kind
+                type: object
+              sloConfig:
+                description: CPUUsageSloConfig contains the configuration for a CPUUsageSloMappingSpec.
+                properties:
+                  targetAvgCPUUtilizationPercentage:
+                    description: The target average CPU utilization percentage of the workload's pods (percentage of the allocated CPUs).
+                    format: int32
+                    maximum: 100
+                    minimum: 1
+                    type: integer
+                required:
+                - targetAvgCPUUtilizationPercentage
+                type: object
+              staticElasticityStrategyConfig:
+                description: "Any static configuration parameters, which are unknown to the SLO, but which may be required to configure the chosen kind of elasticity strategy should be specified here. They will be copied over into the spec of the elasticity strategy. \n // Note that the Go deepCopy() method will only be able to create shallow copies of this field, because it does not know its internal structure."
+                type: object
+                x-kubernetes-preserve-unknown-fields: true
+              targetRef:
+                description: Specifies the target on which to execute the elasticity strategy.
+                properties:
+                  apiVersion:
+                    description: API version of the referent
+                    type: string
+                  kind:
+                    description: 'Kind of the referent; More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds"'
+                    type: string
+                  name:
+                    description: 'Name of the referent; More info: http://kubernetes.io/docs/user-guide/identifiers#names'
+                    type: string
+                required:
+                - kind
+                - name
+                type: object
+            required:
+            - elasticityStrategy
+            - sloConfig
+            - targetRef
+            type: object
+          status:
+            description: CPUUsageSloMappingStatus defines the observed state of CPUUsageSloMapping
+            type: object
+        type: object
+    served: true
+    storage: true
+status:
+  acceptedNames:
+    kind: ""
+    plural: ""
+  conditions: []
+  storedVersions: []
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.4.1
+  creationTimestamp: null
+  name: horizontalelasticitystrategies.elasticity.polaris-slo-cloud.github.io
+spec:
+  group: elasticity.polaris-slo-cloud.github.io
+  names:
+    kind: HorizontalElasticityStrategy
+    listKind: HorizontalElasticityStrategyList
+    plural: horizontalelasticitystrategies
+    singular: horizontalelasticitystrategy
+  scope: Namespaced
+  versions:
+  - name: v1
+    schema:
+      openAPIV3Schema:
+        description: HorizontalElasticityStrategy is the Schema for the horizontalelasticitystrategies API
+        properties:
+          apiVersion:
+            description: 'APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            type: string
+          kind:
+            description: 'Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: HorizontalElasticityStrategySpec defines the desired state of HorizontalElasticityStrategy
+            properties:
+              sloOutputParams:
+                description: Specifies how much the current state of the system complies with the SLO.
+                properties:
+                  currSloCompliancePercentage:
+                    description: "Specifies how much the current state of the system complies with the SLO. \n This value must be specified as an integer, e.g., `50` meaning 50%, `100` meaning 100%, `200` meaning 200%. \n If this value is `100`, the SLO is met exactly and no scaling action is required. \n If this value is greater than `100`, the SLO is violated and scaling out/up is required. \n If this value is less than `100`, the system is performing better than the SLO demands and scaling in/down will be performed."
+                    format: int32
+                    type: integer
+                  tolerance:
+                    description: "Specifies the tolerance around 100%, within which no scaling will be performed. \n For example, if tolerance is `10`, no scaling will be performed as long as `currSloCompliancePercentage` is between `90` and `110`."
+                    format: int32
+                    type: integer
+                type: object
+              staticConfig:
+                description: Static configuration that was supplied using `SloMapping.StaticElasticityStrategyConfig`.
+                type: object
+                x-kubernetes-preserve-unknown-fields: true
+              targetRef:
+                description: Specifies the target on which to execute the elasticity strategy.
+                properties:
+                  apiVersion:
+                    description: API version of the referent
+                    type: string
+                  kind:
+                    description: 'Kind of the referent; More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds"'
+                    type: string
+                  name:
+                    description: 'Name of the referent; More info: http://kubernetes.io/docs/user-guide/identifiers#names'
+                    type: string
+                required:
+                - kind
+                - name
+                type: object
+            required:
+            - sloOutputParams
+            - targetRef
+            type: object
+          status:
+            description: HorizontalElasticityStrategyStatus defines the observed state of HorizontalElasticityStrategy
+            type: object
+        type: object
+    served: true
+    storage: true
+status:
+  acceptedNames:
+    kind: ""
+    plural: ""
+  conditions: []
+  storedVersions: []
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.4.1
+  creationTimestamp: null
+  name: templatestrategies.elasticity.polaris-slo-cloud.github.io
+spec:
+  group: elasticity.polaris-slo-cloud.github.io
+  names:
+    kind: TemplateStrategy
+    listKind: TemplateStrategyList
+    plural: templatestrategies
+    singular: templatestrategy
+  scope: Namespaced
+  versions:
+  - name: v1
+    schema:
+      openAPIV3Schema:
+        description: TemplateStrategy is the Schema for the templatestrategies API
+        properties:
+          apiVersion:
+            description: 'APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            type: string
+          kind:
+            description: 'Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: TemplateStrategySpec defines the desired state of TemplateStrategy
+            properties:
+              horizontalSpec:
+                description: The horizontal scaling options in this strategy. If this is omitted, no horizontal scaling will be performed.
+                properties:
+                  maxReplicas:
+                    description: The maximum number of replicas that should be allowed when scaling out.
+                    format: int32
+                    minimum: 1
+                    type: integer
+                  targetAvgCPUUtilizationPercentage:
+                    description: The target average CPU utilization percentage of the pods (percentage of the allocated CPUs).
+                    format: int32
+                    maximum: 100
+                    minimum: 1
+                    type: integer
+                required:
+                - targetAvgCPUUtilizationPercentage
+                type: object
+              targetRef:
+                description: Specifies the target on which to perform the scaling.
+                properties:
+                  apiVersion:
+                    description: API version of the referent
+                    type: string
+                  kind:
+                    description: 'Kind of the referent; More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds"'
+                    type: string
+                  name:
+                    description: 'Name of the referent; More info: http://kubernetes.io/docs/user-guide/identifiers#names'
+                    type: string
+                required:
+                - kind
+                - name
+                type: object
+              verticalSpec:
+                description: The vertical scaling options in this strategy. If this is omitted, no vertical scaling will be performed.
+                properties:
+                  maxMemory:
+                    anyOf:
+                    - type: integer
+                    - type: string
+                    description: The maximum amount of memory that the containers may be scaled up to.
+                    pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                    x-kubernetes-int-or-string: true
+                  minMemory:
+                    anyOf:
+                    - type: integer
+                    - type: string
+                    description: The minimum amount of memory that the containers may be scaled down to.
+                    pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                    x-kubernetes-int-or-string: true
+                required:
+                - maxMemory
+                type: object
+            required:
+            - targetRef
+            type: object
+          status:
+            description: TemplateStrategyStatus defines the observed state of TemplateStrategy
+            type: object
+        type: object
+    served: true
+    storage: true
+status:
+  acceptedNames:
+    kind: ""
+    plural: ""
+  conditions: []
+  storedVersions: []
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: polaris-leader-election-role
+  namespace: polaris
+rules:
+- apiGroups:
+  - ""
+  resources:
+  - configmaps
+  verbs:
+  - get
+  - list
+  - watch
+  - create
+  - update
+  - patch
+  - delete
+- apiGroups:
+  - ""
+  resources:
+  - configmaps/status
+  verbs:
+  - get
+  - update
+  - patch
+- apiGroups:
+  - ""
+  resources:
+  - events
+  verbs:
+  - create
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  creationTimestamp: null
+  name: polaris-manager-role
+rules:
+- apiGroups:
+  - apps
+  resources:
+  - '*/scale'
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - autoscaling
+  resources:
+  - horizontalpodautoscalers
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - elasticity.polaris-slo-cloud.github.io
+  resources:
+  - horizontalelasticitystrategies
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - elasticity.polaris-slo-cloud.github.io
+  resources:
+  - horizontalelasticitystrategies/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - elasticity.polaris-slo-cloud.github.io
+  resources:
+  - templatestrategies
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - elasticity.polaris-slo-cloud.github.io
+  resources:
+  - templatestrategies/status
+  verbs:
+  - get
+  - patch
+  - update
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: polaris-metrics-reader
+rules:
+- nonResourceURLs:
+  - /metrics
+  verbs:
+  - get
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: polaris-proxy-role
+rules:
+- apiGroups:
+  - authentication.k8s.io
+  resources:
+  - tokenreviews
+  verbs:
+  - create
+- apiGroups:
+  - authorization.k8s.io
+  resources:
+  - subjectaccessreviews
+  verbs:
+  - create
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: polaris-leader-election-rolebinding
+  namespace: polaris
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: polaris-leader-election-role
+subjects:
+- kind: ServiceAccount
+  name: default
+  namespace: polaris
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: polaris-manager-rolebinding
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: polaris-manager-role
+subjects:
+- kind: ServiceAccount
+  name: default
+  namespace: polaris
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: polaris-proxy-rolebinding
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: polaris-proxy-role
+subjects:
+- kind: ServiceAccount
+  name: default
+  namespace: polaris
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    control-plane: controller-manager
+  name: polaris-controller-manager-metrics-service
+  namespace: polaris
+spec:
+  ports:
+  - name: https
+    port: 8443
+    targetPort: https
+  selector:
+    control-plane: controller-manager
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    control-plane: controller-manager
+  name: polaris-controller-manager
+  namespace: polaris
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      control-plane: controller-manager
+  template:
+    metadata:
+      labels:
+        control-plane: controller-manager
+    spec:
+      containers:
+      - args:
+        - --secure-listen-address=0.0.0.0:8443
+        - --upstream=http://127.0.0.1:8080/
+        - --logtostderr=true
+        - --v=10
+        image: gcr.io/kubebuilder/kube-rbac-proxy:v0.5.0
+        name: kube-rbac-proxy
+        ports:
+        - containerPort: 8443
+          name: https
+      - args:
+        - --metrics-addr=127.0.0.1:8080
+        - --enable-leader-election
+        command:
+        - /manager
+        image: polarissloc/elasticity-strategies:0.2.0-beta.9
+        name: manager
+        resources:
+          limits:
+            cpu: 100m
+            memory: 30Mi
+          requests:
+            cpu: 100m
+            memory: 20Mi
+      terminationGracePeriodSeconds: 10
