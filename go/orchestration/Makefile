@@ -1,6 +1,8 @@
 
+# The version of the orchestrator
+VERSION ?= 0.1.0
 # Image URL to use all building/pushing image targets
-IMG ?= rainbowh2020/rainbow-orchestrator:latest
+IMG ?= registry.gitlab.com/rainbow-project1/rainbow-integration/rainbow-orchestrator:${VERSION}
 # Produce CRDs that work back to Kubernetes 1.11 (no version conversion)
 CRD_OPTIONS ?= "crd:trivialVersions=true,preserveUnknownFields=false"
 
