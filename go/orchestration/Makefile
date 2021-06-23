@@ -1,6 +1,8 @@
 
+# The version of the orchestrator
+VERSION ?= 0.1.0
 # Image URL to use all building/pushing image targets
-IMG ?= controller:latest
+IMG ?= registry.gitlab.com/rainbow-project1/rainbow-integration/rainbow-orchestrator:${VERSION}
 # Produce CRDs that work back to Kubernetes 1.11 (no version conversion)
 CRD_OPTIONS ?= "crd:trivialVersions=true,preserveUnknownFields=false"
 
@@ -83,6 +85,10 @@ deploy: manifests kustomize ## Deploy controller to the K8s cluster specified in
 
 undeploy: ## Undeploy controller from the K8s cluster specified in ~/.kube/config.
 	$(KUSTOMIZE) build config/default | kubectl delete -f -
+
+deployment-yaml: manifests kustomize ## Build YAML files that can be used for deployment by customers
+	cd config/manager && $(KUSTOMIZE) edit set image controller=${IMG}
+	$(KUSTOMIZE) build config/default > ../../deployment/2-orchestrator.yaml
 
 
 CONTROLLER_GEN = $(shell pwd)/bin/controller-gen
