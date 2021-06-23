@@ -25,7 +25,7 @@ LOCAL_IMAGE=rainbow-scheduler:latest
 # RELEASE_REGISTRY is the container registry to push
 # into. The default is to push to the staging
 # registry, not production(k8s.gcr.io).
-RELEASE_REGISTRY?=rainbowh2020
+RELEASE_REGISTRY?=registry.gitlab.com/rainbow-project1/rainbow-integration
 RELEASE_VERSION?=$(shell date +%Y%m%d%H%M)-v$(PROJECT_VERSION)
 # RELEASE_VERSION?=v$(shell date +%Y%m%d)-$(shell git describe --tags --match "v*")
 RELEASE_IMAGE:=rainbow-scheduler:$(RELEASE_VERSION)
