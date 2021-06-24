@@ -2,7 +2,7 @@ apiVersion: v1
 kind: Namespace
 metadata:
   labels:
-    control-plane: orchestrator
+    control-plane: controller-manager
   name: rainbow-system
 ---
 apiVersion: apiextensions.k8s.io/v1
@@ -3305,7 +3305,7 @@ status:
 apiVersion: v1
 kind: ServiceAccount
 metadata:
-  name: rainbow-orchestrator
+  name: rainbow-controller-manager
   namespace: rainbow-system
 ---
 apiVersion: rbac.authorization.k8s.io/v1
@@ -3474,7 +3474,7 @@ roleRef:
   name: rainbow-leader-election-role
 subjects:
 - kind: ServiceAccount
-  name: rainbow-orchestrator
+  name: rainbow-controller-manager
   namespace: rainbow-system
 ---
 apiVersion: rbac.authorization.k8s.io/v1
@@ -3487,7 +3487,7 @@ roleRef:
   name: rainbow-manager-role
 subjects:
 - kind: ServiceAccount
-  name: rainbow-orchestrator
+  name: rainbow-controller-manager
   namespace: rainbow-system
 ---
 apiVersion: rbac.authorization.k8s.io/v1
@@ -3500,7 +3500,7 @@ roleRef:
   name: rainbow-proxy-role
 subjects:
 - kind: ServiceAccount
-  name: rainbow-orchestrator
+  name: rainbow-controller-manager
   namespace: rainbow-system
 ---
 apiVersion: v1
@@ -3526,8 +3526,8 @@ apiVersion: v1
 kind: Service
 metadata:
   labels:
-    control-plane: orchestrator
-  name: rainbow-orchestrator-metrics-service
+    control-plane: controller-manager
+  name: rainbow-controller-manager-metrics-service
   namespace: rainbow-system
 spec:
   ports:
@@ -3535,24 +3535,24 @@ spec:
     port: 8443
     targetPort: https
   selector:
-    control-plane: orchestrator
+    control-plane: controller-manager
 ---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   labels:
-    control-plane: orchestrator
-  name: rainbow-orchestrator
+    control-plane: controller-manager
+  name: rainbow-controller-manager
   namespace: rainbow-system
 spec:
   replicas: 1
   selector:
     matchLabels:
-      control-plane: orchestrator
+      control-plane: controller-manager
   template:
     metadata:
       labels:
-        control-plane: orchestrator
+        control-plane: controller-manager
     spec:
       containers:
       - args:
@@ -3596,5 +3596,5 @@ spec:
           allowPrivilegeEscalation: false
       securityContext:
         runAsNonRoot: true
-      serviceAccountName: rainbow-orchestrator
+      serviceAccountName: rainbow-controller-manager
       terminationGracePeriodSeconds: 10
