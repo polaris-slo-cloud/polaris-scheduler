@@ -3353,7 +3353,7 @@ metadata:
   name: rainbow-orchestrator-manager-role
 rules:
 - apiGroups:
-  - apps/v1
+  - apps
   resources:
   - deployments
   - statefulsets
@@ -3366,10 +3366,28 @@ rules:
   - update
   - watch
 - apiGroups:
-  - apps/v1
+  - apps
   resources:
   - deployments/status
   - statefulsets/status
+  verbs:
+  - get
+- apiGroups:
+  - ""
+  resources:
+  - services
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - ""
+  resources:
+  - services/status
   verbs:
   - get
 - apiGroups:
@@ -3399,7 +3417,7 @@ rules:
   - patch
   - update
 - apiGroups:
-  - networking.k8s.io/v1
+  - networking.k8s.io
   resources:
   - ingresses
   verbs:
@@ -3411,27 +3429,9 @@ rules:
   - update
   - watch
 - apiGroups:
-  - networking.k8s.io/v1
+  - networking.k8s.io
   resources:
   - ingresses/status
-  verbs:
-  - get
-- apiGroups:
-  - v1
-  resources:
-  - services
-  verbs:
-  - create
-  - delete
-  - get
-  - list
-  - patch
-  - update
-  - watch
-- apiGroups:
-  - v1
-  resources:
-  - services/status
   verbs:
   - get
 ---

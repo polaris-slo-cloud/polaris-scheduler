@@ -59,16 +59,16 @@ type serviceGraphChildObjects struct {
 //+kubebuilder:rbac:groups=fogapps.k8s.rainbow-h2020.eu,resources=servicegraphs/finalizers,verbs=update
 
 // Permissions on Deployments and StatefulSets:
-//+kubebuilder:rbac:groups=apps/v1,resources=deployments;statefulsets,verbs=get;list;watch;create;update;patch;delete
-//+kubebuilder:rbac:groups=apps/v1,resources=deployments/status;statefulsets/status,verbs=get
+//+kubebuilder:rbac:groups=apps,resources=deployments;statefulsets,verbs=get;list;watch;create;update;patch;delete
+//+kubebuilder:rbac:groups=apps,resources=deployments/status;statefulsets/status,verbs=get
 
 // Permissions on Services:
-//+kubebuilder:rbac:groups=v1,resources=services,verbs=get;list;watch;create;update;patch;delete
-//+kubebuilder:rbac:groups=v1,resources=services/status,verbs=get
+//+kubebuilder:rbac:groups=core,resources=services,verbs=get;list;watch;create;update;patch;delete
+//+kubebuilder:rbac:groups=core,resources=services/status,verbs=get
 
 // Permissions on Ingresses:
-//+kubebuilder:rbac:groups=networking.k8s.io/v1,resources=ingresses,verbs=get;list;watch;create;update;patch;delete
-//+kubebuilder:rbac:groups=networking.k8s.io/v1,resources=ingresses/status,verbs=get
+//+kubebuilder:rbac:groups=networking.k8s.io,resources=ingresses,verbs=get;list;watch;create;update;patch;delete
+//+kubebuilder:rbac:groups=networking.k8s.io,resources=ingresses/status,verbs=get
 
 // Reconcile is triggered whenever a ServiceGraph is added, changed, or removed.
 //
