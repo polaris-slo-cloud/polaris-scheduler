@@ -5,6 +5,7 @@ import (
 	core "k8s.io/api/core/v1"
 	meta "k8s.io/apimachinery/pkg/apis/meta/v1"
 	fogappsCRDs "k8s.rainbow-h2020.eu/rainbow/orchestration/apis/fogapps/v1"
+	"k8s.rainbow-h2020.eu/rainbow/orchestration/pkg/kubeutil"
 )
 
 // CreatePodSpec creates a PodSpec from the specified node.
@@ -62,6 +63,7 @@ func UpdateStatefulSet(statefulSet *apps.StatefulSet, node *fogappsCRDs.ServiceG
 }
 
 func updatePodTemplate(podTemplate *core.PodTemplateSpec, node *fogappsCRDs.ServiceGraphNode, graph *fogappsCRDs.ServiceGraph) {
+	podTemplate.Spec.SchedulerName = kubeutil.RainbowSchedulerName
 	podTemplate.ObjectMeta.Labels = getPodLabels(node, graph)
 	podTemplate.Spec.InitContainers = node.InitContainers
 	podTemplate.Spec.Containers = node.Containers
