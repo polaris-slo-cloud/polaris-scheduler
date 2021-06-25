@@ -120,6 +120,8 @@ spec:
           - mountPath: /etc/kubernetes
             name: etc-kubernetes
             readOnly: true
+      imagePullSecrets:
+        - name: regcred
       hostNetwork: false
       hostPID: false
       volumes:

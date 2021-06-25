@@ -31,7 +31,21 @@ The documentation for the RAINBOW orchestration components is available in the [
 
 ## Deployment
 
-To deploy the RAINBOW orchestration stack, open a terminal in the root folder of this repository and execute the following command:
+To deploy the RAINBOW orchestration stack, open a terminal in the root folder of this repository and follow these steps:
+
+1. Create the `rainbow-system` namespace:
+
+```sh
+kubectl create namespace rainbow-system
+```
+
+2. Create the `regcred` secret with your deployment token credentials for the [rainbow-integration](https://gitlab.com/rainbow-project1/rainbow-integration/container_registry) container registry:
+
+```sh
+kubectl create secret docker-registry -n=rainbow-system regcred --docker-server=<your-registry-server> --docker-username=<your-name> --docker-password=<your-pword> --docker-email=<your-email>
+```
+
+3. Deploy the orchestrator components:
 
 ```sh
 kubectl apply -f ./deployment
