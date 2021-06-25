@@ -56,10 +56,11 @@ spec:
         # Configures the hardware requirements that the node must fulfill.
         # Note that this does not reserve the hardware for exclusive usage, it only assures that the node has this hardware.
         cpuInfo:
-          # This service supports both Intel 64-bit and ARM 64-bit CPUs
+          # This service supports only Intel 64-bit CPUs
+          # Multiple supported architectures are also possible.
+          # If no CPU architectures are specified, this means that all architectures are supported.
           architectures:
             - amd64
-            - arm64
       slos:
         # SLOs for this node.
         - name: cpu-usage
@@ -118,6 +119,11 @@ spec:
               value: bronx
       replicas:
         max: 1
+      nodeHardware:
+        cpuInfo:
+          architectures:
+            - amd64
+            - arm64
 
     # Taxi Edge Brooklyn Node
     - name: taxi-edge-brooklyn
