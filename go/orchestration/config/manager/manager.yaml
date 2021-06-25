@@ -24,6 +24,20 @@ spec:
     spec:
       securityContext:
         runAsNonRoot: true
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  # Ensure that the controller is only scheduled on Intel 64-bit nodes.
+                  - key: kubernetes.io/arch
+                    operator: In
+                    values:
+                      - amd64
+      tolerations:
+        - key: node-role.kubernetes.io/master
+          operator: Exists
+          effect: NoSchedule
       containers:
       - command:
         - /manager

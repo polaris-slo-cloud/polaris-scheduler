@@ -69,6 +69,16 @@ spec:
       serviceAccountName: rainbow-scheduler
       nodeSelector:
         node-role.kubernetes.io/control-plane: ""
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  # Ensure that the scheduler pods are only scheduled on Intel 64-bit nodes.
+                  - key: kubernetes.io/arch
+                    operator: In
+                    values:
+                      - amd64
       priorityClassName: system-node-critical
       tolerations:
       - key: node-role.kubernetes.io/master

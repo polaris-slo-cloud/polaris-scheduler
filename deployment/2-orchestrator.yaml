@@ -3554,6 +3554,15 @@ spec:
       labels:
         control-plane: controller-manager
     spec:
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: kubernetes.io/arch
+                operator: In
+                values:
+                - amd64
       containers:
       - args:
         - --secure-listen-address=0.0.0.0:8443
@@ -3598,3 +3607,7 @@ spec:
         runAsNonRoot: true
       serviceAccountName: rainbow-orchestrator-controller-manager
       terminationGracePeriodSeconds: 10
+      tolerations:
+      - effect: NoSchedule
+        key: node-role.kubernetes.io/master
+        operator: Exists
