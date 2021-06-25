@@ -1,9 +1,14 @@
 # Adapted from https://kubernetes.io/docs/tasks/extend-kubernetes/configure-multiple-schedulers/#define-a-kubernetes-deployment-for-the-scheduler
 apiVersion: v1
+kind: Namespace
+metadata:
+  name: rainbow-system
+---
+apiVersion: v1
 kind: ServiceAccount
 metadata:
   name: rainbow-scheduler
-  namespace: kube-system
+  namespace: rainbow-system
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
@@ -12,7 +17,7 @@ metadata:
 subjects:
 - kind: ServiceAccount
   name: rainbow-scheduler
-  namespace: kube-system
+  namespace: rainbow-system
 roleRef:
   kind: ClusterRole
   name: system:kube-scheduler
@@ -25,7 +30,7 @@ metadata:
 subjects:
 - kind: ServiceAccount
   name: rainbow-scheduler
-  namespace: kube-system
+  namespace: rainbow-system
 roleRef:
   kind: ClusterRole
   name: system:volume-scheduler
@@ -35,11 +40,11 @@ apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
 metadata:
   name: rainbow-scheduler-authentication-reader
-  namespace: kube-system
+  namespace: rainbow-system
 subjects:
 - kind: ServiceAccount
   name: rainbow-scheduler
-  namespace: kube-system
+  namespace: rainbow-system
 roleRef:
   kind: Role
   name: extension-apiserver-authentication-reader
@@ -52,7 +57,7 @@ metadata:
     component: scheduler
     tier: control-plane
   name: rainbow-scheduler
-  namespace: kube-system
+  namespace: rainbow-system
 spec:
   selector:
     matchLabels:
