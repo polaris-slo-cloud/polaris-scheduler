@@ -7,7 +7,7 @@ clientConnection:
 leaderElection:
   leaderElect: false # Leader election requires additional privileges.
   resourceName: rainbow-scheduler
-  resourceNamespace: kube-system
+  resourceNamespace: rainbow-system
 # When comparing the rainbow-scheduler with others, we want to make sure that all nodes are scored,
 # because some of the schedulers compared against, depend on that.
 percentageOfNodesToScore: 100

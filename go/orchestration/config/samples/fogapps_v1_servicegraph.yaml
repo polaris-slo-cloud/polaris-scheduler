@@ -52,6 +52,14 @@ spec:
         ports:
           - name: main
             port: 8080
+      nodeHardware:
+        # Configures the hardware requirements that the node must fulfill.
+        # Note that this does not reserve the hardware for exclusive usage, it only assures that the node has this hardware.
+        cpuInfo:
+          # This service supports both Intel 64-bit and ARM 64-bit CPUs
+          architectures:
+            - amd64
+            - arm64
       slos:
         # SLOs for this node.
         - name: cpu-usage
@@ -84,6 +92,10 @@ spec:
       replicas:
         min: 2
         max: 10
+      nodeHardware:
+        cpuInfo:
+          architectures:
+            - arm64
 
     # Taxi Edge Bronx Node
     - name: taxi-edge-bronx
