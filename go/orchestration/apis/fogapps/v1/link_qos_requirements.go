@@ -34,7 +34,7 @@ type NetworkThroughputRequirements struct {
 	//
 	// +kubebuilder:validation:Minimum=0
 	// +optional
-	MaxBandwidthVariance *int64 `json:"MaxBandwidthVariance,omitempty"`
+	MaxBandwidthVariance *int64 `json:"maxBandwidthVariance,omitempty"`
 }
 
 // NetworkLatencyRequirements describes the requirements for the latency of a NetworkLink.

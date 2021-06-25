@@ -231,7 +231,7 @@ spec:
                         throughput:
                           description: The throughput requirements for the network link.
                           properties:
-                            MaxBandwidthVariance:
+                            maxBandwidthVariance:
                               description: The maximum variance of the bandwidth of the network link.
                               format: int64
                               minimum: 0
@@ -2166,6 +2166,38 @@ spec:
                       type: string
                     nodeHardware:
                       description: "Allows specifying requirements for the cluster node that will host an instance of this ServiceGraphNode. \n This only specifies what hardware the cluster node needs to have. It does not specify resource requirements or exclusive usage of that hardware."
+                      properties:
+                        cpuInfo:
+                          description: Used to define CPU requirements for the host node, e.g., CPU architecture.
+                          properties:
+                            architectures:
+                              description: "Array of CPU architectures supported by the container images of this service. If this is not specified, all CPU architectures are assumed to be supported. \n Possible CpuArchitecture values: - Intel 32-bit: \"386\" - Intel 64-bit: \"amd64\" - ARM 32-bit: \"arm\" - ARM 64-bit: \"arm64\""
+                              items:
+                                description: CpuArchitecture defines the possible CPU architectures.
+                                enum:
+                                - 386
+                                - amd64
+                                - arm
+                                - arm64
+                                type: string
+                              type: array
+                            minBashClockMHz:
+                              description: The minimum base clock frequency of the CPU in MHz.
+                              format: int32
+                              minimum: 0
+                              type: integer
+                            minCores:
+                              description: The minimum number of CPU cores that the node must have.
+                              format: int32
+                              minimum: 0
+                              type: integer
+                          type: object
+                        gpuInfo:
+                          description: Used to define GPU requirements for the host node.
+                          type: object
+                        nodeType:
+                          description: "A string that allows specifying the type of host node, e.g., a cloud server, a stationary compute node in the fog, or an airborne drone in the fog. \n A node type string is hierarchical and composed similar to a URI: <fog|cloud>/<category>/<optionalvendor>/<type>/<optional-model> \n Each hierarchy level designates a set of compliant nodes, which can be reduced by specifying an additional level. For example, the node type string “fog/stationary” ensures that the service is only deployed on stationary fog nodes, i.e., a road side unit integrated into a traffic light would be eligible, but a smart car would not. The more specific string “fog/stationary/raspberrypi/4-b” would only allow fog nodes that are a stationary Raspberry Pi Model 4 B."
+                          type: string
                       type: object
                     nodeType:
                       default: ServiceNode
