@@ -5,6 +5,20 @@ kind: Namespace
 metadata:
   name: taxi-demo
 ---
+# Secret for pulling container images from a private registry (optional).
+# The .dockerconfigjson string is simply the base64 encoded version of a .docker/config.json file, which contains username and password in plain text.
+# For more details on how to create the string, see https://github.com/kubernetes/kubernetes/blob/397ff0b3cb2d674113f3cb8195e044ebdf88d27b/staging/src/k8s.io/kubectl/pkg/cmd/create/create_secret_docker.go#L290
+# The example is the result of running the following command:
+# kubectl create secret docker-registry -n taxi-demo rainbow-regcred --docker-server=registry.gitlab.com --docker-username=test --docker-password=1234 --docker-email=test@rainbow-h2020.eu
+apiVersion: v1
+kind: Secret
+metadata:
+  name: rainbow-regcred
+  namespace: taxi-demo
+data:
+  .dockerconfigjson: eyJhdXRocyI6eyJyZWdpc3RyeS5naXRsYWIuY29tIjp7InVzZXJuYW1lIjoidGVzdCIsInBhc3N3b3JkIjoiMTIzNCIsImVtYWlsIjoidGVzdEByYWluYm93LWgyMDIwLmV1IiwiYXV0aCI6ImRHVnpkRG94TWpNMCJ9fX0=
+type: kubernetes.io/dockerconfigjson
+---
 apiVersion: fogapps.k8s.rainbow-h2020.eu/v1
 kind: ServiceGraph
 
@@ -152,11 +166,20 @@ spec:
     - source: taxi-iot
       target: taxi-edge-bronx
       qosRequirements:
+        # Specifying QoS requirements is optional (none of them are required).
         linkType:
           protocol: HTTP
           minQualityClass: QC1Mbps
+        throughput:
+          minBandwidthKbps: 1000
+          maxBandwidthVariance: 200
         latency:
           maxPacketDelayMsec: 100
+          maxPacketDelayVariance: 80 # Jitter
+        packetLoss:
+          # The maximum packet loss in basis points (bp).
+          # 1 bp = 0.01%
+          maxPacketLossBp: 1
     - source: taxi-iot
       target: taxi-edge-brooklyn
     - source: taxi-edge-bronx
