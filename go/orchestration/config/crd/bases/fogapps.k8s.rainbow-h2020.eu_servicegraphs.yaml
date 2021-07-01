@@ -2098,6 +2098,11 @@ spec:
                       description: Used to constrain the geographical locations where
                         this service may be deployed.
                       type: object
+                    hostNetwork:
+                      default: false
+                      description: If true, a pod created from this ServiceGraphNode,
+                        will use host host node's network namespace.
+                      type: boolean
                     imagePullSecrets:
                       description: References to secrets for pulling container images
                         from private registries.
