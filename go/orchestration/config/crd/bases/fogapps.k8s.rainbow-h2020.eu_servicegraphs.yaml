@@ -3278,7 +3278,7 @@ spec:
                                 description: CpuArchitecture defines the possible
                                   CPU architectures.
                                 enum:
-                                - 386
+                                - "386"
                                 - amd64
                                 - arm
                                 - arm64
