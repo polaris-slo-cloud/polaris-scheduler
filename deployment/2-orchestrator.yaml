@@ -3626,7 +3626,7 @@ spec:
         - --leader-elect
         command:
         - /manager
-        image: registry.gitlab.com/rainbow-project1/rainbow-integration/rainbow-orchestrator:0.2.0
+        image: registry.gitlab.com/rainbow-project1/rainbow-integration/rainbow-orchestrator:0.3.0
         livenessProbe:
           httpGet:
             path: /healthz

@@ -1,6 +1,6 @@
 
 # The version of the orchestrator
-VERSION ?= 0.2.0
+VERSION ?= 0.3.0
 # Image URL to use all building/pushing image targets
 IMG ?= registry.gitlab.com/rainbow-project1/rainbow-integration/rainbow-orchestrator:${VERSION}
 # Produce CRDs that work back to Kubernetes 1.11 (no version conversion)
