@@ -50,6 +50,11 @@ type ServiceGraphNode struct {
 	// The containers that constitute the service represented by this node.
 	Containers []core.Container `json:"containers"`
 
+	// References to secrets for pulling container images from private registries.
+	//
+	// +optional
+	ImagePullSecrets []core.LocalObjectReference `json:"imagePullSecrets,omitempty"`
+
 	// The storage volumes that should be available to the containers.
 	//
 	// +optional

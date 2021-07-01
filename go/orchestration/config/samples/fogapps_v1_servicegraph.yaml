@@ -50,6 +50,9 @@ spec:
             # Not needed by taxi-cloud, but to have a more complete example.
             - mountPath: /cache
               name: cache-volume
+      imagePullSecrets:
+        # Optional references to secrets for pulling container images from private registries.
+        - rainbow-regcred
       volumes:
         # List of Kubernetes Volume objects
         - name: cache-volume

@@ -74,6 +74,10 @@ func updatePodTemplate(podTemplate *core.PodTemplateSpec, node *fogappsCRDs.Serv
 	podTemplate.Spec.Volumes = node.Volumes
 	podTemplate.Spec.Affinity = node.Affinity
 
+	if node.ImagePullSecrets != nil && len(node.ImagePullSecrets) > 0 {
+		podTemplate.Spec.ImagePullSecrets = node.ImagePullSecrets
+	}
+
 	if node.NodeHardware != nil {
 		addNodeHardwareRequirements(podTemplate, node.NodeHardware)
 	}
