@@ -52,7 +52,7 @@ spec:
               name: cache-volume
       imagePullSecrets:
         # Optional references to secrets for pulling container images from private registries.
-        - rainbow-regcred
+        - name: rainbow-regcred
       volumes:
         # List of Kubernetes Volume objects
         - name: cache-volume
