@@ -73,12 +73,6 @@ type ServiceGraphNode struct {
 	// +optional
 	ExposedPorts *ExposedPorts `json:"exposedPorts,omitempty"`
 
-	// If true, a pod created from this ServiceGraphNode, will use host host node's network namespace.
-	//
-	// +kubebuilder:default=false
-	// +optional
-	HostNetwork bool `json:"hostNetwork,omitempty"`
-
 	// Allows to configure affinity to cluster nodes and affinity and anti-affinity
 	// to other ServiceGraphNodes (referred to as "pods" in the data structure).
 	//

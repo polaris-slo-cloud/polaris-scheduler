@@ -69,6 +69,8 @@ spec:
         ports:
           - name: main
             port: 8080
+        # Optionally, use the host node's network namespace
+        hostNetwork: true
       nodeHardware:
         # Configures the hardware requirements that the node must fulfill.
         # Note that this does not reserve the hardware for exclusive usage, it only assures that the node has this hardware.
