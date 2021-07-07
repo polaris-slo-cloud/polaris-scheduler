@@ -50,6 +50,9 @@ spec:
             # Not needed by taxi-cloud, but to have a more complete example.
             - mountPath: /cache
               name: cache-volume
+      imagePullSecrets:
+        # Optional references to secrets for pulling container images from private registries.
+        - name: rainbow-regcred
       volumes:
         # List of Kubernetes Volume objects
         - name: cache-volume
@@ -66,6 +69,8 @@ spec:
         ports:
           - name: main
             port: 8080
+        # Optionally, use the host node's network namespace
+        hostNetwork: true
       nodeHardware:
         # Configures the hardware requirements that the node must fulfill.
         # Note that this does not reserve the hardware for exclusive usage, it only assures that the node has this hardware.

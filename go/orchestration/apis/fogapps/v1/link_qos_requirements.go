@@ -5,22 +5,22 @@ type LinkQosRequirements struct {
 	// The type of advertised NetworkLink that is required by this ServiceLink.
 	//
 	// +optional
-	LinkType LinkType `json:"linkType,omitempty"`
+	LinkType *LinkType `json:"linkType,omitempty"`
 
 	// The throughput requirements for the network link.
 	//
 	// +optional
-	Throughput NetworkThroughputRequirements `json:"throughput,omitempty"`
+	Throughput *NetworkThroughputRequirements `json:"throughput,omitempty"`
 
 	// The latency requirements for the the network link.
 	//
 	// +optional
-	Latency NetworkLatencyRequirements `json:"latency,omitempty"`
+	Latency *NetworkLatencyRequirements `json:"latency,omitempty"`
 
 	// The average packet loss requirements for this network link.
 	//
 	// +optional
-	PacketLoss NetworkPacketLossRequirements `json:"packetLoss,omitempty"`
+	PacketLoss *NetworkPacketLossRequirements `json:"packetLoss,omitempty"`
 }
 
 // NetworkThroughputRequirements describes the requirements for the speed of the NetworkLink.

@@ -2,7 +2,7 @@ package v1
 
 // CpuArchitecture defines the possible CPU architectures.
 //
-// +kubebuilder:validation:Enum=386;amd64;arm;arm64
+// +kubebuilder:validation:Enum="386";amd64;arm;arm64
 type CpuArchitecture string
 
 // The list of CPU architecures is a selection taken from https://gist.github.com/asukakenji/f15ba7e588ac42795f421b48b8aede63
