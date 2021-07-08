@@ -5088,8 +5088,93 @@ spec:
             - nodes
             type: object
           status:
-            description: "ServiceGraphStatus defines the observed state of ServiceGraph
-              \n ToDo: Add info on deployment status here."
+            description: ServiceGraphStatus defines the observed state of ServiceGraph
+            properties:
+              conditions:
+                description: The latest available high-level state information on
+                  this ServiceGraph.
+                items:
+                  description: ServiceGraphCondition describes a high-level observed
+                    state of a ServiceGraph that is derived from lower level info
+                    contained in the ServiceGraphStatus.
+                  properties:
+                    lastTransitionTime:
+                      description: The last time that the condition transitioned from
+                        one state to another.
+                      format: date-time
+                      type: string
+                    message:
+                      description: A human-readable message that indicates why the
+                        last transition from one condition to another occurred.
+                      type: string
+                    reason:
+                      description: A one-word reason why the last transition from
+                        one condition to another occurred.
+                      type: string
+                    status:
+                      description: The status of this condition, one of True, False,
+                        Unknown.
+                      type: string
+                    type:
+                      description: Defines the type of this condition.
+                      type: string
+                  required:
+                  - reason
+                  - status
+                  - type
+                  type: object
+                type: array
+              nodeStates:
+                additionalProperties:
+                  description: ServiceGraphNodeStatus describes the observed state
+                    of the resources created from a ServiceGraphNode.
+                  properties:
+                    configuredReplicas:
+                      description: The number of replicas that has been configured,
+                        based on the ServiceGraphNode and the state of the SLOs.
+                      format: int32
+                      type: integer
+                    deploymentType:
+                      description: Describes the type of deployment resource that
+                        is created for this ServiceGraphNode.
+                      properties:
+                        group:
+                          type: string
+                        kind:
+                          type: string
+                        version:
+                          type: string
+                      required:
+                      - group
+                      - kind
+                      - version
+                      type: object
+                    initialReplicas:
+                      description: The last observed initial replicas value observed
+                        on the ServiceGraphNode. If the value on the ServiceGraphNode
+                        is different, the number of replicas on the deployment is
+                        changed (and a value potentially set through an elasticity
+                        strategy is overwritten), otherwise we know that the initial
+                        number of replicas has not been changed on the ServiceGraph
+                        and we do not need to update the deployment.
+                      format: int32
+                      type: integer
+                    readyReplicas:
+                      description: The number of replicas in the Ready state that
+                        have been observed.
+                      format: int32
+                      type: integer
+                  type: object
+                description: "Describes the state of the resources created from each
+                  ServiceGraphNode, indexed by ServiceGraphNode.Name. \n Note that
+                  it is possible that not all nodes from the ServiceGraph have been
+                  added to this map yet."
+                type: object
+              observedGeneration:
+                description: The last metadata.Generation value that was observed
+                  by the controller.
+                format: int64
+                type: integer
             type: object
         type: object
     served: true
