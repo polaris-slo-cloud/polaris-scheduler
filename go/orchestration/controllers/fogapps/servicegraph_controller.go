@@ -141,6 +141,8 @@ func (me *ServiceGraphReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		For(&fogappsCRDs.ServiceGraph{}).
 		Owns(&apps.Deployment{}).
 		Owns(&apps.StatefulSet{}).
+		Owns(&core.Service{}).
+		Owns(&networking.Ingress{}).
 		Complete(me)
 }
 
