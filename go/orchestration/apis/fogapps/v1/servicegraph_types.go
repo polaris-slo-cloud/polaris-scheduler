@@ -62,9 +62,24 @@ type ServiceGraphSpec struct {
 }
 
 // ServiceGraphStatus defines the observed state of ServiceGraph
-//
-// ToDo: Add info on deployment status here.
 type ServiceGraphStatus struct {
+
+	// The last metadata.Generation value that was observed by the controller.
+	//
+	// +optional
+	ObservedGeneration int64 `json:"observedGeneration,omitempty"`
+
+	// Describes the state of the resources created from each ServiceGraphNode, indexed by ServiceGraphNode.Name.
+	//
+	// Note that it is possible that not all nodes from the ServiceGraph have been added to this map yet.
+	//
+	// +optional
+	NodeStates map[string]*ServiceGraphNodeStatus `json:"nodeStates,omitempty"`
+
+	// The latest available high-level state information on this ServiceGraph.
+	//
+	// +optional
+	Conditions []ServiceGraphCondition `json:"conditions,omitempty"`
 }
 
 //+kubebuilder:object:root=true

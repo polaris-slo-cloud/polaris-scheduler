@@ -2,6 +2,7 @@ package v1
 
 import (
 	core "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 // ServiceGraphNodeType denotes the type of a ServiceGraphNode.
@@ -108,4 +109,33 @@ type ServiceGraphNode struct {
 	//
 	// +optional
 	GeoLocation *GeoLocation `json:"geoLocation,omitempty"`
+}
+
+// ServiceGraphNodeStatus describes the observed state of the resources created from a ServiceGraphNode.
+type ServiceGraphNodeStatus struct {
+
+	// Describes the type of deployment resource that is created for this ServiceGraphNode.
+	//
+	// +optional
+	DeploymentResourceType *metav1.GroupVersionKind `json:"deploymentType,omitempty"`
+
+	// The last observed initial replicas value observed on the ServiceGraphNode.
+	// If the value on the ServiceGraphNode is different, the number of replicas on the deployment
+	// is changed (and a value potentially set through an elasticity strategy is overwritten),
+	// otherwise we know that the initial number of replicas has not been changed on
+	// the ServiceGraph and we do not need to update the deployment.
+	//
+	// +optional
+	InitialReplicas int32 `json:"initialReplicas,omitempty"`
+
+	// The number of replicas that has been configured, based on the ServiceGraphNode and the
+	// state of the SLOs.
+	//
+	// +optional
+	ConfiguredReplicas int32 `json:"configuredReplicas,omitempty"`
+
+	// The number of replicas in the Ready state that have been observed.
+	//
+	// +optional
+	ReadyReplicas int32 `json:"readyReplicas,omitempty"`
 }

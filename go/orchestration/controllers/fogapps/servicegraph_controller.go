@@ -19,6 +19,7 @@ package fogapps
 import (
 	"context"
 	"fmt"
+	"reflect"
 
 	"github.com/go-logr/logr"
 	apps "k8s.io/api/apps/v1"
@@ -89,7 +90,7 @@ func (me *ServiceGraphReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 	}
 	log.Info("Successfully fetched all child objects.")
 
-	changes, err := ProcessServiceGraph(
+	changes, newStatus, err := ProcessServiceGraph(
 		&serviceGraph,
 		children,
 		log,
@@ -106,6 +107,13 @@ func (me *ServiceGraphReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 		return ctrl.Result{}, err
 	}
 	log.Info("Successfully applied all changes.")
+
+	if newStatus != nil && !reflect.DeepEqual(serviceGraph.Status, newStatus) {
+		serviceGraph.Status = *newStatus
+		if err := me.Client.Status().Update(ctx, &serviceGraph); err != nil {
+			log.Error(err, "Error updating ServiceGraph status subresource")
+		}
+	}
 
 	return ctrl.Result{}, nil
 }
@@ -141,6 +149,8 @@ func (me *ServiceGraphReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		For(&fogappsCRDs.ServiceGraph{}).
 		Owns(&apps.Deployment{}).
 		Owns(&apps.StatefulSet{}).
+		Owns(&core.Service{}).
+		Owns(&networking.Ingress{}).
 		Complete(me)
 }
 

@@ -34,12 +34,15 @@ func CreateDeployment(node *fogappsCRDs.ServiceGraphNode, graph *fogappsCRDs.Ser
 
 // UpdateDeployment updates an existing Deployment, based on the specified node.
 func UpdateDeployment(deployment *apps.Deployment, node *fogappsCRDs.ServiceGraphNode, graph *fogappsCRDs.ServiceGraph) (*apps.Deployment, error) {
-	replicas := getInitialReplicas(node)
-
 	updateNodeObjectMeta(&deployment.ObjectMeta, node, graph)
 	updatePodTemplate(&deployment.Spec.Template, node, graph)
 	deployment.Spec.Selector = createLabelSelector(node, graph)
-	deployment.Spec.Replicas = &replicas
+
+	initialReplicas := GetInitialReplicas(node)
+	initialReplicasFromStatus := getInitialReplicasFromStatus(node, graph)
+	if initialReplicasFromStatus != initialReplicas {
+		deployment.Spec.Replicas = &initialReplicas
+	}
 
 	return deployment, nil
 }
@@ -56,12 +59,15 @@ func CreateStatefulSet(node *fogappsCRDs.ServiceGraphNode, graph *fogappsCRDs.Se
 
 // UpdateStatefulSet updates an existing StatefulSet, based on the specified node.
 func UpdateStatefulSet(statefulSet *apps.StatefulSet, node *fogappsCRDs.ServiceGraphNode, graph *fogappsCRDs.ServiceGraph) (*apps.StatefulSet, error) {
-	replicas := getInitialReplicas(node)
-
 	updateNodeObjectMeta(&statefulSet.ObjectMeta, node, graph)
 	updatePodTemplate(&statefulSet.Spec.Template, node, graph)
 	statefulSet.Spec.Selector = createLabelSelector(node, graph)
-	statefulSet.Spec.Replicas = &replicas
+
+	initialReplicas := GetInitialReplicas(node)
+	initialReplicasFromStatus := getInitialReplicasFromStatus(node, graph)
+	if initialReplicasFromStatus != initialReplicas {
+		statefulSet.Spec.Replicas = &initialReplicas
+	}
 
 	return statefulSet, nil
 }
@@ -99,7 +105,9 @@ func createLabelSelector(node *fogappsCRDs.ServiceGraphNode, graph *fogappsCRDs.
 	}
 }
 
-func getInitialReplicas(node *fogappsCRDs.ServiceGraphNode) int32 {
+// GetInitialReplicas returns the initial number of replicas configured for the node
+// or, if they are not set, the minimum number of replicas.
+func GetInitialReplicas(node *fogappsCRDs.ServiceGraphNode) int32 {
 	if node.Replicas.InitialCount != nil {
 		return *node.Replicas.InitialCount
 	}
@@ -171,4 +179,18 @@ func addCpuSelectionTerms(nodeSelector *core.NodeSelector, cpuInfo *fogappsCRDs.
 		}
 		nodeSelector.NodeSelectorTerms = append(nodeSelector.NodeSelectorTerms, cpuArchTerm)
 	}
+}
+
+// Returns the initial replica count for the specified node from the Status of the ServiceGraph,
+// or -1 if the node does not exist in the Status.
+func getInitialReplicasFromStatus(node *fogappsCRDs.ServiceGraphNode, graph *fogappsCRDs.ServiceGraph) int32 {
+	if graph.Status.NodeStates == nil {
+		return -1
+	}
+	if nodeState, ok := graph.Status.NodeStates[node.Name]; ok {
+		if nodeState.InitialReplicas > 0 {
+			return nodeState.InitialReplicas
+		}
+	}
+	return -1
 }

@@ -8,6 +8,7 @@ import (
 	apps "k8s.io/api/apps/v1"
 	core "k8s.io/api/core/v1"
 	networking "k8s.io/api/networking/v1"
+	meta "k8s.io/apimachinery/pkg/apis/meta/v1"
 	fogappsCRDs "k8s.rainbow-h2020.eu/rainbow/orchestration/apis/fogapps/v1"
 	svcGraphUtil "k8s.rainbow-h2020.eu/rainbow/orchestration/internal/servicegraphutil"
 	"k8s.rainbow-h2020.eu/rainbow/orchestration/pkg/controllerutil"
@@ -33,6 +34,7 @@ type serviceGraphProcessor struct {
 	log        logr.Logger
 	setOwnerFn controllerutil.SetOwnerReferenceFn
 	changes    *controllerutil.ResourceChangesList
+	status     *fogappsCRDs.ServiceGraphStatus
 }
 
 // ProcessServiceGraph assembles a list of changes that need to be applied due to the specified ServiceGraph.
@@ -41,14 +43,14 @@ func ProcessServiceGraph(
 	childObjects *serviceGraphChildObjects,
 	log logr.Logger,
 	setOwnerFn controllerutil.SetOwnerReferenceFn,
-) (*controllerutil.ResourceChangesList, error) {
+) (*controllerutil.ResourceChangesList, *fogappsCRDs.ServiceGraphStatus, error) {
 	graphProcessor := newServiceGraphProcessor(graph, childObjects, log, setOwnerFn)
 
 	if err := graphProcessor.assembleGraphChanges(); err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
-	return graphProcessor.changes, nil
+	return graphProcessor.changes, graphProcessor.status, nil
 }
 
 func newServiceGraphChildObjectMaps(lists *serviceGraphChildObjects) serviceGraphChildObjectMaps {
@@ -80,6 +82,22 @@ func newServiceGraphChildObjectMaps(lists *serviceGraphChildObjects) serviceGrap
 	return maps
 }
 
+func newServiceGraphStatus(graph *fogappsCRDs.ServiceGraph) *fogappsCRDs.ServiceGraphStatus {
+	status := fogappsCRDs.ServiceGraphStatus{
+		ObservedGeneration: graph.Generation,
+		NodeStates:         make(map[string]*fogappsCRDs.ServiceGraphNodeStatus),
+		Conditions:         make([]fogappsCRDs.ServiceGraphCondition, 0),
+	}
+
+	// Copy the conditions from the previous Status object one-by-one to ensure that
+	// we don't modify the existing Status.
+	for i := range graph.Status.Conditions {
+		status.Conditions = append(status.Conditions, graph.Status.Conditions[i])
+	}
+
+	return &status
+}
+
 func newServiceGraphProcessor(
 	graph *fogappsCRDs.ServiceGraph,
 	childObjects *serviceGraphChildObjects,
@@ -93,6 +111,7 @@ func newServiceGraphProcessor(
 		log:                  log,
 		setOwnerFn:           setOwnerFn,
 		changes:              controllerutil.NewResourceChangesList(),
+		status:               newServiceGraphStatus(graph),
 	}
 }
 
@@ -110,6 +129,7 @@ func (me *serviceGraphProcessor) assembleGraphChanges() error {
 	if err := me.createChildObjectsForServiceGraph(); err != nil {
 		return err
 	}
+	me.updateStatusConditions()
 
 	if err := me.assembleUpdatesForDeployments(); err != nil {
 		return err
@@ -189,6 +209,7 @@ func (me *serviceGraphProcessor) createOrUpdateDeployment(node *fogappsCRDs.Serv
 	}
 
 	me.newChildObjects.Deployments[deployment.Name] = deployment
+	me.updateNodeStatusWithDeployment(node, deployment)
 	return nil
 }
 
@@ -210,6 +231,7 @@ func (me *serviceGraphProcessor) createOrUpdateStatefulSet(node *fogappsCRDs.Ser
 	}
 
 	me.newChildObjects.StatefulSets[statefulSet.Name] = statefulSet
+	me.updateNodeStatusWithStatefulSet(node, statefulSet)
 	return nil
 }
 
@@ -354,4 +376,78 @@ func (me *serviceGraphProcessor) assembleAdditions() error {
 		me.changes.AddChanges(controllerutil.NewResourceAddition(value))
 	}
 	return nil
+}
+
+func (me *serviceGraphProcessor) getOrCreateServiceGraphNodeStatus(node *fogappsCRDs.ServiceGraphNode) *fogappsCRDs.ServiceGraphNodeStatus {
+	if nodeStatus, ok := me.status.NodeStates[node.Name]; ok {
+		return nodeStatus
+	}
+	nodeStatus := fogappsCRDs.ServiceGraphNodeStatus{}
+	me.status.NodeStates[node.Name] = &nodeStatus
+	return &nodeStatus
+}
+
+func (me *serviceGraphProcessor) updateNodeStatusWithDeployment(node *fogappsCRDs.ServiceGraphNode, deployment *apps.Deployment) {
+	nodeStatus := me.getOrCreateServiceGraphNodeStatus(node)
+	gvk := deployment.GroupVersionKind()
+	nodeStatus.DeploymentResourceType = &meta.GroupVersionKind{
+		Group:   gvk.Group,
+		Version: gvk.Version,
+		Kind:    gvk.Kind,
+	}
+
+	nodeStatus.InitialReplicas = svcGraphUtil.GetInitialReplicas(node)
+	nodeStatus.ConfiguredReplicas = *deployment.Spec.Replicas
+	nodeStatus.ReadyReplicas = deployment.Status.ReadyReplicas
+}
+
+func (me *serviceGraphProcessor) updateNodeStatusWithStatefulSet(node *fogappsCRDs.ServiceGraphNode, statefulSet *apps.StatefulSet) {
+	nodeStatus := me.getOrCreateServiceGraphNodeStatus(node)
+	gvk := statefulSet.GroupVersionKind()
+	nodeStatus.DeploymentResourceType = &meta.GroupVersionKind{
+		Group:   gvk.Group,
+		Version: gvk.Version,
+		Kind:    gvk.Kind,
+	}
+
+	nodeStatus.InitialReplicas = svcGraphUtil.GetInitialReplicas(node)
+	nodeStatus.ConfiguredReplicas = *statefulSet.Spec.Replicas
+	nodeStatus.ReadyReplicas = statefulSet.Status.ReadyReplicas
+}
+
+func (me *serviceGraphProcessor) updateStatusConditions() {
+	isReady := true
+	for i := range me.svcGraph.Spec.Nodes {
+		node := &me.svcGraph.Spec.Nodes[i]
+		nodeStatus := me.status.NodeStates[node.Name]
+		isReady = nodeStatus.ReadyReplicas >= node.Replicas.Min
+		if !isReady {
+			break
+		}
+	}
+
+	newCondition := fogappsCRDs.ServiceGraphCondition{
+		Status:             core.ConditionTrue,
+		LastTransitionTime: meta.Now(),
+	}
+
+	if isReady {
+		message := "The minimum number of replicas is in a ready state for each ServiceGraphNode"
+		newCondition.Type = fogappsCRDs.ServiceGraphReady
+		newCondition.Reason = "MinReplicasReady"
+		newCondition.Message = &message
+	} else {
+		message := "The minimum number of replicas is not yet in a ready state for each ServiceGraphNode"
+		newCondition.Type = fogappsCRDs.ServiceGraphProgressing
+		newCondition.Reason = "MinReplicasNotReady"
+		newCondition.Message = &message
+	}
+
+	if len(me.status.Conditions) > 0 {
+		lastCondition := me.status.Conditions[0]
+		if lastCondition.Type == newCondition.Type && lastCondition.Status == newCondition.Status {
+			return
+		}
+	}
+	me.status.Conditions = []fogappsCRDs.ServiceGraphCondition{newCondition}
 }
