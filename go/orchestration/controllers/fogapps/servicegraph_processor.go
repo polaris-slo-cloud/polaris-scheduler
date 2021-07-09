@@ -417,8 +417,10 @@ func (me *serviceGraphProcessor) updateNodeStatusWithStatefulSet(node *fogappsCR
 
 func (me *serviceGraphProcessor) updateStatusConditions() {
 	isReady := true
-	for _, nodeStatus := range me.status.NodeStates {
-		isReady = nodeStatus.ReadyReplicas == nodeStatus.ConfiguredReplicas
+	for i := range me.svcGraph.Spec.Nodes {
+		node := &me.svcGraph.Spec.Nodes[i]
+		nodeStatus := me.status.NodeStates[node.Name]
+		isReady = nodeStatus.ReadyReplicas >= node.Replicas.Min
 		if !isReady {
 			break
 		}
