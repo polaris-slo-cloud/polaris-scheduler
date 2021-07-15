@@ -31,6 +31,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	fogappsCRDs "k8s.rainbow-h2020.eu/rainbow/orchestration/apis/fogapps/v1"
+	"k8s.rainbow-h2020.eu/rainbow/orchestration/pkg/slo"
 )
 
 var (
@@ -52,6 +53,7 @@ type serviceGraphChildObjects struct {
 	StatefulSets []apps.StatefulSet
 	Services     []core.Service
 	Ingresses    []networking.Ingress
+	SloMappings  []slo.SloMapping
 }
 
 // Permissions on ServiceGraphs:

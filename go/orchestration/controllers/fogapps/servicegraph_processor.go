@@ -6,12 +6,14 @@ import (
 
 	"github.com/go-logr/logr"
 	apps "k8s.io/api/apps/v1"
+	autoscaling "k8s.io/api/autoscaling/v1"
 	core "k8s.io/api/core/v1"
 	networking "k8s.io/api/networking/v1"
 	meta "k8s.io/apimachinery/pkg/apis/meta/v1"
 	fogappsCRDs "k8s.rainbow-h2020.eu/rainbow/orchestration/apis/fogapps/v1"
 	svcGraphUtil "k8s.rainbow-h2020.eu/rainbow/orchestration/internal/servicegraphutil"
 	"k8s.rainbow-h2020.eu/rainbow/orchestration/pkg/controllerutil"
+	"k8s.rainbow-h2020.eu/rainbow/orchestration/pkg/slo"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -20,6 +22,7 @@ type serviceGraphChildObjectMaps struct {
 	StatefulSets map[string]*apps.StatefulSet
 	Services     map[string]*core.Service
 	Ingresses    map[string]*networking.Ingress
+	SloMappings  map[string]*slo.SloMapping
 }
 
 type serviceGraphProcessor struct {
@@ -59,23 +62,32 @@ func newServiceGraphChildObjectMaps(lists *serviceGraphChildObjects) serviceGrap
 		StatefulSets: make(map[string]*apps.StatefulSet),
 		Services:     make(map[string]*core.Service),
 		Ingresses:    make(map[string]*networking.Ingress),
+		SloMappings:  make(map[string]*slo.SloMapping),
 	}
 
 	if lists != nil {
-		for i, item := range lists.Deployments {
-			// item is apparently an object that is allocated for the loop and overwritten with
-			// the values of lists.Deployments[i], which means that the address of item is
-			// the same on every iteration.
-			maps.Deployments[item.Name] = &lists.Deployments[i]
+		for i := range lists.Deployments {
+			// In `for i, item := rage ...`, item is apparently an object that is allocated for the loop and overwritten with
+			// the values of lists.Deployments[i], which means that the address of item is the same on every iteration.
+			// Using only the index in the for loop, reduces copying.
+			item := &lists.Deployments[i]
+			maps.Deployments[item.Name] = item
 		}
-		for i, item := range lists.StatefulSets {
-			maps.StatefulSets[item.Name] = &lists.StatefulSets[i]
+		for i := range lists.StatefulSets {
+			item := &lists.StatefulSets[i]
+			maps.StatefulSets[item.Name] = item
 		}
-		for i, item := range lists.Services {
-			maps.Services[item.Name] = &lists.Services[i]
+		for i := range lists.Services {
+			item := &lists.Services[i]
+			maps.Services[item.Name] = item
 		}
-		for i, item := range lists.Ingresses {
-			maps.Ingresses[item.Name] = &lists.Ingresses[i]
+		for i := range lists.Ingresses {
+			item := &lists.Ingresses[i]
+			maps.Ingresses[item.Name] = item
+		}
+		for i := range lists.SloMappings {
+			item := &lists.SloMappings[i]
+			maps.SloMappings[item.Name] = item
 		}
 	}
 
@@ -143,6 +155,9 @@ func (me *serviceGraphProcessor) assembleGraphChanges() error {
 	if err := me.assembleUpdatesForIngresses(); err != nil {
 		return err
 	}
+	if err := me.assembleUpdatesForSloMappings(); err != nil {
+		return err
+	}
 	if err := me.assembleAdditions(); err != nil {
 		return err
 	}
@@ -168,12 +183,13 @@ func (me *serviceGraphProcessor) createChildObjectsForServiceGraph() error {
 
 func (me *serviceGraphProcessor) createChildObjectsForServiceNode(node *fogappsCRDs.ServiceGraphNode) error {
 	var err error
+	var targetRef *autoscaling.CrossVersionObjectReference
 
 	switch node.Replicas.SetType {
 	case fogappsCRDs.SimpleReplicaSet:
-		err = me.createOrUpdateDeployment(node)
+		targetRef, err = me.createOrUpdateDeployment(node)
 	case fogappsCRDs.StatefulReplicaSet:
-		err = me.createOrUpdateStatefulSet(node)
+		targetRef, err = me.createOrUpdateStatefulSet(node)
 	}
 
 	if err != nil {
@@ -188,10 +204,17 @@ func (me *serviceGraphProcessor) createChildObjectsForServiceNode(node *fogappsC
 		}
 	}
 
+	// Create SloMappings from the configured SLOs, if any.
+	for i := range node.SLOs {
+		if err = me.createOrUpdateSloMapping(&node.SLOs[i], targetRef, node); err != nil {
+			return err
+		}
+	}
+
 	return nil
 }
 
-func (me *serviceGraphProcessor) createOrUpdateDeployment(node *fogappsCRDs.ServiceGraphNode) error {
+func (me *serviceGraphProcessor) createOrUpdateDeployment(node *fogappsCRDs.ServiceGraphNode) (*autoscaling.CrossVersionObjectReference, error) {
 	var deployment *apps.Deployment
 	var err error
 
@@ -199,21 +222,27 @@ func (me *serviceGraphProcessor) createOrUpdateDeployment(node *fogappsCRDs.Serv
 		deployment, err = svcGraphUtil.UpdateDeployment(existingDeployment.DeepCopy(), node, me.svcGraph)
 	} else {
 		if deployment, err = svcGraphUtil.CreateDeployment(node, me.svcGraph); err != nil {
-			return err
+			return nil, err
 		}
 		err = me.setOwner(deployment)
 	}
 
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	me.newChildObjects.Deployments[deployment.Name] = deployment
 	me.updateNodeStatusWithDeployment(node, deployment)
-	return nil
+
+	targetRef := autoscaling.CrossVersionObjectReference{
+		APIVersion: deployment.APIVersion,
+		Kind:       deployment.Kind,
+		Name:       deployment.Name,
+	}
+	return &targetRef, nil
 }
 
-func (me *serviceGraphProcessor) createOrUpdateStatefulSet(node *fogappsCRDs.ServiceGraphNode) error {
+func (me *serviceGraphProcessor) createOrUpdateStatefulSet(node *fogappsCRDs.ServiceGraphNode) (*autoscaling.CrossVersionObjectReference, error) {
 	var statefulSet *apps.StatefulSet
 	var err error
 
@@ -221,18 +250,24 @@ func (me *serviceGraphProcessor) createOrUpdateStatefulSet(node *fogappsCRDs.Ser
 		statefulSet, err = svcGraphUtil.UpdateStatefulSet(existingStatefulSet.DeepCopy(), node, me.svcGraph)
 	} else {
 		if statefulSet, err = svcGraphUtil.CreateStatefulSet(node, me.svcGraph); err != nil {
-			return err
+			return nil, err
 		}
 		err = me.setOwner(statefulSet)
 	}
 
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	me.newChildObjects.StatefulSets[statefulSet.Name] = statefulSet
 	me.updateNodeStatusWithStatefulSet(node, statefulSet)
-	return nil
+
+	targetRef := autoscaling.CrossVersionObjectReference{
+		APIVersion: statefulSet.APIVersion,
+		Kind:       statefulSet.Kind,
+		Name:       statefulSet.Name,
+	}
+	return &targetRef, nil
 }
 
 func (me *serviceGraphProcessor) createOrUpdateServiceAndIngress(node *fogappsCRDs.ServiceGraphNode) error {
@@ -276,6 +311,23 @@ func (me *serviceGraphProcessor) createOrUpdateServiceAndIngress(node *fogappsCR
 		me.newChildObjects.Ingresses[serviceAndIngress.Ingress.Name] = serviceAndIngress.Ingress
 	}
 
+	return nil
+}
+
+func (me *serviceGraphProcessor) createOrUpdateSloMapping(
+	sloObj *fogappsCRDs.ServiceLevelObjective,
+	target *autoscaling.CrossVersionObjectReference,
+	node *fogappsCRDs.ServiceGraphNode,
+) error {
+	newSloMapping := slo.CreateSloMappingFromServiceGraphNode(sloObj, target, node, me.svcGraph)
+
+	if existingSloMapping, ok := me.existingChildObjects.SloMappings[newSloMapping.Name]; ok {
+		newSloMapping.ObjectMeta = existingSloMapping.ObjectMeta
+	} else {
+		me.setOwner(newSloMapping)
+	}
+
+	me.newChildObjects.SloMappings[newSloMapping.Name] = newSloMapping
 	return nil
 }
 
@@ -362,6 +414,24 @@ func (me *serviceGraphProcessor) assembleUpdatesForIngresses() error {
 	return nil
 }
 
+func (me *serviceGraphProcessor) assembleUpdatesForSloMappings() error {
+	for _, existingSloMapping := range me.existingChildObjects.SloMappings {
+		if updatedSloMapping, ok := me.newChildObjects.SloMappings[existingSloMapping.Name]; ok {
+
+			if !reflect.DeepEqual(existingSloMapping.Spec, updatedSloMapping.Spec) {
+				// SloMapping was changed, we need to update it
+				me.changes.AddChanges(controllerutil.NewResourceUpdate(updatedSloMapping))
+			}
+
+			delete(me.newChildObjects.SloMappings, updatedSloMapping.Name)
+		} else {
+			// The corresponding SLO or its ServiceGraphNode or ServiceGraphLink was deleted, so we delete the SloMapping
+			me.changes.AddChanges(controllerutil.NewResourceDeletion(existingSloMapping))
+		}
+	}
+	return nil
+}
+
 func (me *serviceGraphProcessor) assembleAdditions() error {
 	for _, value := range me.newChildObjects.Deployments {
 		me.changes.AddChanges(controllerutil.NewResourceAddition(value))
@@ -373,6 +443,9 @@ func (me *serviceGraphProcessor) assembleAdditions() error {
 		me.changes.AddChanges(controllerutil.NewResourceAddition(value))
 	}
 	for _, value := range me.newChildObjects.Ingresses {
+		me.changes.AddChanges(controllerutil.NewResourceAddition(value))
+	}
+	for _, value := range me.newChildObjects.SloMappings {
 		me.changes.AddChanges(controllerutil.NewResourceAddition(value))
 	}
 	return nil
