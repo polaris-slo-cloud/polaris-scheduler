@@ -162,22 +162,32 @@ func ensureAffinityNodeSelectorExists(podTemplate *core.PodTemplateSpec) *core.N
 
 func addCpuSelectionTerms(nodeSelector *core.NodeSelector, cpuInfo *fogappsCRDs.CpuInfo) {
 	architecturesCount := len(cpuInfo.Architectures)
-	if architecturesCount > 0 {
-		architectures := make([]string, architecturesCount)
-		for i, cpuArch := range cpuInfo.Architectures {
-			architectures[i] = string(cpuArch)
-		}
+	if architecturesCount == 0 {
+		return
+	}
 
-		cpuArchTerm := core.NodeSelectorTerm{
-			MatchExpressions: []core.NodeSelectorRequirement{
-				{
-					Key:      kubernetesCpuArchLabel,
-					Operator: core.NodeSelectorOpIn,
-					Values:   architectures,
-				},
-			},
+	architectures := make([]string, architecturesCount)
+	for i, cpuArch := range cpuInfo.Architectures {
+		architectures[i] = string(cpuArch)
+	}
+
+	cpuArchReq := core.NodeSelectorRequirement{
+		Key:      kubernetesCpuArchLabel,
+		Operator: core.NodeSelectorOpIn,
+		Values:   architectures,
+	}
+
+	if len(nodeSelector.NodeSelectorTerms) == 0 {
+		nodeSelector.NodeSelectorTerms = append(nodeSelector.NodeSelectorTerms, core.NodeSelectorTerm{})
+	}
+
+	// Add cpuArchReq to all node selector terms, because only one needs to be satisfied by a node to be eligible.
+	for i := range nodeSelector.NodeSelectorTerms {
+		selectorTerm := &nodeSelector.NodeSelectorTerms[i]
+		if selectorTerm.MatchExpressions == nil {
+			selectorTerm.MatchExpressions = make([]core.NodeSelectorRequirement, 0, 1)
 		}
-		nodeSelector.NodeSelectorTerms = append(nodeSelector.NodeSelectorTerms, cpuArchTerm)
+		selectorTerm.MatchExpressions = append(selectorTerm.MatchExpressions, cpuArchReq)
 	}
 }
 
