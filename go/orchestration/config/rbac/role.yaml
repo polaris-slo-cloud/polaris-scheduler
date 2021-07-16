@@ -88,3 +88,15 @@ rules:
   - ingresses/status
   verbs:
   - get
+- apiGroups:
+  - slo.polaris-slo-cloud.github.io
+  resources:
+  - '*'
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch

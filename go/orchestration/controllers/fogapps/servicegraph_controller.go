@@ -73,6 +73,9 @@ type serviceGraphChildObjects struct {
 //+kubebuilder:rbac:groups=networking.k8s.io,resources=ingresses,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=networking.k8s.io,resources=ingresses/status,verbs=get
 
+// Permissions on SloMappings:
+//+kubebuilder:rbac:groups=slo.polaris-slo-cloud.github.io,resources=*,verbs=get;list;watch;create;update;patch;delete
+
 // Reconcile is triggered whenever a ServiceGraph is added, changed, or removed.
 //
 // Reconcile applies changes to the deployments in the cluster to ensure that they reflect the new state of the ServiceGraph object.
