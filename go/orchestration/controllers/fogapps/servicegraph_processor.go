@@ -234,9 +234,10 @@ func (me *serviceGraphProcessor) createOrUpdateDeployment(node *fogappsCRDs.Serv
 	me.newChildObjects.Deployments[deployment.Name] = deployment
 	me.updateNodeStatusWithDeployment(node, deployment)
 
+	apiVersion, kind := deployment.GroupVersionKind().ToAPIVersionAndKind()
 	targetRef := autoscaling.CrossVersionObjectReference{
-		APIVersion: deployment.APIVersion,
-		Kind:       deployment.Kind,
+		APIVersion: apiVersion,
+		Kind:       kind,
 		Name:       deployment.Name,
 	}
 	return &targetRef, nil
@@ -262,9 +263,10 @@ func (me *serviceGraphProcessor) createOrUpdateStatefulSet(node *fogappsCRDs.Ser
 	me.newChildObjects.StatefulSets[statefulSet.Name] = statefulSet
 	me.updateNodeStatusWithStatefulSet(node, statefulSet)
 
+	apiVersion, kind := statefulSet.GroupVersionKind().ToAPIVersionAndKind()
 	targetRef := autoscaling.CrossVersionObjectReference{
-		APIVersion: statefulSet.APIVersion,
-		Kind:       statefulSet.Kind,
+		APIVersion: apiVersion,
+		Kind:       kind,
 		Name:       statefulSet.Name,
 	}
 	return &targetRef, nil
@@ -420,7 +422,7 @@ func (me *serviceGraphProcessor) assembleUpdatesForSloMappings() error {
 
 			if !reflect.DeepEqual(existingSloMapping.Spec, updatedSloMapping.Spec) {
 				// SloMapping was changed, we need to update it
-				me.changes.AddChanges(controllerutil.NewResourceUpdate(updatedSloMapping))
+				me.changes.AddChanges(controllerutil.NewResourceUpdate(updatedSloMapping.ToUnstructured()))
 			}
 
 			delete(me.newChildObjects.SloMappings, updatedSloMapping.Name)
@@ -446,7 +448,7 @@ func (me *serviceGraphProcessor) assembleAdditions() error {
 		me.changes.AddChanges(controllerutil.NewResourceAddition(value))
 	}
 	for _, value := range me.newChildObjects.SloMappings {
-		me.changes.AddChanges(controllerutil.NewResourceAddition(value))
+		me.changes.AddChanges(controllerutil.NewResourceAddition(value.ToUnstructured()))
 	}
 	return nil
 }

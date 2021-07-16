@@ -5,6 +5,7 @@ import (
 
 	autoscaling "k8s.io/api/autoscaling/v1"
 	meta "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	runtime "k8s.io/apimachinery/pkg/runtime"
 	fogappsCRDs "k8s.rainbow-h2020.eu/rainbow/orchestration/apis/fogapps/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -72,6 +73,70 @@ func CreateSloMappingFromServiceGraphNode(
 		},
 	}
 	return &sloMapping
+}
+
+// ToUnstructured returns copy of this SloMapping as an unstructured map for use
+// with a non-typed Kubernetes client.
+func (me *SloMapping) ToUnstructured() *unstructured.Unstructured {
+	ret := unstructured.Unstructured{
+		Object: map[string]interface{}{
+			"apiVersion": me.APIVersion,
+			"kind":       me.Kind,
+			"metadata":   me.convertMetadataToUnstructuredMap(),
+			"spec":       me.Spec.toUnstructuredMap(),
+		},
+	}
+	apiV := ret.GetAPIVersion()
+	_ = apiV
+	kind := ret.GetKind()
+	_ = kind
+	namespace := ret.GetNamespace()
+	_ = namespace
+	name := ret.GetName()
+	_ = name
+
+	return &ret
+}
+
+func (me *SloMapping) convertMetadataToUnstructuredMap() map[string]interface{} {
+	metadata := map[string]interface{}{
+		"name":        me.Name,
+		"namespace":   me.Namespace,
+		"annotations": me.Annotations,
+	}
+	if me.Generation > 0 {
+		metadata["generation"] = me.Generation
+		metadata["uid"] = me.UID
+		metadata["resourceVersion"] = me.ResourceVersion
+		metadata["creationTimestamp"] = me.CreationTimestamp
+	}
+	return metadata
+}
+
+func (me *SloMappingSpec) toUnstructuredMap() map[string]interface{} {
+	var stabilizationWindowMap map[string]interface{}
+	if me.StabilizationWindow != nil {
+		stabilizationWindowMap = map[string]interface{}{
+			"scaleDownSeconds": me.StabilizationWindow.ScaleDownSeconds,
+			"scaleUpSeconds":   me.StabilizationWindow.ScaleUpSeconds,
+		}
+	}
+
+	spec := map[string]interface{}{
+		"targetRef": map[string]interface{}{
+			"apiVersion": me.TargetRef.APIVersion,
+			"kind":       me.TargetRef.Kind,
+			"name":       me.TargetRef.Name,
+		},
+		"elasticityStrategy": map[string]interface{}{
+			"apiVersion": me.ElasticityStrategy.APIVersion,
+			"kind":       me.ElasticityStrategy.Kind,
+		},
+		"sloConfig":                      me.SloConfig,
+		"stabilizationWindow":            stabilizationWindowMap,
+		"staticElasticityStrategyConfig": me.StaticElasticityStrategyConfig,
+	}
+	return spec
 }
 
 func getSloMappingName(targetName string, sloName string) string {

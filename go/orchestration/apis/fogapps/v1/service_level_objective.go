@@ -1,5 +1,9 @@
 package v1
 
+import (
+	"k8s.io/apimachinery/pkg/runtime"
+)
+
 // ServiceLevelObjective an SLOs that is attached to
 // a ServiceGraph, a ServiceGraphNode, or a ServiceLink.
 type ServiceLevelObjective struct {
@@ -23,7 +27,8 @@ type SloUserConfig struct {
 	ElasticityStrategy ApiVersionKind `json:"elasticityStrategy"`
 
 	// The SLO-specific configuration.
-	SloConfig *ArbitraryObject `json:"sloConfig"`
+	// +kubebuilder:pruning:PreserveUnknownFields
+	SloConfig runtime.RawExtension `json:"sloConfig"`
 
 	// Configures the duration of the period after the last elasticity strategy execution,
 	// during which the strategy will not be executed again (to avoid unnecessary scaling).
@@ -34,7 +39,8 @@ type SloUserConfig struct {
 	// Static configuration to be passed to the chosen elasticity strategy.
 	//
 	// +optional
-	StaticElasticityStrategyConfig *ArbitraryObject `json:"staticElasticityStrategyConfig,omitempty"`
+	// +kubebuilder:pruning:PreserveUnknownFields
+	StaticElasticityStrategyConfig *runtime.RawExtension `json:"staticElasticityStrategyConfig,omitempty"`
 }
 
 // StabilizationWindow allows configuring the period of time that an elasticity strategy controller will

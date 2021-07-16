@@ -84,10 +84,10 @@ spec:
         # SLOs for this node.
         - name: cpu-usage
           sloType:
-            apiVersion: slo.sloc.github.io/v1
+            apiVersion: slo.polaris-slo-cloud.github.io/v1
             kind: CPUUsageSloMapping
           elasticityStrategy:
-            apiVersion: elasticity.sloc.github.io/v1
+            apiVersion: elasticity.polaris-slo-cloud.github.io/v1
             kind: HorizontalElasticityStrategy
           sloConfig:
             targetAvgCPUUtilizationPercentage: 70

@@ -23,7 +23,7 @@ package v1
 import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	runtime "k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime"
 	clusterv1 "k8s.rainbow-h2020.eu/rainbow/orchestration/apis/cluster/v1"
 )
 
@@ -771,11 +771,7 @@ func (in *ServiceLink) DeepCopy() *ServiceLink {
 func (in *SloUserConfig) DeepCopyInto(out *SloUserConfig) {
 	*out = *in
 	out.ElasticityStrategy = in.ElasticityStrategy
-	if in.SloConfig != nil {
-		in, out := &in.SloConfig, &out.SloConfig
-		*out = new(ArbitraryObject)
-		**out = **in
-	}
+	in.SloConfig.DeepCopyInto(&out.SloConfig)
 	if in.StabilizationWindow != nil {
 		in, out := &in.StabilizationWindow, &out.StabilizationWindow
 		*out = new(StabilizationWindow)
@@ -783,8 +779,8 @@ func (in *SloUserConfig) DeepCopyInto(out *SloUserConfig) {
 	}
 	if in.StaticElasticityStrategyConfig != nil {
 		in, out := &in.StaticElasticityStrategyConfig, &out.StaticElasticityStrategyConfig
-		*out = new(ArbitraryObject)
-		**out = **in
+		*out = new(runtime.RawExtension)
+		(*in).DeepCopyInto(*out)
 	}
 }
 
