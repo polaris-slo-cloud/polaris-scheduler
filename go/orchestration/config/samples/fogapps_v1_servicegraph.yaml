@@ -200,6 +200,12 @@ spec:
     - source: taxi-edge-brooklyn
       target: taxi-cloud
 
+  # Optional DNS Configuration for all pods created from this ServiceGraph
+  # dnsConfig:
+  #   dnsPolicy: None
+  #   nameservers:
+  #     - 8.8.8.8
+
   # Application-wide Service Level Objectives
   # slos:
 

@@ -58,6 +58,11 @@ type ServiceGraphSpec struct {
 	// +optional
 	ConfigMaps []ConfigMap `json:"configMaps,omitempty"`
 
+	// Allows configuring DNS for all pods created from this ServiceGraph.
+	//
+	// +optional
+	DNSConfig *DNSConfig `json:"dnsConfig,omitempty"`
+
 	// ToDo: add secrets
 }
 

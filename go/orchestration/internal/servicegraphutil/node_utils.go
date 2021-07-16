@@ -82,11 +82,14 @@ func updatePodTemplate(podTemplate *core.PodTemplateSpec, node *fogappsCRDs.Serv
 
 	if node.ImagePullSecrets != nil && len(node.ImagePullSecrets) > 0 {
 		podTemplate.Spec.ImagePullSecrets = node.ImagePullSecrets
+	} else {
+		podTemplate.Spec.ImagePullSecrets = nil
 	}
 
 	if node.NodeHardware != nil {
 		addNodeHardwareRequirements(podTemplate, node.NodeHardware)
 	}
+	// ToDo: Add else branch to remove hardware requirements from the pod, if they were removed from the ServiceGraphNode.
 
 	if serviceAccountName := getServiceAccountName(node, graph); serviceAccountName != nil {
 		podTemplate.Spec.ServiceAccountName = *serviceAccountName
@@ -96,6 +99,17 @@ func updatePodTemplate(podTemplate *core.PodTemplateSpec, node *fogappsCRDs.Serv
 
 	if node.ExposedPorts != nil {
 		podTemplate.Spec.HostNetwork = node.ExposedPorts.HostNetwork
+	} else {
+		// Set to the default value.
+		podTemplate.Spec.HostNetwork = false
+	}
+
+	if graph.Spec.DNSConfig != nil {
+		podTemplate.Spec.DNSPolicy = graph.Spec.DNSConfig.DNSPolicy
+		podTemplate.Spec.DNSConfig = &graph.Spec.DNSConfig.PodDNSConfig
+	} else {
+		podTemplate.Spec.DNSPolicy = core.DNSClusterFirst
+		podTemplate.Spec.DNSConfig = nil
 	}
 }
 
