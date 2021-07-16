@@ -91,6 +91,16 @@ spec:
             kind: HorizontalElasticityStrategy
           sloConfig:
             targetAvgCPUUtilizationPercentage: 70
+          # Optional configuration of the stabilization window, within which the elasticity strategy will not be executed twice.
+          stabilizationWindow:
+            scaleUpSeconds: 40
+            scaleDownSeconds: 60
+          # Optional static configuration
+          staticElasticityStrategyConfig:
+            testA: 1
+            complexObj:
+              a: 1
+              b: test
 
     # Taxi IoT Node
     - name: taxi-iot
