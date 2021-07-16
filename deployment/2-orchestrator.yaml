@@ -173,6 +173,41 @@ spec:
                       type: boolean
                   type: object
                 type: array
+              dnsConfig:
+                description: Allows configuring DNS for all pods created from this ServiceGraph.
+                properties:
+                  dnsPolicy:
+                    default: ClusterFirst
+                    description: "Sets the DNS policy for all pods created from this ServiceGraph. \n The possible values are: 'ClusterFirstWithHostNet', 'ClusterFirst' (= default), 'Default', or 'None'."
+                    enum:
+                    - ClusterFirstWithHostNet
+                    - ClusterFirst
+                    - Default
+                    - None
+                    type: string
+                  nameservers:
+                    description: A list of DNS name server IP addresses. This will be appended to the base nameservers generated from DNSPolicy. Duplicated nameservers will be removed.
+                    items:
+                      type: string
+                    type: array
+                  options:
+                    description: A list of DNS resolver options. This will be merged with the base options generated from DNSPolicy. Duplicated entries will be removed. Resolution options given in Options will override those that appear in the base DNSPolicy.
+                    items:
+                      description: PodDNSConfigOption defines DNS resolver options of a pod.
+                      properties:
+                        name:
+                          description: Required.
+                          type: string
+                        value:
+                          type: string
+                      type: object
+                    type: array
+                  searches:
+                    description: A list of DNS search domains for host-name lookup. This will be appended to the base search paths generated from DNSPolicy. Duplicated search paths will be removed.
+                    items:
+                      type: string
+                    type: array
+                type: object
               links:
                 description: The set of links between the nodes.
                 items:
@@ -3691,7 +3726,7 @@ spec:
         - --leader-elect
         command:
         - /manager
-        image: registry.gitlab.com/rainbow-project1/rainbow-integration/rainbow-orchestrator:0.4.0
+        image: registry.gitlab.com/rainbow-project1/rainbow-integration/rainbow-orchestrator:0.4.2
         livenessProbe:
           httpGet:
             path: /healthz
@@ -3707,8 +3742,8 @@ spec:
           periodSeconds: 10
         resources:
           limits:
-            cpu: 100m
-            memory: 30Mi
+            cpu: 500m
+            memory: 512Mi
           requests:
             cpu: 100m
             memory: 20Mi

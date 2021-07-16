@@ -82,11 +82,14 @@ func updatePodTemplate(podTemplate *core.PodTemplateSpec, node *fogappsCRDs.Serv
 
 	if node.ImagePullSecrets != nil && len(node.ImagePullSecrets) > 0 {
 		podTemplate.Spec.ImagePullSecrets = node.ImagePullSecrets
+	} else {
+		podTemplate.Spec.ImagePullSecrets = nil
 	}
 
 	if node.NodeHardware != nil {
 		addNodeHardwareRequirements(podTemplate, node.NodeHardware)
 	}
+	// ToDo: Add else branch to remove hardware requirements from the pod, if they were removed from the ServiceGraphNode.
 
 	if serviceAccountName := getServiceAccountName(node, graph); serviceAccountName != nil {
 		podTemplate.Spec.ServiceAccountName = *serviceAccountName
@@ -96,6 +99,17 @@ func updatePodTemplate(podTemplate *core.PodTemplateSpec, node *fogappsCRDs.Serv
 
 	if node.ExposedPorts != nil {
 		podTemplate.Spec.HostNetwork = node.ExposedPorts.HostNetwork
+	} else {
+		// Set to the default value.
+		podTemplate.Spec.HostNetwork = false
+	}
+
+	if graph.Spec.DNSConfig != nil {
+		podTemplate.Spec.DNSPolicy = graph.Spec.DNSConfig.DNSPolicy
+		podTemplate.Spec.DNSConfig = &graph.Spec.DNSConfig.PodDNSConfig
+	} else {
+		podTemplate.Spec.DNSPolicy = core.DNSClusterFirst
+		podTemplate.Spec.DNSConfig = nil
 	}
 }
 
@@ -162,22 +176,32 @@ func ensureAffinityNodeSelectorExists(podTemplate *core.PodTemplateSpec) *core.N
 
 func addCpuSelectionTerms(nodeSelector *core.NodeSelector, cpuInfo *fogappsCRDs.CpuInfo) {
 	architecturesCount := len(cpuInfo.Architectures)
-	if architecturesCount > 0 {
-		architectures := make([]string, architecturesCount)
-		for i, cpuArch := range cpuInfo.Architectures {
-			architectures[i] = string(cpuArch)
-		}
+	if architecturesCount == 0 {
+		return
+	}
 
-		cpuArchTerm := core.NodeSelectorTerm{
-			MatchExpressions: []core.NodeSelectorRequirement{
-				{
-					Key:      kubernetesCpuArchLabel,
-					Operator: core.NodeSelectorOpIn,
-					Values:   architectures,
-				},
-			},
+	architectures := make([]string, architecturesCount)
+	for i, cpuArch := range cpuInfo.Architectures {
+		architectures[i] = string(cpuArch)
+	}
+
+	cpuArchReq := core.NodeSelectorRequirement{
+		Key:      kubernetesCpuArchLabel,
+		Operator: core.NodeSelectorOpIn,
+		Values:   architectures,
+	}
+
+	if len(nodeSelector.NodeSelectorTerms) == 0 {
+		nodeSelector.NodeSelectorTerms = append(nodeSelector.NodeSelectorTerms, core.NodeSelectorTerm{})
+	}
+
+	// Add cpuArchReq to all node selector terms, because only one needs to be satisfied by a node to be eligible.
+	for i := range nodeSelector.NodeSelectorTerms {
+		selectorTerm := &nodeSelector.NodeSelectorTerms[i]
+		if selectorTerm.MatchExpressions == nil {
+			selectorTerm.MatchExpressions = make([]core.NodeSelectorRequirement, 0, 1)
 		}
-		nodeSelector.NodeSelectorTerms = append(nodeSelector.NodeSelectorTerms, cpuArchTerm)
+		selectorTerm.MatchExpressions = append(selectorTerm.MatchExpressions, cpuArchReq)
 	}
 }
 

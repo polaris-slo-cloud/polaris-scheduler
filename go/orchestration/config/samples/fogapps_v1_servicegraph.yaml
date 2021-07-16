@@ -124,6 +124,14 @@ spec:
         app.kubernetes.io/version: "0.0.1"
         app.kubernetes.io/component: taxi-edge
         app.kubernetes.io/instance: taxi-edge-bronx
+      # Optional affinity specification
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: rainbow-h2020.eu/devices-camera
+                operator: Exists
       containers:
         - name: taxi
           image: gcr.io/google-containers/pause:3.2
@@ -191,6 +199,12 @@ spec:
       target: taxi-cloud
     - source: taxi-edge-brooklyn
       target: taxi-cloud
+
+  # Optional DNS Configuration for all pods created from this ServiceGraph
+  # dnsConfig:
+  #   dnsPolicy: None
+  #   nameservers:
+  #     - 8.8.8.8
 
   # Application-wide Service Level Objectives
   # slos:
