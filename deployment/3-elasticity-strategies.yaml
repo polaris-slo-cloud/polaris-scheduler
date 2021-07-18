@@ -727,6 +727,10 @@ spec:
             memory: 1Gi
         securityContext:
           privileged: false
+        env:
+          # Workaround for an issue with kubernetes-client when using IPv6 (https://github.com/kubernetes-client/javascript/issues/599)
+          - name: KUBERNETES_SERVICE_HOST
+            value: kubernetes.default.svc
 
 
 ---
@@ -850,6 +854,10 @@ spec:
 #             memory: 1Gi
 #         securityContext:
 #           privileged: false
+#         env:
+#           # Workaround for an issue with kubernetes-client when using IPv6 (https://github.com/kubernetes-client/javascript/issues/599)
+#           - name: KUBERNETES_SERVICE_HOST
+#             value: kubernetes.default.svc
 
 
 # ---
