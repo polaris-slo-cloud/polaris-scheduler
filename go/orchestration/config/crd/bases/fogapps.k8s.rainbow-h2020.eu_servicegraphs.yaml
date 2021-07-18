@@ -279,11 +279,6 @@ spec:
                                 minimum: 0
                                 type: integer
                             type: object
-                          staticElasticityStrategyConfig:
-                            description: Static configuration to be passed to the
-                              chosen elasticity strategy.
-                            type: object
-                            x-kubernetes-preserve-unknown-fields: true
                         required:
                         - elasticityStrategy
                         - name
@@ -3542,11 +3537,6 @@ spec:
                                 minimum: 0
                                 type: integer
                             type: object
-                          staticElasticityStrategyConfig:
-                            description: Static configuration to be passed to the
-                              chosen elasticity strategy.
-                            type: object
-                            x-kubernetes-preserve-unknown-fields: true
                         required:
                         - elasticityStrategy
                         - name
@@ -5196,11 +5186,6 @@ spec:
                           minimum: 0
                           type: integer
                       type: object
-                    staticElasticityStrategyConfig:
-                      description: Static configuration to be passed to the chosen
-                        elasticity strategy.
-                      type: object
-                      x-kubernetes-preserve-unknown-fields: true
                   required:
                   - elasticityStrategy
                   - name

@@ -37,15 +37,31 @@ type SloMappingSpec struct {
 
 	// The user modifiable parts of the SLO configuration from the ServiceGraph.
 	fogappsCRDs.SloUserConfig `json:",inline"`
+
+	// Static configuration to be passed to the chosen elasticity strategy.
+	//
+	// +optional
+	StaticElasticityStrategyConfig *StaticElasticityStrategyConfiguration `json:"staticElasticityStrategyConfig,omitempty"`
+}
+
+// StaticElasticityStrategyConfiguration contains commonly used static configuration parameters for elasticity strategies.
+type StaticElasticityStrategyConfiguration struct {
+
+	// The minium number of replicas that the target workload must have.
+	MinReplicas int32 `json:"minReplicas,omitempty"`
+
+	// The maximum number of replicas that the target workload may have.
+	MaxReplicas int32 `json:"maxReplicas,omitempty"`
 }
 
 func (me *SloMapping) DeepCopyObject() runtime.Object {
 	return &SloMapping{
 		TypeMeta:   me.TypeMeta,
-		ObjectMeta: me.ObjectMeta,
+		ObjectMeta: *me.ObjectMeta.DeepCopy(),
 		Spec: SloMappingSpec{
-			TargetRef:     me.Spec.TargetRef,
-			SloUserConfig: *me.Spec.SloUserConfig.DeepCopy(),
+			TargetRef:                      me.Spec.TargetRef,
+			SloUserConfig:                  *me.Spec.SloUserConfig.DeepCopy(),
+			StaticElasticityStrategyConfig: me.Spec.StaticElasticityStrategyConfig,
 		},
 		Status: me.Status,
 	}
@@ -68,8 +84,9 @@ func CreateSloMappingFromServiceGraphNode(
 			Name:      getSloMappingName(node.Name, slo.Name),
 		},
 		Spec: SloMappingSpec{
-			TargetRef:     *target,
-			SloUserConfig: *slo.SloUserConfig.DeepCopy(),
+			TargetRef:                      *target,
+			SloUserConfig:                  *slo.SloUserConfig.DeepCopy(),
+			StaticElasticityStrategyConfig: createStaticElasticityStrategyConfig(node),
 		},
 	}
 	return &sloMapping
@@ -86,23 +103,22 @@ func (me *SloMapping) ToUnstructured() *unstructured.Unstructured {
 			"spec":       me.Spec.toUnstructuredMap(),
 		},
 	}
-	apiV := ret.GetAPIVersion()
-	_ = apiV
-	kind := ret.GetKind()
-	_ = kind
-	namespace := ret.GetNamespace()
-	_ = namespace
-	name := ret.GetName()
-	_ = name
-
 	return &ret
+}
+
+func createStaticElasticityStrategyConfig(node *fogappsCRDs.ServiceGraphNode) *StaticElasticityStrategyConfiguration {
+	return &StaticElasticityStrategyConfiguration{
+		MinReplicas: node.Replicas.Min,
+		MaxReplicas: node.Replicas.Max,
+	}
 }
 
 func (me *SloMapping) convertMetadataToUnstructuredMap() map[string]interface{} {
 	metadata := map[string]interface{}{
-		"name":        me.Name,
-		"namespace":   me.Namespace,
-		"annotations": me.Annotations,
+		"name":            me.Name,
+		"namespace":       me.Namespace,
+		"annotations":     me.Annotations,
+		"ownerReferences": me.convertOwnerReferencesToUnstructuredMap(),
 	}
 	if me.Generation > 0 {
 		metadata["generation"] = me.Generation
@@ -113,6 +129,23 @@ func (me *SloMapping) convertMetadataToUnstructuredMap() map[string]interface{} 
 	return metadata
 }
 
+func (me *SloMapping) convertOwnerReferencesToUnstructuredMap() []map[string]interface{} {
+	ownerRefs := make([]map[string]interface{}, len(me.OwnerReferences))
+	for i := range me.OwnerReferences {
+		src := me.OwnerReferences[i].DeepCopy()
+		dest := map[string]interface{}{
+			"apiVersion":         src.APIVersion,
+			"kind":               src.Kind,
+			"name":               src.Name,
+			"uid":                src.UID,
+			"controller":         src.Controller,
+			"blockOwnerDeletion": src.BlockOwnerDeletion,
+		}
+		ownerRefs[i] = dest
+	}
+	return ownerRefs
+}
+
 func (me *SloMappingSpec) toUnstructuredMap() map[string]interface{} {
 	var stabilizationWindowMap map[string]interface{}
 	if me.StabilizationWindow != nil {
@@ -120,6 +153,11 @@ func (me *SloMappingSpec) toUnstructuredMap() map[string]interface{} {
 			"scaleDownSeconds": me.StabilizationWindow.ScaleDownSeconds,
 			"scaleUpSeconds":   me.StabilizationWindow.ScaleUpSeconds,
 		}
+	}
+
+	staticElasticityStrategyConfig := map[string]interface{}{
+		"minReplicas": me.StaticElasticityStrategyConfig.MinReplicas,
+		"maxReplicas": me.StaticElasticityStrategyConfig.MaxReplicas,
 	}
 
 	spec := map[string]interface{}{
@@ -134,7 +172,7 @@ func (me *SloMappingSpec) toUnstructuredMap() map[string]interface{} {
 		},
 		"sloConfig":                      me.SloConfig,
 		"stabilizationWindow":            stabilizationWindowMap,
-		"staticElasticityStrategyConfig": me.StaticElasticityStrategyConfig,
+		"staticElasticityStrategyConfig": staticElasticityStrategyConfig,
 	}
 	return spec
 }

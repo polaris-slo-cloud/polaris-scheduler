@@ -95,12 +95,6 @@ spec:
           stabilizationWindow:
             scaleUpSeconds: 40
             scaleDownSeconds: 60
-          # Optional static configuration
-          staticElasticityStrategyConfig:
-            testA: 1
-            complexObj:
-              a: 1
-              b: test
 
     # Taxi IoT Node
     - name: taxi-iot
