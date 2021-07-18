@@ -84,13 +84,17 @@ spec:
         # SLOs for this node.
         - name: cpu-usage
           sloType:
-            apiVersion: slo.sloc.github.io/v1
+            apiVersion: slo.polaris-slo-cloud.github.io/v1
             kind: CPUUsageSloMapping
           elasticityStrategy:
-            apiVersion: elasticity.sloc.github.io/v1
+            apiVersion: elasticity.polaris-slo-cloud.github.io/v1
             kind: HorizontalElasticityStrategy
           sloConfig:
             targetAvgCPUUtilizationPercentage: 70
+          # Optional configuration of the stabilization window, within which the elasticity strategy will not be executed twice.
+          stabilizationWindow:
+            scaleUpSeconds: 40
+            scaleDownSeconds: 60
 
     # Taxi IoT Node
     - name: taxi-iot

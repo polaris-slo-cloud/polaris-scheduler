@@ -27,10 +27,12 @@ import (
 	networking "k8s.io/api/networking/v1"
 	meta "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/types"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	fogappsCRDs "k8s.rainbow-h2020.eu/rainbow/orchestration/apis/fogapps/v1"
+	"k8s.rainbow-h2020.eu/rainbow/orchestration/pkg/slo"
 )
 
 var (
@@ -52,6 +54,7 @@ type serviceGraphChildObjects struct {
 	StatefulSets []apps.StatefulSet
 	Services     []core.Service
 	Ingresses    []networking.Ingress
+	SloMappings  []slo.UnstructuredSloMapping
 }
 
 // Permissions on ServiceGraphs:
@@ -71,6 +74,9 @@ type serviceGraphChildObjects struct {
 //+kubebuilder:rbac:groups=networking.k8s.io,resources=ingresses,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=networking.k8s.io,resources=ingresses/status,verbs=get
 
+// Permissions on SloMappings:
+//+kubebuilder:rbac:groups=slo.polaris-slo-cloud.github.io,resources=*,verbs=get;list;watch;create;update;patch;delete
+
 // Reconcile is triggered whenever a ServiceGraph is added, changed, or removed.
 //
 // Reconcile applies changes to the deployments in the cluster to ensure that they reflect the new state of the ServiceGraph object.
@@ -84,7 +90,7 @@ func (me *ServiceGraphReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
 
-	children, err := me.fetchChildObjects(ctx, req)
+	children, err := me.fetchChildObjects(ctx, req, &serviceGraph)
 	if err != nil {
 		return ctrl.Result{}, err
 	}
@@ -155,7 +161,7 @@ func (me *ServiceGraphReconciler) SetupWithManager(mgr ctrl.Manager) error {
 }
 
 // fetchChildObjects loads all objects that have been created from the respective ServiceGraph
-func (me *ServiceGraphReconciler) fetchChildObjects(ctx context.Context, req ctrl.Request) (*serviceGraphChildObjects, error) {
+func (me *ServiceGraphReconciler) fetchChildObjects(ctx context.Context, req ctrl.Request, serviceGraph *fogappsCRDs.ServiceGraph) (*serviceGraphChildObjects, error) {
 	children := serviceGraphChildObjects{}
 
 	var deployments apps.DeploymentList
@@ -181,6 +187,23 @@ func (me *ServiceGraphReconciler) fetchChildObjects(ctx context.Context, req ctr
 		return nil, fmt.Errorf("unable to load child Ingresses. Cause: %w", err)
 	}
 	children.Ingresses = ingresses.Items
+
+	children.SloMappings = make([]slo.UnstructuredSloMapping, 0, len(serviceGraph.Status.SloMappings))
+	for _, sloMappingRef := range serviceGraph.Status.SloMappings {
+		key := types.NamespacedName{Namespace: req.Namespace, Name: sloMappingRef.Name}
+		sloMapping := slo.NewUnstructuredSloMapping(
+			map[string]interface{}{
+				"apiVersion": sloMappingRef.APIVersion,
+				"kind":       sloMappingRef.Kind,
+			},
+		)
+		if err := client.IgnoreNotFound(me.Get(ctx, key, &sloMapping.Unstructured)); err != nil {
+			return nil, fmt.Errorf("unable to load child SloMapping. Cause: %w", err)
+		}
+		sloMapping.DeleteStatus()
+		children.SloMappings = append(children.SloMappings, *sloMapping)
+	}
+	// ToDo: Find a way to watch SloMappings to be notified when they are deleted/changed.
 
 	return &children, nil
 }
