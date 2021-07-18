@@ -166,10 +166,11 @@ func (me *serviceGraphProcessor) assembleGraphChanges() error {
 }
 
 func (me *serviceGraphProcessor) createChildObjectsForServiceGraph() error {
-	for _, node := range me.svcGraph.Spec.Nodes {
+	for i := range me.svcGraph.Spec.Nodes {
+		node := &me.svcGraph.Spec.Nodes[i]
 		switch node.NodeType {
 		case fogappsCRDs.ServiceNode:
-			if err := me.createChildObjectsForServiceNode(&node); err != nil {
+			if err := me.createChildObjectsForServiceNode(node); err != nil {
 				return err
 			}
 		case fogappsCRDs.UserNode:
@@ -428,7 +429,7 @@ func (me *serviceGraphProcessor) assembleUpdatesForSloMappings() error {
 			delete(me.newChildObjects.SloMappings, updatedSloMapping.Name)
 		} else {
 			// The corresponding SLO or its ServiceGraphNode or ServiceGraphLink was deleted, so we delete the SloMapping
-			me.changes.AddChanges(controllerutil.NewResourceDeletion(existingSloMapping))
+			me.changes.AddChanges(controllerutil.NewResourceDeletion(existingSloMapping.ToUnstructured()))
 		}
 	}
 	return nil
