@@ -5,7 +5,6 @@ import (
 
 	autoscaling "k8s.io/api/autoscaling/v1"
 	meta "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	runtime "k8s.io/apimachinery/pkg/runtime"
 	fogappsCRDs "k8s.rainbow-h2020.eu/rainbow/orchestration/apis/fogapps/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -25,8 +24,7 @@ type SloMapping struct {
 	meta.TypeMeta   `json:",inline"`
 	meta.ObjectMeta `json:"metadata,omitempty"`
 
-	Spec   SloMappingSpec               `json:"spec,omitempty"`
-	Status *fogappsCRDs.ArbitraryObject `json:"status,omitempty"`
+	Spec SloMappingSpec `json:"spec,omitempty"`
 }
 
 // SloMappingSpec is the Spec of an SloMapping object.
@@ -63,7 +61,6 @@ func (me *SloMapping) DeepCopyObject() runtime.Object {
 			SloUserConfig:                  *me.Spec.SloUserConfig.DeepCopy(),
 			StaticElasticityStrategyConfig: me.Spec.StaticElasticityStrategyConfig,
 		},
-		Status: me.Status,
 	}
 }
 
@@ -94,16 +91,16 @@ func CreateSloMappingFromServiceGraphNode(
 
 // ToUnstructured returns copy of this SloMapping as an unstructured map for use
 // with a non-typed Kubernetes client.
-func (me *SloMapping) ToUnstructured() *unstructured.Unstructured {
-	ret := unstructured.Unstructured{
-		Object: map[string]interface{}{
+func (me *SloMapping) ToUnstructured() *UnstructuredSloMapping {
+	ret := NewUnstructuredSloMapping(
+		map[string]interface{}{
 			"apiVersion": me.APIVersion,
 			"kind":       me.Kind,
 			"metadata":   me.convertMetadataToUnstructuredMap(),
 			"spec":       me.Spec.toUnstructuredMap(),
 		},
-	}
-	return &ret
+	)
+	return ret
 }
 
 func createStaticElasticityStrategyConfig(node *fogappsCRDs.ServiceGraphNode) *StaticElasticityStrategyConfiguration {

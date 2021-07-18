@@ -22,7 +22,7 @@ type serviceGraphChildObjectMaps struct {
 	StatefulSets map[string]*apps.StatefulSet
 	Services     map[string]*core.Service
 	Ingresses    map[string]*networking.Ingress
-	SloMappings  map[string]*slo.SloMapping
+	SloMappings  map[string]*slo.UnstructuredSloMapping
 }
 
 type serviceGraphProcessor struct {
@@ -62,7 +62,7 @@ func newServiceGraphChildObjectMaps(lists *serviceGraphChildObjects) serviceGrap
 		StatefulSets: make(map[string]*apps.StatefulSet),
 		Services:     make(map[string]*core.Service),
 		Ingresses:    make(map[string]*networking.Ingress),
-		SloMappings:  make(map[string]*slo.SloMapping),
+		SloMappings:  make(map[string]*slo.UnstructuredSloMapping),
 	}
 
 	if lists != nil {
@@ -87,7 +87,7 @@ func newServiceGraphChildObjectMaps(lists *serviceGraphChildObjects) serviceGrap
 		}
 		for i := range lists.SloMappings {
 			item := &lists.SloMappings[i]
-			maps.SloMappings[item.Name] = item
+			maps.SloMappings[item.GetName()] = item
 		}
 	}
 
@@ -99,6 +99,7 @@ func newServiceGraphStatus(graph *fogappsCRDs.ServiceGraph) *fogappsCRDs.Service
 		ObservedGeneration: graph.Generation,
 		NodeStates:         make(map[string]*fogappsCRDs.ServiceGraphNodeStatus),
 		Conditions:         make([]fogappsCRDs.ServiceGraphCondition, 0),
+		SloMappings:        make([]autoscaling.CrossVersionObjectReference, 0),
 	}
 
 	// Copy the conditions from the previous Status object one-by-one to ensure that
@@ -323,14 +324,15 @@ func (me *serviceGraphProcessor) createOrUpdateSloMapping(
 	node *fogappsCRDs.ServiceGraphNode,
 ) error {
 	newSloMapping := slo.CreateSloMappingFromServiceGraphNode(sloObj, target, node, me.svcGraph)
+	me.setOwner(newSloMapping)
+	newSloMappingUnstructured := newSloMapping.ToUnstructured()
 
 	if existingSloMapping, ok := me.existingChildObjects.SloMappings[newSloMapping.Name]; ok {
-		newSloMapping.ObjectMeta = existingSloMapping.ObjectMeta
-	} else {
-		me.setOwner(newSloMapping)
+		newSloMappingUnstructured.SetMetadata(existingSloMapping.GetMetadata())
 	}
 
-	me.newChildObjects.SloMappings[newSloMapping.Name] = newSloMapping
+	me.newChildObjects.SloMappings[newSloMapping.Name] = newSloMappingUnstructured
+	me.status.SloMappings = append(me.status.SloMappings, newSloMappingUnstructured.GetObjectReference())
 	return nil
 }
 
@@ -419,17 +421,17 @@ func (me *serviceGraphProcessor) assembleUpdatesForIngresses() error {
 
 func (me *serviceGraphProcessor) assembleUpdatesForSloMappings() error {
 	for _, existingSloMapping := range me.existingChildObjects.SloMappings {
-		if updatedSloMapping, ok := me.newChildObjects.SloMappings[existingSloMapping.Name]; ok {
+		if updatedSloMapping, ok := me.newChildObjects.SloMappings[existingSloMapping.GetName()]; ok {
 
-			if !reflect.DeepEqual(existingSloMapping.Spec, updatedSloMapping.Spec) {
+			if !reflect.DeepEqual(existingSloMapping.GetSpec(), updatedSloMapping.GetSpec()) {
 				// SloMapping was changed, we need to update it
-				me.changes.AddChanges(controllerutil.NewResourceUpdate(updatedSloMapping.ToUnstructured()))
+				me.changes.AddChanges(controllerutil.NewResourceUpdate(&updatedSloMapping.Unstructured))
 			}
 
-			delete(me.newChildObjects.SloMappings, updatedSloMapping.Name)
+			delete(me.newChildObjects.SloMappings, updatedSloMapping.GetName())
 		} else {
 			// The corresponding SLO or its ServiceGraphNode or ServiceGraphLink was deleted, so we delete the SloMapping
-			me.changes.AddChanges(controllerutil.NewResourceDeletion(existingSloMapping.ToUnstructured()))
+			me.changes.AddChanges(controllerutil.NewResourceDeletion(&existingSloMapping.Unstructured))
 		}
 	}
 	return nil
@@ -449,7 +451,7 @@ func (me *serviceGraphProcessor) assembleAdditions() error {
 		me.changes.AddChanges(controllerutil.NewResourceAddition(value))
 	}
 	for _, value := range me.newChildObjects.SloMappings {
-		me.changes.AddChanges(controllerutil.NewResourceAddition(value.ToUnstructured()))
+		me.changes.AddChanges(controllerutil.NewResourceAddition(&value.Unstructured))
 	}
 	return nil
 }

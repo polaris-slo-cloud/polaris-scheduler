@@ -17,6 +17,7 @@ limitations under the License.
 package v1
 
 import (
+	autoscaling "k8s.io/api/autoscaling/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -80,6 +81,11 @@ type ServiceGraphStatus struct {
 	//
 	// +optional
 	NodeStates map[string]*ServiceGraphNodeStatus `json:"nodeStates,omitempty"`
+
+	// Lists the SloMappings that were created from this ServiceGraph.
+	//
+	// +optional
+	SloMappings []autoscaling.CrossVersionObjectReference `json:"sloMappings,omitempty"`
 
 	// The latest available high-level state information on this ServiceGraph.
 	//

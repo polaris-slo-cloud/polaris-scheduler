@@ -21,6 +21,7 @@ limitations under the License.
 package v1
 
 import (
+	autoscalingv1 "k8s.io/api/autoscaling/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -698,6 +699,11 @@ func (in *ServiceGraphStatus) DeepCopyInto(out *ServiceGraphStatus) {
 			}
 			(*out)[key] = outVal
 		}
+	}
+	if in.SloMappings != nil {
+		in, out := &in.SloMappings, &out.SloMappings
+		*out = make([]autoscalingv1.CrossVersionObjectReference, len(*in))
+		copy(*out, *in)
 	}
 	if in.Conditions != nil {
 		in, out := &in.Conditions, &out.Conditions
