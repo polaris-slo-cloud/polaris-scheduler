@@ -38,6 +38,7 @@ import (
 
 	clusterv1 "k8s.rainbow-h2020.eu/rainbow/orchestration/apis/cluster/v1"
 	fogappsv1 "k8s.rainbow-h2020.eu/rainbow/orchestration/apis/fogapps/v1"
+	slov1 "k8s.rainbow-h2020.eu/rainbow/orchestration/apis/slo/v1"
 	fogappscontrollers "k8s.rainbow-h2020.eu/rainbow/orchestration/controllers/fogapps"
 	//+kubebuilder:scaffold:imports
 )
@@ -52,6 +53,7 @@ func init() {
 
 	utilruntime.Must(clusterv1.AddToScheme(scheme))
 	utilruntime.Must(fogappsv1.AddToScheme(scheme))
+	utilruntime.Must(slov1.AddToScheme(scheme))
 	//+kubebuilder:scaffold:scheme
 }
 
