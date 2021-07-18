@@ -203,6 +203,7 @@ func (me *ServiceGraphReconciler) fetchChildObjects(ctx context.Context, req ctr
 		sloMapping.DeleteStatus()
 		children.SloMappings = append(children.SloMappings, *sloMapping)
 	}
+	// ToDo: Find a way to watch SloMappings to be notified when they are deleted/changed.
 
 	return &children, nil
 }
