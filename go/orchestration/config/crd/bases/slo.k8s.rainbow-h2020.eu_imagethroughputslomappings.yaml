@@ -35,13 +35,96 @@ spec:
           metadata:
             type: object
           spec:
-            description: ImageThroughputSloMappingSpec defines the desired state of
-              ImageThroughputSloMapping
+            description: ImageThroughputSloMappingSpec represents an SloMapping for
+              the Image Throughput SLO.
             properties:
-              foo:
-                description: Foo is an example field of ImageThroughputSloMapping.
-                  Edit imagethroughputslomapping_types.go to remove/update
-                type: string
+              elasticityStrategy:
+                description: Specifies the type of ElasticityStrategy to use for this
+                  SLO mapping.
+                properties:
+                  apiVersion:
+                    description: The API group and version of the ElasticityStrategy.
+                    type: string
+                  kind:
+                    description: The kind of ElasticityStrategy.
+                    type: string
+                required:
+                - apiVersion
+                - kind
+                type: object
+              sloConfig:
+                description: ImageThroughputSloConfig contains the configuration for
+                  a ImageThroughputSloMappingSpec.
+                properties:
+                  minCpuUsage:
+                    default: 70
+                    description: The minimum CPU usage percentage that must be achieved
+                      before scaling out on a too low targetImagesPerMinute rate.
+                    format: int32
+                    minimum: 0
+                    type: integer
+                  targetImagesPerMinute:
+                    description: The desired number of images that should be processed
+                      per minute.
+                    format: int32
+                    minimum: 1
+                    type: integer
+                required:
+                - targetImagesPerMinute
+                type: object
+              stabilizationWindow:
+                description: Configures the duration of the period after the last
+                  elasticity strategy execution, during which the strategy will not
+                  be executed again (to avoid unnecessary scaling).
+                properties:
+                  scaleDownSeconds:
+                    default: 300
+                    description: The number of seconds after the previous scaling
+                      operation to wait before an elasticity action that decreases
+                      resources (e.g., scale down/in) or an equivalent configuration
+                      change can be issued due to an SLO violation.
+                    format: int32
+                    minimum: 0
+                    type: integer
+                  scaleUpSeconds:
+                    default: 60
+                    description: The number of seconds after the previous scaling
+                      operation to wait before an elasticity action that increases
+                      resources (e.g., scale up/out) or an equivalent configuration
+                      change can be issued due to an SLO violation.
+                    format: int32
+                    minimum: 0
+                    type: integer
+                type: object
+              staticElasticityStrategyConfig:
+                description: "Any static configuration parameters, which are unknown
+                  to the SLO, but which may be required to configure the chosen kind
+                  of elasticity strategy should be specified here. They will be copied
+                  over into the spec of the elasticity strategy. \n // Note that the
+                  Go deepCopy() method will only be able to create shallow copies
+                  of this field, because it does not know its internal structure."
+                type: object
+              targetRef:
+                description: Specifies the target on which to execute the elasticity
+                  strategy.
+                properties:
+                  apiVersion:
+                    description: API version of the referent
+                    type: string
+                  kind:
+                    description: 'Kind of the referent; More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds"'
+                    type: string
+                  name:
+                    description: 'Name of the referent; More info: http://kubernetes.io/docs/user-guide/identifiers#names'
+                    type: string
+                required:
+                - kind
+                - name
+                type: object
+            required:
+            - elasticityStrategy
+            - sloConfig
+            - targetRef
             type: object
           status:
             description: ImageThroughputSloMappingStatus defines the observed state

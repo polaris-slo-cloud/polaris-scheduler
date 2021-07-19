@@ -20,22 +20,36 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-// EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
-// NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
+// Important: Run `make` and `make manifests` to regenerate code and YAML files after modifying this file.
 
-// ImageThroughputSloMappingSpec defines the desired state of ImageThroughputSloMapping
+// +kubebuilder:validation:Required
+
+// ImageThroughputSloConfig contains the configuration for a ImageThroughputSloMappingSpec.
+type ImageThroughputSloConfig struct {
+
+	// The desired number of images that should be processed per minute.
+	//
+	// +kubebuilder:validation:Minimum=1
+	TargetImagesPerMinute int32 `json:"targetImagesPerMinute"`
+
+	// The minimum CPU usage percentage that must be achieved before scaling out on a
+	// too low targetImagesPerMinute rate.
+	//
+	// +optional
+	// +kubebuilder:validation:Minimum=0
+	// +kubebuilder:default=70
+	MinCpuUsage int32 `json:"minCpuUsage,omitempty"`
+}
+
+// ImageThroughputSloMappingSpec represents an SloMapping for the Image Throughput SLO.
 type ImageThroughputSloMappingSpec struct {
-	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
-	// Important: Run "make" to regenerate code after modifying this file
+	SloMapping SloMapping `json:",inline"`
 
-	// Foo is an example field of ImageThroughputSloMapping. Edit imagethroughputslomapping_types.go to remove/update
-	Foo string `json:"foo,omitempty"`
+	SloConfig ImageThroughputSloConfig `json:"sloConfig"`
 }
 
 // ImageThroughputSloMappingStatus defines the observed state of ImageThroughputSloMapping
 type ImageThroughputSloMappingStatus struct {
-	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
-	// Important: Run "make" to regenerate code after modifying this file
 }
 
 //+kubebuilder:object:root=true

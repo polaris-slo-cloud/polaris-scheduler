@@ -221,10 +221,10 @@ spec:
                               upon violations of the SLO.
                             properties:
                               apiVersion:
-                                description: The API group and version of the type.
+                                description: The API group and version of the ElasticityStrategy.
                                 type: string
                               kind:
-                                description: The kind name of the type.
+                                description: The kind of ElasticityStrategy.
                                 type: string
                             required:
                             - apiVersion
@@ -3479,10 +3479,10 @@ spec:
                               upon violations of the SLO.
                             properties:
                               apiVersion:
-                                description: The API group and version of the type.
+                                description: The API group and version of the ElasticityStrategy.
                                 type: string
                               kind:
-                                description: The kind name of the type.
+                                description: The kind of ElasticityStrategy.
                                 type: string
                             required:
                             - apiVersion
@@ -5131,10 +5131,10 @@ spec:
                         upon violations of the SLO.
                       properties:
                         apiVersion:
-                          description: The API group and version of the type.
+                          description: The API group and version of the ElasticityStrategy.
                           type: string
                         kind:
-                          description: The kind name of the type.
+                          description: The kind of ElasticityStrategy.
                           type: string
                       required:
                       - apiVersion
