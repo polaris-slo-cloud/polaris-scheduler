@@ -14,6 +14,8 @@
         "skipLibCheck": true,
         "skipDefaultLibCheck": true,
         "baseUrl": ".",
+        "resolveJsonModule": true,
+        "noImplicitAny": true,
         "paths": {
             "@rainbow-h2020/common-mappings": ["libs/common-mappings/src/index.ts"]
         }
