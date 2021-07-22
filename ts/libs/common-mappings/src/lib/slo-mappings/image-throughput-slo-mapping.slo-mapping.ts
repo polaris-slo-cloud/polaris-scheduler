@@ -4,7 +4,20 @@ import { ObjectKind, PolarisType, SloCompliance, SloMappingBase, SloMappingInitD
  * Represents the configuration options of the ImageThroughputSloMapping SLO.
  */
 export interface ImageThroughputSloMappingSloConfig {
-    // ToDo: Add SLO configuration properties.
+
+    /**
+     * The desired number of images that should be processed per minute.
+     */
+    targetImagesPerMinute: number;
+
+    /**
+     * The minimum CPU usage percentage that must be achieved before scaling out on a
+     * too low targetImagesPerMinute rate.
+     *
+     * Default: 70
+     */
+    minCpuUsage?: number;
+
 }
 
 /**
