@@ -1,7 +1,40 @@
 {
-  "version": 2,
-  "projects": {},
-  "cli": {
-    "defaultCollection": "@nrwl/workspace"
-  }
+    "version": 2,
+    "projects": {
+        "common-mappings": {
+            "root": "libs/common-mappings",
+            "sourceRoot": "libs/common-mappings/src",
+            "projectType": "library",
+            "targets": {
+                "lint": {
+                    "executor": "@nrwl/linter:eslint",
+                    "options": {
+                        "lintFilePatterns": ["libs/common-mappings/**/*.ts"]
+                    }
+                },
+                "test": {
+                    "executor": "@nrwl/jest:jest",
+                    "outputs": ["coverage/libs/common-mappings"],
+                    "options": {
+                        "jestConfig": "libs/common-mappings/jest.config.js",
+                        "passWithNoTests": true
+                    }
+                },
+                "build": {
+                    "executor": "@nrwl/node:package",
+                    "outputs": ["{options.outputPath}"],
+                    "options": {
+                        "outputPath": "dist/libs/common-mappings",
+                        "tsConfig": "libs/common-mappings/tsconfig.lib.json",
+                        "packageJson": "libs/common-mappings/package.json",
+                        "main": "libs/common-mappings/src/index.ts",
+                        "assets": ["libs/common-mappings/*.md"]
+                    }
+                }
+            }
+        }
+    },
+    "cli": {
+        "defaultCollection": "@nrwl/workspace"
+    }
 }
