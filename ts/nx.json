@@ -29,6 +29,9 @@
     "projects": {
         "common-mappings": {
             "tags": []
+        },
+        "polaris-streamsight": {
+            "tags": []
         }
     }
 }

@@ -32,6 +32,38 @@
                     }
                 }
             }
+        },
+        "polaris-streamsight": {
+            "root": "libs/polaris-streamsight",
+            "sourceRoot": "libs/polaris-streamsight/src",
+            "projectType": "library",
+            "targets": {
+                "build": {
+                    "executor": "@nrwl/node:package",
+                    "outputs": ["{options.outputPath}"],
+                    "options": {
+                        "outputPath": "dist/libs/polaris-streamsight",
+                        "tsConfig": "libs/polaris-streamsight/tsconfig.lib.json",
+                        "packageJson": "libs/polaris-streamsight/package.json",
+                        "main": "libs/polaris-streamsight/src/index.ts",
+                        "assets": ["libs/polaris-streamsight/*.md"]
+                    }
+                },
+                "lint": {
+                    "executor": "@nrwl/linter:eslint",
+                    "options": {
+                        "lintFilePatterns": ["libs/polaris-streamsight/**/*.ts"]
+                    }
+                },
+                "test": {
+                    "executor": "@nrwl/jest:jest",
+                    "outputs": ["coverage/libs/polaris-streamsight"],
+                    "options": {
+                        "jestConfig": "libs/polaris-streamsight/jest.config.js",
+                        "passWithNoTests": true
+                    }
+                }
+            }
         }
     },
     "cli": {
