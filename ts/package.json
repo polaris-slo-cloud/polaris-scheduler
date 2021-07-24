@@ -30,7 +30,8 @@
         "@polaris-sloc/common-mappings": "^0.2.0-beta.13",
         "@polaris-sloc/core": "^0.2.0-beta.13",
         "rxjs": "^6.5.5",
-        "tslib": "^2.0.0"
+        "tslib": "^2.0.0",
+        "typed-rest-client": "^1.8.4"
     },
     "devDependencies": {
         "@nrwl/cli": "12.5.9",
