@@ -1,5 +1,6 @@
 import { PolarisRuntime } from '@polaris-sloc/core';
 import { PolarisStreamSightConfig } from './config';
+import { RainbowStorageTimeSeriesSource } from './rainbow-storage';
 
 /**
  * Initializes the StreamSightQueryBackend and registers it with the `PolarisRuntime`.
@@ -11,5 +12,5 @@ import { PolarisStreamSightConfig } from './config';
  export function initStreamSightQueryBackend(runtime: PolarisRuntime, config: PolarisStreamSightConfig, setAsDefaultSource: boolean = false): void {
     console.log('Initializing StreamSightQueryBackend with config:', config);
 
-    // runtime.metricsSourcesManager.addTimeSeriesSource(new PrometheusTimeSeriesSource(config), setAsDefaultSource);
+    runtime.metricsSourcesManager.addTimeSeriesSource(new RainbowStorageTimeSeriesSource(config), setAsDefaultSource);
 }
