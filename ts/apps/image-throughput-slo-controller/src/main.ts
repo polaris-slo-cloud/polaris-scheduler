@@ -1,7 +1,7 @@
 import { KubeConfig } from '@kubernetes/client-node';
-import { ImageThroughputSloMapping, ImageThroughputSloMappingSpec, initPolarisLib as initSloMappingsLib } from '@rainbow-h2020/common-mappings';
 import { initPolarisKubernetes } from '@polaris-sloc/kubernetes';
-import { initPrometheusQueryBackend } from '@polaris-sloc/prometheus';
+import { ImageThroughputSloMapping, ImageThroughputSloMappingSpec, initPolarisLib as initSloMappingsLib } from '@rainbow-h2020/common-mappings';
+import { initStreamSightQueryBackend } from '@rainbow-h2020/polaris-streamsight';
 import { interval } from 'rxjs';
 import { ImageThroughputSlo } from './app/slo';
 import { convertToNumber, getEnvironmentVariable } from './app/util/environment-var-helper';
@@ -11,15 +11,13 @@ const k8sConfig = new KubeConfig();
 k8sConfig.loadFromDefault();
 const polarisRuntime = initPolarisKubernetes(k8sConfig);
 
-// Initialize the Prometheus query backend.
-const promHost = getEnvironmentVariable('PROMETHEUS_HOST') || 'localhost';
-const promPort = getEnvironmentVariable('PROMETHEUS_PORT', convertToNumber) || 9090;
-initPrometheusQueryBackend(polarisRuntime, { host: promHost, port: promPort }, true);
+// Initialize the RAINBOW StreamSight query backend.
+const rainbowStorageHost = getEnvironmentVariable('RAINBOW_STORAGE_HOST') || 'localhost';
+const rainbowStoragePort = getEnvironmentVariable('RAINBOW_STORAGE_PORT', convertToNumber) || 50000;
+initStreamSightQueryBackend(polarisRuntime, { rainbowStorageHost, rainbowStoragePort }, true);
 
 // Initialize the used Polaris mapping libraries
 initSloMappingsLib(polarisRuntime);
-
-// ToDo: Initialize any additional libraries, e.g., composed metrics.
 
 // Create an SloControlLoop and register the factories for the ServiceLevelObjectives it will handle
 const sloControlLoop = polarisRuntime.createSloControlLoop();

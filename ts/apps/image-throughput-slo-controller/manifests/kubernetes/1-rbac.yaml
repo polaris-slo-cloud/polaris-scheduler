@@ -27,7 +27,7 @@ rules:
 
   # Allow reading supported SLO mappings
   - apiGroups:
-      - slo.polaris-slo-cloud.github.io
+      - slo.k8s.rainbow-h2020.eu
     resources:
       - imagethroughputslomappings
     verbs:
