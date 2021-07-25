@@ -29,6 +29,8 @@
     "dependencies": {
         "@polaris-sloc/common-mappings": "^0.2.0-beta.13",
         "@polaris-sloc/core": "^0.2.0-beta.13",
+        "@polaris-sloc/kubernetes": "^0.2.0-beta.13",
+        "@polaris-sloc/prometheus": "^0.2.0-beta.13",
         "rxjs": "^6.5.5",
         "tslib": "^2.0.0",
         "typed-rest-client": "^1.8.4"
@@ -38,6 +40,7 @@
         "@nrwl/eslint-plugin-nx": "12.5.9",
         "@nrwl/jest": "12.5.9",
         "@nrwl/linter": "12.5.9",
+        "@nrwl/node": "12.5.9",
         "@nrwl/tao": "12.5.9",
         "@nrwl/workspace": "12.5.9",
         "@polaris-sloc/polaris-nx": "^0.2.0-beta.13",
