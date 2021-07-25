@@ -86,7 +86,7 @@
                     "executor": "@nrwl/workspace:run-commands",
                     "options": {
                         "commands": [
-                            "docker build -f ./apps/image-throughput-slo-controller/Dockerfile --build-arg POLARIS_APP_TYPE=slo --build-arg POLARIS_APP_NAME=image-throughput-slo-controller -t polarissloc/image-throughput-slo-controller:latest ."
+                            "docker build -f ./apps/image-throughput-slo-controller/Dockerfile --build-arg POLARIS_APP_TYPE=slo --build-arg POLARIS_APP_NAME=image-throughput-slo-controller -t registry.gitlab.com/rainbow-project1/rainbow-integration/image-throughput-slo-controller:latest ."
                         ],
                         "parallel": false
                     }
