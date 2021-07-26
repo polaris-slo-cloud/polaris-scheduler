@@ -2,8 +2,8 @@ import { MetricsSource, ObservableOrPromise, PolarisRuntime, ServiceLevelObjecti
 import { ImageThroughputSloConfig } from '@rainbow-h2020/common-mappings';
 import { of as observableOf } from 'rxjs';
 
-const THROUGHPUT_METRIC = 'throughput-per-minute';
-const CPU_METRIC = 'cpu';
+const THROUGHPUT_METRIC = 'overallframePerSecWindow';
+const CPU_METRIC = 'overallCPU';
 
 /**
  * Implements the ImageThroughput SLO.
