@@ -28,13 +28,20 @@
     },
     "projects": {
         "common-mappings": {
-            "tags": []
+            "tags": [
+                "scope:core"
+            ]
         },
         "image-throughput-slo-controller": {
-            "tags": []
+            "tags": [
+                "scope:slo",
+                "orchestrator:kubernetes"
+            ]
         },
         "polaris-streamsight": {
-            "tags": []
+            "tags": [
+                "orchestrator:kubernetes"
+            ]
         }
     }
 }
