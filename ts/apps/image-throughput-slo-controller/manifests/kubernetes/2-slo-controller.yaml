@@ -37,7 +37,7 @@ spec:
       # We need access to the host's network to allow us to access the RAINBOW services deployed there.
       hostNetwork: true
       containers:
-        - image: registry.gitlab.com/rainbow-project1/rainbow-integration/image-throughput-slo-controller:latest
+        - image: registry.gitlab.com/rainbow-project1/rainbow-integration/image-throughput-slo-controller:0.0.2
           name: slo-controller
           resources:
             limits:
