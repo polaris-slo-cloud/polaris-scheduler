@@ -1,0 +1,11 @@
+stages:
+  - triggers
+
+trigger_ts:
+  stage: triggers
+  trigger:
+    include: ts/.gitlab-ci.yml
+    strategy: depend
+  rules:
+    - changes:
+        - ts/*

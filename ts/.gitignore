@@ -8,6 +8,12 @@
 # dependencies
 /node_modules
 
+# CI Cache
+/.npm-cache
+
+# Test reports
+/junit-reports
+
 # misc
 /.sass-cache
 /connect.lock

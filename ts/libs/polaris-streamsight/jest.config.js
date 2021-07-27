@@ -12,4 +12,13 @@ module.exports = {
     },
     moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx'],
     coverageDirectory: '../../coverage/libs/polaris-streamsight',
+    reporters: [
+        "default",
+        [
+            "jest-junit", {
+                outputDirectory: "./junit-reports",
+                outputName: "polaris-streamsight.xml"
+            },
+        ]
+    ],
 };
