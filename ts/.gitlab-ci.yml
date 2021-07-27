@@ -1,3 +1,9 @@
+.only-default: &only-default
+  only:
+    - main
+    - merge_requests
+    - tags
+
 stages:
   - build
   - test
@@ -20,6 +26,7 @@ before_script:
 
 build:
   stage: build
+  <<: *only-default
   cache:
     # inherit all global cache settings
     <<: *global_cache
@@ -30,6 +37,7 @@ build:
 
 test:
   stage: test
+  <<: *only-default
   cache:
     # inherit all global cache settings
     <<: *global_cache
