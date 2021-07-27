@@ -13,3 +13,12 @@ build:
     - npx nx build common-mappings --with-deps=true
     - npx nx build polaris-streamsight --with-deps=true
     - npx nx build image-throughput-slo-controller --with-deps=true
+
+test:
+  stage: test
+  dependencies:
+    - build
+  script:
+    - npm run test common-mappings
+    - npm run test polaris-streamsight
+    - npm run test image-throughput-slo-controller
