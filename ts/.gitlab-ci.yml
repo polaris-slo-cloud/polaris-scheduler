@@ -5,19 +5,34 @@ stages:
 
 image: node:14-alpine3.13
 
+cache: &global_cache
+  key:
+    files:
+      - ts/package.json
+      - ts/package.lock.json
+  paths:
+    - ts/.npm-cache
+  policy: pull-push
+
+before_script:
+  - cd ts
+  - npm ci --cache .npm-cache --prefer-offline
+
 build:
   stage: build
+  cache:
+    # inherit all global cache settings
+    <<: *global_cache
   script:
-    - cd ts
-    - npm install
     - npx nx build common-mappings --with-deps=true
     - npx nx build polaris-streamsight --with-deps=true
     - npx nx build image-throughput-slo-controller --with-deps=true
 
 test:
   stage: test
-  dependencies:
-    - build
+  cache:
+    # inherit all global cache settings
+    <<: *global_cache
   script:
     - npm run test common-mappings
     - npm run test polaris-streamsight
