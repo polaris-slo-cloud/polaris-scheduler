@@ -12,4 +12,13 @@ module.exports = {
     },
     moduleFileExtensions: ['ts', 'js', 'html'],
     coverageDirectory: '../../coverage/apps/image-throughput-slo-controller',
+    reporters: [
+        "default",
+        [
+            "jest-junit", {
+                outputDirectory: "./junit-reports",
+                outputName: "image-throughput-slo-controller.xml"
+            },
+        ]
+    ],
 };

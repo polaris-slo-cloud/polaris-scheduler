@@ -37,3 +37,13 @@ test:
     - npm run test common-mappings
     - npm run test polaris-streamsight
     - npm run test image-throughput-slo-controller
+  artifacts:
+    untracked: false
+    when: always
+    paths:
+      - ts/junit-reports
+    reports:
+      junit:
+        - ts/junit-reports/common-mappings.xml
+        - ts/junit-reports/polaris-streamsight.xml
+        - ts/junit-reports/image-throughput-slo-controller.xml

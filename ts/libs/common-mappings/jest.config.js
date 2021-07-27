@@ -12,4 +12,13 @@ module.exports = {
     },
     moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx'],
     coverageDirectory: '../../coverage/libs/common-mappings',
+    reporters: [
+        "default",
+        [
+            "jest-junit", {
+                outputDirectory: "./junit-reports",
+                outputName: "common-mappings.xml"
+            },
+        ]
+    ],
 };

@@ -11,6 +11,9 @@
 # CI Cache
 /.npm-cache
 
+# Test reports
+/junit-reports
+
 # misc
 /.sass-cache
 /connect.lock
