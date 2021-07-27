@@ -36,6 +36,7 @@ spec:
           effect: NoSchedule
       # We need access to the host's network to allow us to access the RAINBOW services deployed there.
       hostNetwork: true
+      dnsPolicy: ClusterFirstWithHostNet
       containers:
         - image: registry.gitlab.com/rainbow-project1/rainbow-integration/image-throughput-slo-controller:0.0.2
           name: slo-controller
@@ -50,7 +51,7 @@ spec:
             - name: RAINBOW_STORAGE_PORT
               value: "50000"
             # Workaround for an issue with kubernetes-client when using IPv6 (https://github.com/kubernetes-client/javascript/issues/599)
-            # - name: KUBERNETES_SERVICE_HOST
-            #   value: kubernetes.default.svc
+            - name: KUBERNETES_SERVICE_HOST
+              value: kubernetes.default.svc
           securityContext:
             privileged: false
