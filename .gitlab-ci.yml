@@ -3,9 +3,12 @@ stages:
 
 trigger_ts:
   stage: triggers
+  variables:
+    PARENT_CI_MERGE_REQUEST_IID: $CI_MERGE_REQUEST_IID
+    PARENT_CI_COMMIT_TAG: $CI_COMMIT_TAG
+    PARENT_CI_COMMIT_BRANCH: $CI_COMMIT_BRANCH
+    PARENT_CI_PIPELINE_SOURCE: $CI_PIPELINE_SOURCE
+    PARENT_CI_MERGE_REQUEST_ID: $CI_MERGE_REQUEST_ID
   trigger:
     include: ts/.gitlab-ci.yml
     strategy: depend
-  rules:
-    - changes:
-        - ts/*
