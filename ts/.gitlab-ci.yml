@@ -1,0 +1,15 @@
+stages:
+  - build
+  - test
+  - deploy
+
+image: node:14-alpine3.13
+
+build:
+  stage: build
+  script:
+    - cd ts
+    - npm install
+    - npx nx build common-mappings --with-deps=true
+    - npx nx build polaris-streamsight --with-deps=true
+    - npx nx build image-throughput-slo-controller --with-deps=true
