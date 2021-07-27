@@ -3,7 +3,7 @@ layout:
 - go.kubebuilder.io/v3
 multigroup: true
 projectName: rainbow
-repo: k8s.rainbow-h2020.eu/rainbow
+repo: k8s.rainbow-h2020.eu/rainbow/orchestration
 resources:
 - api:
     crdVersion: v1
@@ -11,7 +11,7 @@ resources:
   domain: k8s.rainbow-h2020.eu
   group: cluster
   kind: NetworkLink
-  path: k8s.rainbow-h2020.eu/rainbow/apis/cluster/v1
+  path: k8s.rainbow-h2020.eu/rainbow/orchestration/apis/cluster/v1
   version: v1
 - api:
     crdVersion: v1
@@ -20,6 +20,14 @@ resources:
   domain: k8s.rainbow-h2020.eu
   group: fogapps
   kind: ServiceGraph
-  path: k8s.rainbow-h2020.eu/rainbow/apis/fogapps/v1
+  path: k8s.rainbow-h2020.eu/rainbow/orchestration/apis/fogapps/v1
+  version: v1
+- api:
+    crdVersion: v1
+    namespaced: true
+  domain: k8s.rainbow-h2020.eu
+  group: slo
+  kind: ImageThroughputSloMapping
+  path: k8s.rainbow-h2020.eu/rainbow/orchestration/apis/slo/v1
   version: v1
 version: "3"

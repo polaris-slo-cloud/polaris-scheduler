@@ -1,0 +1,7 @@
+**/.git*
+!**/.gitkeep
+**/node_modules
+**/dist
+**/tmp
+**/bin
+**/.vscode

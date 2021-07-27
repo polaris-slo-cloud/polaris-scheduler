@@ -76,6 +76,7 @@ type serviceGraphChildObjects struct {
 
 // Permissions on SloMappings:
 //+kubebuilder:rbac:groups=slo.polaris-slo-cloud.github.io,resources=*,verbs=get;list;watch;create;update;patch;delete
+//+kubebuilder:rbac:groups=slo.k8s.rainbow-h2020.eu,resources=*,verbs=get;list;watch;create;update;patch;delete
 
 // Reconcile is triggered whenever a ServiceGraph is added, changed, or removed.
 //

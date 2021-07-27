@@ -89,6 +89,18 @@ rules:
   verbs:
   - get
 - apiGroups:
+  - slo.k8s.rainbow-h2020.eu
+  resources:
+  - '*'
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
   - slo.polaris-slo-cloud.github.io
   resources:
   - '*'

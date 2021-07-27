@@ -155,6 +155,21 @@ spec:
           architectures:
             - amd64
             - arm64
+      slos:
+        - name: image-throughput
+          sloType:
+            apiVersion: slo.k8s.rainbow-h2020.eu/v1
+            kind: ImageThroughputSloMapping
+          elasticityStrategy:
+            apiVersion: elasticity.polaris-slo-cloud.github.io/v1
+            kind: HorizontalElasticityStrategy
+          sloConfig:
+            targetImagesPerMinute: 600
+            minCpuUsage: 80
+          # Optional configuration of the stabilization window, within which the elasticity strategy will not be executed twice.
+          stabilizationWindow:
+            scaleUpSeconds: 40
+            scaleDownSeconds: 60
 
     # Taxi Edge Brooklyn Node
     - name: taxi-edge-brooklyn

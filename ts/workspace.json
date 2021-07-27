@@ -1,0 +1,140 @@
+{
+    "version": 2,
+    "projects": {
+        "common-mappings": {
+            "root": "libs/common-mappings",
+            "sourceRoot": "libs/common-mappings/src",
+            "projectType": "library",
+            "targets": {
+                "lint": {
+                    "executor": "@nrwl/linter:eslint",
+                    "options": {
+                        "lintFilePatterns": ["libs/common-mappings/**/*.ts"]
+                    }
+                },
+                "test": {
+                    "executor": "@nrwl/jest:jest",
+                    "outputs": ["coverage/libs/common-mappings"],
+                    "options": {
+                        "jestConfig": "libs/common-mappings/jest.config.js",
+                        "passWithNoTests": true
+                    }
+                },
+                "build": {
+                    "executor": "@nrwl/node:package",
+                    "outputs": ["{options.outputPath}"],
+                    "options": {
+                        "outputPath": "dist/libs/common-mappings",
+                        "tsConfig": "libs/common-mappings/tsconfig.lib.json",
+                        "packageJson": "libs/common-mappings/package.json",
+                        "main": "libs/common-mappings/src/index.ts",
+                        "assets": ["libs/common-mappings/*.md"]
+                    }
+                }
+            }
+        },
+        "image-throughput-slo-controller": {
+            "root": "apps/image-throughput-slo-controller",
+            "sourceRoot": "apps/image-throughput-slo-controller/src",
+            "projectType": "application",
+            "targets": {
+                "build": {
+                    "executor": "@nrwl/node:build",
+                    "outputs": ["{options.outputPath}"],
+                    "options": {
+                        "outputPath": "dist/apps/image-throughput-slo-controller",
+                        "main": "apps/image-throughput-slo-controller/src/main.ts",
+                        "tsConfig": "apps/image-throughput-slo-controller/tsconfig.app.json",
+                        "assets": ["apps/image-throughput-slo-controller/src/assets"],
+                        "externalDependencies": "none"
+                    },
+                    "configurations": {
+                        "production": {
+                            "optimization": true,
+                            "extractLicenses": true,
+                            "inspect": false,
+                            "fileReplacements": [
+                                {
+                                    "replace": "apps/image-throughput-slo-controller/src/environments/environment.ts",
+                                    "with": "apps/image-throughput-slo-controller/src/environments/environment.prod.ts"
+                                }
+                            ]
+                        }
+                    }
+                },
+                "serve": {
+                    "executor": "@nrwl/node:execute",
+                    "options": {
+                        "buildTarget": "image-throughput-slo-controller:build"
+                    }
+                },
+                "lint": {
+                    "executor": "@nrwl/linter:eslint",
+                    "options": {
+                        "lintFilePatterns": ["apps/image-throughput-slo-controller/**/*.ts"]
+                    }
+                },
+                "test": {
+                    "executor": "@nrwl/jest:jest",
+                    "outputs": ["coverage/apps/image-throughput-slo-controller"],
+                    "options": {
+                        "jestConfig": "apps/image-throughput-slo-controller/jest.config.js",
+                        "passWithNoTests": true
+                    }
+                },
+                "docker-build": {
+                    "executor": "@nrwl/workspace:run-commands",
+                    "options": {
+                        "commands": [
+                            "docker build -f ./apps/image-throughput-slo-controller/Dockerfile --build-arg POLARIS_APP_TYPE=slo --build-arg POLARIS_APP_NAME=image-throughput-slo-controller -t registry.gitlab.com/rainbow-project1/rainbow-integration/image-throughput-slo-controller:latest ."
+                        ],
+                        "parallel": false
+                    }
+                },
+                "deploy": {
+                    "executor": "@nrwl/workspace:run-commands",
+                    "options": {
+                        "commands": ["kubectl apply -f ./apps/image-throughput-slo-controller/manifests/kubernetes"],
+                        "parallel": false
+                    }
+                }
+            }
+        },
+        "polaris-streamsight": {
+            "root": "libs/polaris-streamsight",
+            "sourceRoot": "libs/polaris-streamsight/src",
+            "projectType": "library",
+            "targets": {
+                "build": {
+                    "executor": "@nrwl/node:package",
+                    "outputs": ["{options.outputPath}"],
+                    "options": {
+                        "outputPath": "dist/libs/polaris-streamsight",
+                        "tsConfig": "libs/polaris-streamsight/tsconfig.lib.json",
+                        "packageJson": "libs/polaris-streamsight/package.json",
+                        "main": "libs/polaris-streamsight/src/index.ts",
+                        "assets": ["libs/polaris-streamsight/*.md"]
+                    }
+                },
+                "lint": {
+                    "executor": "@nrwl/linter:eslint",
+                    "options": {
+                        "lintFilePatterns": ["libs/polaris-streamsight/**/*.ts"]
+                    }
+                },
+                "test": {
+                    "executor": "@nrwl/jest:jest",
+                    "outputs": ["coverage/libs/polaris-streamsight"],
+                    "options": {
+                        "jestConfig": "libs/polaris-streamsight/jest.config.js",
+                        "passWithNoTests": true
+                    }
+                }
+            }
+        }
+    },
+    "cli": {
+        "defaultCollection": "@nrwl/node"
+    },
+    "defaultProject": "image-throughput-slo-controller"
+}

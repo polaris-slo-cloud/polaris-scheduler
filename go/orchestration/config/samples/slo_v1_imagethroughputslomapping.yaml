@@ -1,0 +1,7 @@
+apiVersion: slo.k8s.rainbow-h2020.eu/v1
+kind: ImageThroughputSloMapping
+metadata:
+  name: imagethroughputslomapping-sample
+spec:
+  # Add fields here
+  foo: bar
