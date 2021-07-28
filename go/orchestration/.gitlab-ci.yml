@@ -26,8 +26,12 @@ cache: &global_cache
     - .go/pkg/mod/
   policy: pull
 
-before_script:
+.setup_go_path: &setup_go_path
   - mkdir -p .go
+  - 'export PATH="$GOPATH/bin:$PATH"'
+
+before_script:
+  - *setup_go_path
   - cd go/orchestration
 
 # The child pipeline needs at minimum one job to run - otherwise the sub-pipeline fails
@@ -57,17 +61,20 @@ build:
     - make
     - make manifests
 
-# test:
-#   stage: test
-#   <<: *rules-default
-#   script:
-#     - go get gotest.tools/gotestsum@v1.7.0
-#     - make test
-#     - gotestsum --junitfile report.xml --format orchestration
-#   artifacts:
-#     untracked: false
-#     when: always
-#     paths:
-#       - go/orchestration/report.xml
-#     reports:
-#       junit: go/orchestration/report.xml
+test:
+  stage: test
+  <<: *rules-default
+  before_script:
+    - *setup_go_path
+    - go get gotest.tools/gotestsum@v1.7.0
+    - cd go/orchestration
+  script:
+    - make test
+    - gotestsum --junitfile report.xml --format testname
+  artifacts:
+    untracked: false
+    when: always
+    paths:
+      - go/orchestration/report.xml
+    reports:
+      junit: go/orchestration/report.xml
