@@ -34,6 +34,7 @@ before_script:
 # See https://gitlab.com/gitlab-org/gitlab/-/issues/218538#note_348724466
 run_always:
   stage: install_deps
+  cache: {}
   before_script:
     - echo "null"
   script:
