@@ -4,6 +4,7 @@
 /bin/
 /_output/
 /_artifacts/
+junit-report.xml
 
 # used for the code generators only
 /vendor/

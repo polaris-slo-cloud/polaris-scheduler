@@ -1,0 +1,76 @@
+.rules-default: &rules-default
+  rules:
+    - changes:
+        - go/scheduler/*
+        - go/orchestration/apis/*
+        - go/orchestration/pkg/*
+    # - if: $CI_MERGE_REQUEST_IID || $CI_COMMIT_TAG || $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+    #   changes:
+    #     - ts/*
+
+stages:
+  - install_deps
+  - build
+  - test
+  - deploy
+
+image: golang:1.16
+
+variables:
+  GOPATH: $CI_PROJECT_DIR/.go
+
+cache: &global_cache
+  key:
+    files:
+      - go/scheduler/go.mod
+      - go/scheduler/go.sum
+  paths:
+    - .go/pkg/mod/
+  policy: pull
+
+.setup_go_path: &setup_go_path
+  - mkdir -p .go
+  - 'export PATH="$GOPATH/bin:$PATH"'
+
+before_script:
+  - *setup_go_path
+  - cd go/scheduler
+
+# The child pipeline needs at minimum one job to run - otherwise the sub-pipeline fails
+# See https://gitlab.com/gitlab-org/gitlab/-/issues/218538#note_348724466
+run_always:
+  stage: install_deps
+  cache: {}
+  before_script:
+    - echo "null"
+  script:
+    - echo "Ensure that pipeline does not fail if no changes were made in ts folder"
+
+install_deps:
+  stage: install_deps
+  <<: *rules-default
+  cache:
+    # inherit all global cache settings, but change the policy to pull-push
+    <<: *global_cache
+    policy: pull-push
+  script:
+    - go mod download
+
+build:
+  stage: build
+  <<: *rules-default
+  script:
+    - make build
+
+# test:
+#   stage: test
+#   <<: *rules-default
+#   script:
+#     - make test-ci
+#   artifacts:
+#     untracked: false
+#     when: always
+#     paths:
+#       - go/scheduler/junit-report.xml
+#     reports:
+#       junit: go/scheduler/junit-report.xml
