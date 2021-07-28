@@ -64,17 +64,12 @@ build:
 test:
   stage: test
   <<: *rules-default
-  before_script:
-    - *setup_go_path
-    - go get gotest.tools/gotestsum@v1.7.0
-    - cd go/orchestration
   script:
-    - make test
-    - gotestsum --junitfile report.xml --format testname
+    - make test-ci
   artifacts:
     untracked: false
     when: always
     paths:
-      - go/orchestration/report.xml
+      - go/orchestration/junit-report.xml
     reports:
-      junit: go/orchestration/report.xml
+      junit: go/orchestration/junit-report.xml
