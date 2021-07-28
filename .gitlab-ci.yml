@@ -13,14 +13,11 @@ trigger_ts:
     include: ts/.gitlab-ci.yml
     strategy: depend
 
-# trigger_scheduler:
-#   stage: triggers
-#   trigger:
-#     include: go/scheduler/.gitlab-ci.yml
-#     strategy: depend
-#   rules:
-#     - changes:
-#         - go/scheduler/*
+trigger_scheduler:
+  stage: triggers
+  trigger:
+    include: go/scheduler/.gitlab-ci.yml
+    strategy: depend
 
 trigger_orchestration:
   stage: triggers
