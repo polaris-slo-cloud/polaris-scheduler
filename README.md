@@ -57,5 +57,3 @@ To deploy the RAINBOW orchestration stack, open a terminal in the root folder of
     * Node Topology CRDs
     * rainbow-orchestrator
     * Horizontal Elasticity Strategy CRD and controller
-    * CRDs and controllers for the following SLOs:
-        * Image throughput SLO
