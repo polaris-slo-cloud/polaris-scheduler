@@ -31,22 +31,8 @@
             }
         ]
     },
-    "projects": {
-        "common-mappings": {
-            "tags": [
-                "scope:core"
-            ]
-        },
-        "image-throughput-slo-controller": {
-            "tags": [
-                "scope:slo",
-                "orchestrator:kubernetes"
-            ]
-        },
-        "polaris-streamsight": {
-            "tags": [
-                "orchestrator:kubernetes"
-            ]
-        }
-    }
+    "cli": {
+        "defaultCollection": "@nrwl/node"
+    },
+    "defaultProject": "image-throughput-slo-controller"
 }

@@ -42,7 +42,10 @@
                         ]
                     }
                 }
-            }
+            },
+            "tags": [
+                "scope:core"
+            ]
         },
         "image-throughput-slo-controller": {
             "root": "apps/image-throughput-slo-controller",
@@ -122,7 +125,11 @@
                         "parallel": false
                     }
                 }
-            }
+            },
+            "tags": [
+                "scope:slo",
+                "orchestrator:kubernetes"
+            ]
         },
         "polaris-streamsight": {
             "root": "libs/polaris-streamsight",
@@ -165,11 +172,10 @@
                         "passWithNoTests": true
                     }
                 }
-            }
+            },
+            "tags": [
+                "orchestrator:kubernetes"
+            ]
         }
-    },
-    "cli": {
-        "defaultCollection": "@nrwl/node"
-    },
-    "defaultProject": "image-throughput-slo-controller"
+    }
 }
