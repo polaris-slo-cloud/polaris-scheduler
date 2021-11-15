@@ -4,7 +4,9 @@ import { RainbowStorageNativeQueryBuilder } from '../internal';
 
 export class RainbowStorageTimeSeriesSource extends TimeSeriesSourceBase {
 
-    readonly name = 'polaris-sloc.time-series-sources.RainbowStorage';
+    static readonly fullName = 'polaris-sloc.time-series-sources.RainbowStorage';
+
+    readonly fullName = RainbowStorageTimeSeriesSource.fullName;
 
     constructor(protected config: PolarisStreamSightConfig) {
         super();

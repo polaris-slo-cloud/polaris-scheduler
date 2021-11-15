@@ -5,9 +5,9 @@
     "author": "Distributed Systems Group, TU Wien",
     "private": false,
     "dependencies": {
-        "typed-rest-client": "^1.8.4"
+        "typed-rest-client": "^1.8.6"
     },
     "peerDependencies": {
-        "@polaris-sloc/core": "~0.2.0-beta.13"
+        "@polaris-sloc/core": "~0.2.0-beta.19"
     }
 }
