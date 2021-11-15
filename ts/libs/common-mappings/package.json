@@ -4,6 +4,7 @@
   "license": "Apache-2.0",
   "author": "Distributed Systems Group, TU Wien",
   "private": "false",
+  "type": "commonjs",
   "peerDependencies": {
     "@polaris-sloc/core": "~0.2.0-beta.19"
   }
