@@ -52,9 +52,9 @@ build:
   stage: build
   <<: *rules-default
   script:
-    - npx nx build common-mappings --with-deps=true
-    - npx nx build polaris-streamsight --with-deps=true
-    - npx nx build image-throughput-slo-controller --with-deps=true
+    - npx nx build common-mappings
+    - npx nx build polaris-streamsight
+    - npx nx build image-throughput-slo-controller
 
 test:
   stage: test
