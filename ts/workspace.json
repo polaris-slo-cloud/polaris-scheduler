@@ -9,12 +9,19 @@
                 "lint": {
                     "executor": "@nrwl/linter:eslint",
                     "options": {
-                        "lintFilePatterns": ["libs/common-mappings/**/*.ts"]
-                    }
+                        "lintFilePatterns": [
+                            "libs/common-mappings/**/*.ts"
+                        ]
+                    },
+                    "outputs": [
+                        "{options.outputFile}"
+                    ]
                 },
                 "test": {
                     "executor": "@nrwl/jest:jest",
-                    "outputs": ["coverage/libs/common-mappings"],
+                    "outputs": [
+                        "coverage/libs/common-mappings"
+                    ],
                     "options": {
                         "jestConfig": "libs/common-mappings/jest.config.js",
                         "passWithNoTests": true
@@ -22,16 +29,27 @@
                 },
                 "build": {
                     "executor": "@nrwl/node:package",
-                    "outputs": ["{options.outputPath}"],
+                    "outputs": [
+                        "{options.outputPath}"
+                    ],
                     "options": {
                         "outputPath": "dist/libs/common-mappings",
                         "tsConfig": "libs/common-mappings/tsconfig.lib.json",
                         "packageJson": "libs/common-mappings/package.json",
                         "main": "libs/common-mappings/src/index.ts",
-                        "assets": ["libs/common-mappings/*.md"]
+                        "assets": [
+                            "libs/common-mappings/*.md"
+                        ]
                     }
+                },
+                "gen-crds": {
+                    "executor": "@polaris-sloc/polaris-nx:generate-crds",
+                    "options": {}
                 }
-            }
+            },
+            "tags": [
+                "scope:core"
+            ]
         },
         "image-throughput-slo-controller": {
             "root": "apps/image-throughput-slo-controller",
@@ -40,12 +58,16 @@
             "targets": {
                 "build": {
                     "executor": "@nrwl/node:build",
-                    "outputs": ["{options.outputPath}"],
+                    "outputs": [
+                        "{options.outputPath}"
+                    ],
                     "options": {
                         "outputPath": "dist/apps/image-throughput-slo-controller",
                         "main": "apps/image-throughput-slo-controller/src/main.ts",
                         "tsConfig": "apps/image-throughput-slo-controller/tsconfig.app.json",
-                        "assets": ["apps/image-throughput-slo-controller/src/assets"],
+                        "assets": [
+                            "apps/image-throughput-slo-controller/src/assets"
+                        ],
                         "externalDependencies": "none"
                     },
                     "configurations": {
@@ -71,12 +93,19 @@
                 "lint": {
                     "executor": "@nrwl/linter:eslint",
                     "options": {
-                        "lintFilePatterns": ["apps/image-throughput-slo-controller/**/*.ts"]
-                    }
+                        "lintFilePatterns": [
+                            "apps/image-throughput-slo-controller/**/*.ts"
+                        ]
+                    },
+                    "outputs": [
+                        "{options.outputFile}"
+                    ]
                 },
                 "test": {
                     "executor": "@nrwl/jest:jest",
-                    "outputs": ["coverage/apps/image-throughput-slo-controller"],
+                    "outputs": [
+                        "coverage/apps/image-throughput-slo-controller"
+                    ],
                     "options": {
                         "jestConfig": "apps/image-throughput-slo-controller/jest.config.js",
                         "passWithNoTests": true
@@ -94,11 +123,17 @@
                 "deploy": {
                     "executor": "@nrwl/workspace:run-commands",
                     "options": {
-                        "commands": ["kubectl apply -f ./apps/image-throughput-slo-controller/manifests/kubernetes"],
+                        "commands": [
+                            "kubectl apply -f ./apps/image-throughput-slo-controller/manifests/kubernetes"
+                        ],
                         "parallel": false
                     }
                 }
-            }
+            },
+            "tags": [
+                "scope:slo",
+                "orchestrator:kubernetes"
+            ]
         },
         "polaris-streamsight": {
             "root": "libs/polaris-streamsight",
@@ -107,34 +142,44 @@
             "targets": {
                 "build": {
                     "executor": "@nrwl/node:package",
-                    "outputs": ["{options.outputPath}"],
+                    "outputs": [
+                        "{options.outputPath}"
+                    ],
                     "options": {
                         "outputPath": "dist/libs/polaris-streamsight",
                         "tsConfig": "libs/polaris-streamsight/tsconfig.lib.json",
                         "packageJson": "libs/polaris-streamsight/package.json",
                         "main": "libs/polaris-streamsight/src/index.ts",
-                        "assets": ["libs/polaris-streamsight/*.md"]
+                        "assets": [
+                            "libs/polaris-streamsight/*.md"
+                        ]
                     }
                 },
                 "lint": {
                     "executor": "@nrwl/linter:eslint",
                     "options": {
-                        "lintFilePatterns": ["libs/polaris-streamsight/**/*.ts"]
-                    }
+                        "lintFilePatterns": [
+                            "libs/polaris-streamsight/**/*.ts"
+                        ]
+                    },
+                    "outputs": [
+                        "{options.outputFile}"
+                    ]
                 },
                 "test": {
                     "executor": "@nrwl/jest:jest",
-                    "outputs": ["coverage/libs/polaris-streamsight"],
+                    "outputs": [
+                        "coverage/libs/polaris-streamsight"
+                    ],
                     "options": {
                         "jestConfig": "libs/polaris-streamsight/jest.config.js",
                         "passWithNoTests": true
                     }
                 }
-            }
+            },
+            "tags": [
+                "orchestrator:kubernetes"
+            ]
         }
-    },
-    "cli": {
-        "defaultCollection": "@nrwl/node"
-    },
-    "defaultProject": "image-throughput-slo-controller"
+    }
 }

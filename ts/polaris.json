@@ -1,0 +1,21 @@
+{
+    "version": 1,
+    "projects": {
+        "common-mappings": {
+            "projectType": "library",
+            "tsEntryPoint": "libs/common-mappings/src/index.ts",
+            "importPath": "@rainbow-h2020/common-mappings",
+            "crds": {
+                "tsConfig": "tsconfig.base.json",
+                "outDir": "crds",
+                "polarisTypes": [
+                    "ImageThroughputSloMapping"
+                ]
+            }
+        },
+        "image-throughput-slo-controller": {
+            "projectType": "slo-controller",
+            "tsEntryPoint": "apps/image-throughput-slo-controller/src/main.ts"
+        }
+    }
+}
