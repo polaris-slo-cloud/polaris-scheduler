@@ -41,6 +41,10 @@
                             "libs/common-mappings/*.md"
                         ]
                     }
+                },
+                "gen-crds": {
+                    "executor": "@polaris-sloc/polaris-nx:generate-crds",
+                    "options": {}
                 }
             },
             "tags": [

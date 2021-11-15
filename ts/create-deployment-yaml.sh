@@ -2,16 +2,17 @@
 set -x
 set -o errexit
 
-# ToDo: Add possibility to specify version, because currently the version must be manually set in th econtrollers' YAML files.
-
 OUTPUT="../deployment/4-slos.yaml"
 
 # Delete old config.
 rm -rf "$OUTPUT"
 
 
-# Build the projects.
+# YAML files to be combined into the output file.
 INPUT_YAML_FILES=(
+    # common-mappings
+    crds/imagethroughputslomappings.slo.k8s.rainbow-h2020.eu.yaml
+
     # image-throughput-slo-controller
     "apps/image-throughput-slo-controller/manifests/kubernetes/1-rbac.yaml"
     "apps/image-throughput-slo-controller/manifests/kubernetes/2-slo-controller.yaml"
