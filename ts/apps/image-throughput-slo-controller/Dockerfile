@@ -19,7 +19,7 @@ COPY ./libs ./libs
 # Build the app.
 # It is important that "externalDependencies" is set to "none" in the node builder's options in angular.json
 # to make sure that all dependencies are packaged into the main.js file.
-RUN npx nx build ${POLARIS_APP_NAME} --with-deps=true
+RUN npx nx build ${POLARIS_APP_NAME}
 
 
 
