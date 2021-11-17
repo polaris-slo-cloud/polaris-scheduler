@@ -57,3 +57,30 @@ Info taken from https://www.youtube.com/watch?v=Wr1TMbdc4O0
 
 We have prepared a set of scenarios to compare rainbow-scheduler against other scheduling approaches.
 These scenarios can be found in [this repository](https://gitlab.com/tommazzo89/scheduler-test-scenarios).
+
+
+## Building and Debugging
+
+### Building
+
+To build the scheduler run the following command:
+
+```sh
+make build
+```
+
+To build the Docker image of the scheduler run the following command:
+
+```sh
+make release-image
+```
+
+
+### Debugging
+
+To debug the scheduler with VS Code, please follow these steps:
+
+1. Copy the `/etc/kubernetes/scheduler.conf` file from your Kubernetes cluster's master node to `bin/config/kubernetes/scheduler.conf`.
+
+2. Go to the "Run and Debug" view in VS Code, select "Local: Debug Scheduler" from the dropdown list, and click the "Start Debugging" button.
+This will automatically execute `make build-debug` and launch the scheduler with the required command line parameters under the Go debugger.
