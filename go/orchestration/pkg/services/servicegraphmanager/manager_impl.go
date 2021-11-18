@@ -5,9 +5,9 @@ import (
 	"math"
 	"strconv"
 
-	"gonum.org/v1/gonum/graph"
 	v1 "k8s.io/api/core/v1"
 	"k8s.rainbow-h2020.eu/rainbow/orchestration/pkg/kubeutil"
+	"k8s.rainbow-h2020.eu/rainbow/orchestration/pkg/model/graph/labeledgraph"
 	"k8s.rainbow-h2020.eu/rainbow/orchestration/pkg/model/graph/servicegraph"
 )
 
@@ -90,11 +90,11 @@ func (me *serviceGraphManagerImpl) buildServiceGraph(pod *v1.Pod) (*servicegraph
 		),
 	}
 
-	edges := []graph.WeightedEdge{
-		svcGraph.NewWeightedEdge(mqNode, taxiCloudNode, 1),
-		svcGraph.NewWeightedEdge(mqNode, taxiIoTNode, 1),
-		svcGraph.NewWeightedEdge(mqNode, taxiEdgeNodes[0], 1),
-		svcGraph.NewWeightedEdge(mqNode, taxiEdgeNodes[1], 1),
+	edges := []labeledgraph.WeightedEdge{
+		svcGraph.NewWeightedEdge(mqNode, taxiCloudNode, labeledgraph.NewComplexEdgeWeightFromFloat(1)),
+		svcGraph.NewWeightedEdge(mqNode, taxiIoTNode, labeledgraph.NewComplexEdgeWeightFromFloat(1)),
+		svcGraph.NewWeightedEdge(mqNode, taxiEdgeNodes[0], labeledgraph.NewComplexEdgeWeightFromFloat(1)),
+		svcGraph.NewWeightedEdge(mqNode, taxiEdgeNodes[1], labeledgraph.NewComplexEdgeWeightFromFloat(1)),
 	}
 	for _, edge := range edges {
 		svcGraph.SetWeightedEdge(edge)

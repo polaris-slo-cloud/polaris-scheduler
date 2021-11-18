@@ -69,7 +69,7 @@ func (me *RainbowLatency) Filter(ctx context.Context, state *framework.CycleStat
 
 	maxLatency := util.GetPodMaxDelay(pod)
 
-	fastestPath := graphpath.DijkstraFrom(currNode, region.LabeledGraph)
+	fastestPath := graphpath.DijkstraFrom(currNode, region.LabeledUndirectedGraph)
 	currNodeLatency := fastestPath.WeightTo(targetNode.ID())
 
 	if int64(currNodeLatency) <= maxLatency {

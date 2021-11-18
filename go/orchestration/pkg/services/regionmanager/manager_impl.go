@@ -3,7 +3,7 @@ package regionmanager
 import (
 	"fmt"
 
-	"gonum.org/v1/gonum/graph"
+	"k8s.rainbow-h2020.eu/rainbow/orchestration/pkg/model/graph/labeledgraph"
 	"k8s.rainbow-h2020.eu/rainbow/orchestration/pkg/model/graph/regiongraph"
 )
 
@@ -69,23 +69,23 @@ func (me *regionManagerImpl) buildRegionGraph() *regiongraph.RegionGraph {
 
 	region.SetRegionHead(regionHead)
 
-	edges := []graph.WeightedEdge{
-		region.NewWeightedEdge(regionHead, fogWorkerNodes[0], 15),
-		region.NewWeightedEdge(fogWorkerNodes[0], fogWorkerNodes[1], 80),
-		region.NewWeightedEdge(regionHead, fogWorkerNodes[2], 20),
-		region.NewWeightedEdge(regionHead, fogWorkerNodes[3], 10),
-		region.NewWeightedEdge(fogWorkerNodes[3], fogWorkerNodes[4], 20),
-		region.NewWeightedEdge(fogWorkerNodes[2], fogWorkerNodes[3], 10),
-		region.NewWeightedEdge(fogWorkerNodes[4], fogWorkerNodes[5], 75),
+	edges := []labeledgraph.WeightedEdge{
+		region.NewWeightedEdge(regionHead, fogWorkerNodes[0], labeledgraph.NewComplexEdgeWeightFromFloat(15)),
+		region.NewWeightedEdge(fogWorkerNodes[0], fogWorkerNodes[1], labeledgraph.NewComplexEdgeWeightFromFloat(80)),
+		region.NewWeightedEdge(regionHead, fogWorkerNodes[2], labeledgraph.NewComplexEdgeWeightFromFloat(20)),
+		region.NewWeightedEdge(regionHead, fogWorkerNodes[3], labeledgraph.NewComplexEdgeWeightFromFloat(10)),
+		region.NewWeightedEdge(fogWorkerNodes[3], fogWorkerNodes[4], labeledgraph.NewComplexEdgeWeightFromFloat(20)),
+		region.NewWeightedEdge(fogWorkerNodes[2], fogWorkerNodes[3], labeledgraph.NewComplexEdgeWeightFromFloat(10)),
+		region.NewWeightedEdge(fogWorkerNodes[4], fogWorkerNodes[5], labeledgraph.NewComplexEdgeWeightFromFloat(75)),
 	}
 
 	for i, cloudNodeI := range cloudWorkerNodes {
 		// Every cloud node has a 40 ms edge to the regioHead
-		edges = append(edges, region.NewWeightedEdge(regionHead, cloudNodeI, 40))
+		edges = append(edges, region.NewWeightedEdge(regionHead, cloudNodeI, labeledgraph.NewComplexEdgeWeightFromFloat(40)))
 
 		// Every cloud node has a 0 ms edge to every other cloud node
 		for j := i + 1; j < len(cloudWorkerNodes); j++ {
-			edges = append(edges, region.NewWeightedEdge(cloudNodeI, cloudWorkerNodes[j], 0))
+			edges = append(edges, region.NewWeightedEdge(cloudNodeI, cloudWorkerNodes[j], labeledgraph.NewComplexEdgeWeightFromFloat(0)))
 		}
 	}
 

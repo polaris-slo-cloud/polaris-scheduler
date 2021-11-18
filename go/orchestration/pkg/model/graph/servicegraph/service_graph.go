@@ -21,7 +21,7 @@ type ServiceGraph struct {
 // NewServiceGraph creates a new instance of ServiceGraph.
 func NewServiceGraph(namespace, appName string) *ServiceGraph {
 	return &ServiceGraph{
-		LabeledGraph: labeledgraph.NewLabeledGraph(NewMicroserviceNode),
+		LabeledGraph: labeledgraph.NewLabeledUndirectedGraph(NewMicroserviceNode),
 		namespace:    namespace,
 		appName:      appName,
 		Mutex:        &sync.RWMutex{},

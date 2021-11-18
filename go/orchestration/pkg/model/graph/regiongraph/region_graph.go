@@ -8,20 +8,20 @@ import (
 // The weight of an edge is the number of milliseconds it takes to send a request between the
 // two nodes that it connects.
 type RegionGraph struct {
-	labeledgraph.LabeledGraph
+	labeledgraph.LabeledUndirectedGraph
 	regionHead *Node
 }
 
 // NewRegionGraph creates a new instance of the default RegionGraph type.
 func NewRegionGraph() *RegionGraph {
 	return &RegionGraph{
-		LabeledGraph: labeledgraph.NewLabeledGraph(NewNode),
+		LabeledUndirectedGraph: labeledgraph.NewLabeledUndirectedGraph(NewNode),
 	}
 }
 
 // Node gets the node with the specified ID.
 func (me *RegionGraph) Node(id int64) *Node {
-	if node := me.LabeledGraph.Node(id); node != nil {
+	if node := me.LabeledUndirectedGraph.Node(id); node != nil {
 		return node.(*Node)
 	}
 	return nil
@@ -29,7 +29,7 @@ func (me *RegionGraph) Node(id int64) *Node {
 
 // NodeByLabel gets the node with the spcified label.
 func (me *RegionGraph) NodeByLabel(label string) *Node {
-	if node := me.LabeledGraph.NodeByLabel(label); node != nil {
+	if node := me.LabeledUndirectedGraph.NodeByLabel(label); node != nil {
 		return node.(*Node)
 	}
 	return nil
@@ -37,9 +37,9 @@ func (me *RegionGraph) NodeByLabel(label string) *Node {
 
 // AddNewNode creates a new node, adds it to the graph, and returns it.
 func (me *RegionGraph) AddNewNode(label string, info *KubernetesNodeInfo) *Node {
-	node := me.LabeledGraph.NewNode(label).(*Node)
+	node := me.LabeledUndirectedGraph.NewNode(label).(*Node)
 	node.SetKubernetesNodeInfo(info)
-	me.LabeledGraph.AddNode(node)
+	me.LabeledUndirectedGraph.AddNode(node)
 	return node
 }
 
