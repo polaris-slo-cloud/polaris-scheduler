@@ -21,7 +21,7 @@ type ServiceGraph struct {
 // NewServiceGraph creates a new instance of ServiceGraph.
 func NewServiceGraph(namespace, appName string) *ServiceGraph {
 	return &ServiceGraph{
-		LabeledGraph: labeledgraph.NewLabeledUndirectedGraph(NewMicroserviceNode),
+		LabeledGraph: labeledgraph.NewLabeledUndirectedGraph(NewMicroserviceNode, labeledgraph.NewDefaultWeightedEdge),
 		namespace:    namespace,
 		appName:      appName,
 		Mutex:        &sync.RWMutex{},
@@ -36,7 +36,7 @@ func (me *ServiceGraph) Node(id int64) *MicroserviceNode {
 	return nil
 }
 
-// NodeByLabel gets the node with the spcified label.
+// NodeByLabel gets the node with the specified label.
 func (me *ServiceGraph) NodeByLabel(label string) *MicroserviceNode {
 	if node := me.LabeledGraph.NodeByLabel(label); node != nil {
 		return node.(*MicroserviceNode)

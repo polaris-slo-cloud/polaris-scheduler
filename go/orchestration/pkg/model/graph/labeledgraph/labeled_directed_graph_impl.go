@@ -18,10 +18,10 @@ type labeledDirectedGraphImpl struct {
 	*labeledGraphBase
 }
 
-func newLabeledDirectedGraphImpl(nodeFactory LabeledNodeFactoryFn) *labeledDirectedGraphImpl {
+func newLabeledDirectedGraphImpl(nodeFactory LabeledNodeFactoryFn, edgeFactory WeightedEdgeFactoryFn) *labeledDirectedGraphImpl {
 	graph := simple.NewWeightedDirectedGraph(0, math.Inf(1))
 	return &labeledDirectedGraphImpl{
-		labeledGraphBase: newLabeledGraphBase(graph, nodeFactory),
+		labeledGraphBase: newLabeledGraphBase(graph, nodeFactory, edgeFactory),
 	}
 }
 

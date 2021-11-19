@@ -26,14 +26,16 @@ type labeledGraphBase struct {
 	weightedGraph
 	nodeIdsByLabel map[string]int64
 	createNewNode  LabeledNodeFactoryFn
+	createNewEdge  WeightedEdgeFactoryFn
 }
 
 // Creates a new labeledGraphBase object with the specified graph and node factory.
-func newLabeledGraphBase(graph weightedGraph, nodeFactory LabeledNodeFactoryFn) *labeledGraphBase {
+func newLabeledGraphBase(graph weightedGraph, nodeFactory LabeledNodeFactoryFn, edgeFactory WeightedEdgeFactoryFn) *labeledGraphBase {
 	return &labeledGraphBase{
 		weightedGraph:  graph,
 		nodeIdsByLabel: make(map[string]int64),
 		createNewNode:  nodeFactory,
+		createNewEdge:  edgeFactory,
 	}
 }
 
@@ -61,7 +63,7 @@ func (me *labeledGraphBase) AddNode(node LabeledNode) {
 }
 
 func (me *labeledGraphBase) NewWeightedEdge(from, to LabeledNode, weight ComplexEdgeWeight) WeightedEdge {
-	return newWeightedEdgeImpl(from, to, weight)
+	return me.createNewEdge(from, to, weight)
 }
 
 func (me *labeledGraphBase) SetWeightedEdge(edge WeightedEdge) {

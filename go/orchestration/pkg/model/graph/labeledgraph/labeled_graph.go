@@ -13,6 +13,9 @@ type NodePayload interface{}
 // LabeledNodeFactoryFn is used to allow the consumer of a LabeledGraph to configure the type of LabeledNode to be used.
 type LabeledNodeFactoryFn func(id int64, label string) LabeledNode
 
+// WeightedEdgeFactoryFn is used to allow the consumer of a LabeledGraph to configure the type of WeightedEdge to be used.
+type WeightedEdgeFactoryFn func(from, to LabeledNode, weight ComplexEdgeWeight) WeightedEdge
+
 // LabeledNode is a graph node with a label.
 // Like a node's ID, its Label must be unique within a graph.
 type LabeledNode interface {
@@ -62,6 +65,8 @@ type LabeledGraph interface {
 	NodeByLabel(label string) LabeledNode
 
 	// NewNode returns a new Node with a unique ID and the specified label.
+	//
+	// The node must be added using AddNode()
 	NewNode(label string) LabeledNode
 
 	// AddNode adds a node to the graph. AddNode panics if
@@ -69,6 +74,7 @@ type LabeledGraph interface {
 	AddNode(node LabeledNode)
 
 	// NewWeightedEdge creates a new WeightedEdge from the `from` to the `to` node.
+	//
 	// This edge can be added to the graph using the SetWeightedEdge() method.
 	NewWeightedEdge(from, to LabeledNode, weight ComplexEdgeWeight) WeightedEdge
 
@@ -89,16 +95,21 @@ type LabeledDirectedGraph interface {
 }
 
 // NewLabeledUndirectedGraph creates an instance of the default LabeledUndirectedGraph type.
-func NewLabeledUndirectedGraph(nodeFactory LabeledNodeFactoryFn) LabeledUndirectedGraph {
-	return newLabeledUndirectedGraphImpl(nodeFactory)
+func NewLabeledUndirectedGraph(nodeFactory LabeledNodeFactoryFn, edgeFactory WeightedEdgeFactoryFn) LabeledUndirectedGraph {
+	return newLabeledUndirectedGraphImpl(nodeFactory, edgeFactory)
 }
 
 // NewLabeledDirectedGraph creates an instance of the default LabeledDirectedGraph type.
-func NewLabeledDirectedGraph(nodeFactory LabeledNodeFactoryFn) LabeledDirectedGraph {
-	return newLabeledDirectedGraphImpl(nodeFactory)
+func NewLabeledDirectedGraph(nodeFactory LabeledNodeFactoryFn, edgeFactory WeightedEdgeFactoryFn) LabeledDirectedGraph {
+	return newLabeledDirectedGraphImpl(nodeFactory, edgeFactory)
 }
 
 // NewDefaultLabeledNode creates an instance of the default LabeledNode type.
 func NewDefaultLabeledNode(id int64, label string) LabeledNode {
 	return newLabeledNodeImpl(id, label)
+}
+
+// NewDefaultWeightedEdge creates an instance of the default WeightedEdge type.
+func NewDefaultWeightedEdge(from, to LabeledNode, weight ComplexEdgeWeight) WeightedEdge {
+	return newWeightedEdgeImpl(from, to, weight)
 }
