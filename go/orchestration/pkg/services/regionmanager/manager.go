@@ -11,7 +11,7 @@ var (
 // RegionManager provides methods for obtaining information about a fog region
 type RegionManager interface {
 	// RegionGraph gets a graph that represents that current state of the region.
-	RegionGraph() *regiongraph.RegionGraph
+	RegionGraph() regiongraph.RegionGraph
 }
 
 // GetRegionManager returns the singleton instance of the RegionManager.
