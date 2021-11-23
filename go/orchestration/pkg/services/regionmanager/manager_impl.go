@@ -1,8 +1,13 @@
 package regionmanager
 
 import (
+	"sync/atomic"
+
+	"k8s.io/klog/v2"
 	cluster "k8s.rainbow-h2020.eu/rainbow/orchestration/apis/cluster/v1"
+	"k8s.rainbow-h2020.eu/rainbow/orchestration/pkg/kubeutil"
 	"k8s.rainbow-h2020.eu/rainbow/orchestration/pkg/model/graph/regiongraph"
+	"k8s.rainbow-h2020.eu/rainbow/orchestration/pkg/services/configmanager"
 )
 
 var (
@@ -12,19 +17,39 @@ var (
 )
 
 type regionManagerImpl struct {
-	regionGraph regiongraph.RegionGraph
+	regionGraph atomic.Value
+	watcher     kubeutil.ListWatcher
 }
 
 func newRegionManagerImpl() *regionManagerImpl {
-	return &regionManagerImpl{}
+	configMgr := configmanager.GetConfigManager()
+	watcher, err := kubeutil.StartListWatcher(&cluster.NetworkLinkList{}, configMgr.RestConfig(), configMgr.Scheme())
+	if err != nil {
+		panic(err)
+	}
+	regionMgr := &regionManagerImpl{
+		watcher: watcher,
+	}
+
+	// Build the initial region graph
+	networkLinks := (<-watcher.WatchChan()).(*cluster.NetworkLinkList)
+	regionGraph := regionMgr.buildRegionGraph(networkLinks)
+	regionMgr.regionGraph.Store(regionGraph)
+
+	go regionMgr.watchNetworkLinks()
+	return regionMgr
 }
 
 func (me *regionManagerImpl) RegionGraph() regiongraph.RegionGraph {
-	if me.regionGraph == nil {
-		// ToDo
-		me.regionGraph = me.buildRegionGraph(nil)
+	return me.regionGraph.Load().(regiongraph.RegionGraph)
+}
+
+func (me *regionManagerImpl) watchNetworkLinks() {
+	watchChan := me.watcher.WatchChan()
+	for networkLinks := range watchChan {
+		updatedGraph := me.buildRegionGraph(networkLinks.(*cluster.NetworkLinkList))
+		me.regionGraph.Store(updatedGraph)
 	}
-	return me.regionGraph
 }
 
 func (me *regionManagerImpl) buildRegionGraph(networkLinks *cluster.NetworkLinkList) regiongraph.RegionGraph {
@@ -39,6 +64,7 @@ func (me *regionManagerImpl) buildRegionGraph(networkLinks *cluster.NetworkLinkL
 		region.SetEdge(edge)
 	}
 
+	klog.Infof("Successfully built a RegionGraph with %v links.", len(networkLinks.Items))
 	return region
 }
 

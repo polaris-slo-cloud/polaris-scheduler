@@ -32,6 +32,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	fogappsCRDs "k8s.rainbow-h2020.eu/rainbow/orchestration/apis/fogapps/v1"
+	"k8s.rainbow-h2020.eu/rainbow/orchestration/pkg/services/regionmanager"
 	"k8s.rainbow-h2020.eu/rainbow/orchestration/pkg/slo"
 )
 
@@ -151,6 +152,9 @@ func (me *ServiceGraphReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	if err := mgr.GetFieldIndexer().IndexField(context.Background(), &networking.Ingress{}, ownerKey, indexerFn); err != nil {
 		return err
 	}
+
+	// Initialize the region manager.
+	var _ = regionmanager.GetRegionManager()
 
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&fogappsCRDs.ServiceGraph{}).

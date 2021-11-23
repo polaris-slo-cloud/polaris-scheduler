@@ -40,6 +40,7 @@ import (
 	fogappsv1 "k8s.rainbow-h2020.eu/rainbow/orchestration/apis/fogapps/v1"
 	slov1 "k8s.rainbow-h2020.eu/rainbow/orchestration/apis/slo/v1"
 	fogappscontrollers "k8s.rainbow-h2020.eu/rainbow/orchestration/controllers/fogapps"
+	"k8s.rainbow-h2020.eu/rainbow/orchestration/pkg/services/configmanager"
 	//+kubebuilder:scaffold:imports
 )
 
@@ -86,6 +87,9 @@ func main() {
 		setupLog.Error(err, "unable to start manager")
 		os.Exit(1)
 	}
+
+	// Initialize the ConfigManager
+	configmanager.InitConfigManager(ctrl.GetConfigOrDie(), scheme)
 
 	if err = (&fogappscontrollers.ServiceGraphReconciler{
 		Client: mgr.GetClient(),

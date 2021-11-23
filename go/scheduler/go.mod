@@ -3,6 +3,7 @@ module k8s.rainbow-h2020.eu/rainbow/scheduler
 go 1.16
 
 require (
+	gonum.org/v1/gonum v0.9.3
 	k8s.io/api v0.22.2
 	k8s.io/apimachinery v0.22.2
 	k8s.io/code-generator v0.21.7
