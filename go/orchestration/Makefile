@@ -72,6 +72,12 @@ test-ci: test-common ## Run tests in CI mode.
 	$(call go-get-tool,$(GOTESTSUM),gotest.tools/gotestsum@v1.7.0)
 	KUBEBUILDER_ASSETS="$(call get-kubebuilder-assets-path)" $(GOTESTSUM) --junitfile junit-report.xml --format testname
 
+.PHONY: clean
+clean:
+	rm -rf ./bin
+	rm -f ./cover.out
+	rm -f ./junit-report.xml
+
 ##@ Build
 
 .PHONY: build
