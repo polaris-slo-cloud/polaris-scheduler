@@ -47,6 +47,22 @@ func (me *labeledGraphBase) NodeByLabel(label string) LabeledNode {
 	return nil
 }
 
+func (me *labeledGraphBase) EdgeByLabels(fromLabel, toLabel string) WeightedEdge {
+	var fromNode, toNode LabeledNode
+	if fromNode = me.NodeByLabel(fromLabel); fromNode == nil {
+		return nil
+	}
+	if toNode = me.NodeByLabel(toLabel); toNode == nil {
+		return nil
+	}
+
+	var edge graph.WeightedEdge
+	if edge = me.WeightedEdge(fromNode.ID(), toNode.ID()); edge == nil {
+		return nil
+	}
+	return edge.(WeightedEdge)
+}
+
 func (me *labeledGraphBase) NewNode(label string) LabeledNode {
 	simpleNode := me.weightedGraph.NewNode()
 	labeledNode := me.createNewNode(simpleNode.ID(), label)

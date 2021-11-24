@@ -1,7 +1,6 @@
 package regiongraph
 
 import (
-	"gonum.org/v1/gonum/graph"
 	cluster "k8s.rainbow-h2020.eu/rainbow/orchestration/apis/cluster/v1"
 	lg "k8s.rainbow-h2020.eu/rainbow/orchestration/pkg/model/graph/labeledgraph"
 )
@@ -36,19 +35,7 @@ func (me *regionGraphImpl) NodeByLabel(label string) Node {
 }
 
 func (me *regionGraphImpl) Edge(fromLabel, toLabel string) Edge {
-	var fromNode, toNode Node
-	if fromNode = me.graph.NodeByLabel(fromLabel); fromNode == nil {
-		return nil
-	}
-	if toNode = me.graph.NodeByLabel(toLabel); toNode == nil {
-		return nil
-	}
-
-	var edge graph.WeightedEdge
-	if edge = me.graph.WeightedEdge(fromNode.ID(), toNode.ID()); edge == nil {
-		return nil
-	}
-	return edge.(Edge)
+	return me.graph.EdgeByLabels(fromLabel, toLabel).(Edge)
 }
 
 func (me *regionGraphImpl) NewNode(label string) Node {

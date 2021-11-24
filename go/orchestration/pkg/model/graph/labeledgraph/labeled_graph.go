@@ -64,6 +64,11 @@ type LabeledGraph interface {
 	// in the graph, and nil otherwise.
 	NodeByLabel(label string) LabeledNode
 
+	// EdgeByLabels returns the WeightedEdge from the node with
+	// the label fromNodeLabel to the node with the label toNodeLabel.
+	// If such an edge does not exist, the method returns nil.
+	EdgeByLabels(fromLabel, toLabel string) WeightedEdge
+
 	// NewNode returns a new Node with a unique ID and the specified label.
 	//
 	// The node must be added using AddNode()
