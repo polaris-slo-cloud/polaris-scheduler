@@ -347,11 +347,7 @@ func (me *serviceGraphProcessor) assembleUpdatesForDeployments() error {
 	for _, existingDeployment := range me.existingChildObjects.Deployments {
 		if updatedDeployment, ok := me.newChildObjects.Deployments[existingDeployment.Name]; ok {
 
-			// ToDo: Containers are currently never equal, because Kubernetes sets some values, which are unset in new containers.
-			// containersEqual := reflect.DeepEqual(existingDeployment.Spec.Template.Spec.Containers, updatedDeployment.Spec.Template.Spec.Containers)
-			// _ = containersEqual
-
-			if !reflect.DeepEqual(existingDeployment.Spec, updatedDeployment.Spec) {
+			if !svcGraphUtil.DeepEqualDeploymentSpecs(&existingDeployment.Spec, &updatedDeployment.Spec) {
 				// Deployment was changed, we need to update it
 				me.changes.AddChanges(controllerutil.NewResourceUpdate(updatedDeployment))
 			}
@@ -369,7 +365,7 @@ func (me *serviceGraphProcessor) assembleUpdatesForStatefulSets() error {
 	for _, existingStatefulSet := range me.existingChildObjects.StatefulSets {
 		if updatedStatefulSet, ok := me.newChildObjects.StatefulSets[existingStatefulSet.Name]; ok {
 
-			if !reflect.DeepEqual(existingStatefulSet.Spec, updatedStatefulSet.Spec) {
+			if !svcGraphUtil.DeepEqualStatefulSetSpecs(&existingStatefulSet.Spec, &updatedStatefulSet.Spec) {
 				// StatefulSet was changed, we need to update it
 				me.changes.AddChanges(controllerutil.NewResourceUpdate(updatedStatefulSet))
 			}
@@ -386,6 +382,8 @@ func (me *serviceGraphProcessor) assembleUpdatesForStatefulSets() error {
 func (me *serviceGraphProcessor) assembleUpdatesForServices() error {
 	for _, existingService := range me.existingChildObjects.Services {
 		if updatedService, ok := me.newChildObjects.Services[existingService.Name]; ok {
+
+			// ToDo: A plain DeepEqual() always returns false. We need a custom comparison.
 
 			if !reflect.DeepEqual(existingService.Spec, updatedService.Spec) {
 				// Service was changed, we need to update it
