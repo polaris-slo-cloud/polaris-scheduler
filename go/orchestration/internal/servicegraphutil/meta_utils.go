@@ -5,8 +5,8 @@ import (
 
 	meta "k8s.io/apimachinery/pkg/apis/meta/v1"
 	fogappsCRDs "k8s.rainbow-h2020.eu/rainbow/orchestration/apis/fogapps/v1"
-	"k8s.rainbow-h2020.eu/rainbow/orchestration/internal/util"
 	"k8s.rainbow-h2020.eu/rainbow/orchestration/pkg/kubeutil"
+	"k8s.rainbow-h2020.eu/rainbow/orchestration/pkg/util"
 )
 
 // createNodeObjectMeta creates an ObjectMeta for resources that are created from a ServiceGraphNode.

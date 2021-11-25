@@ -16,6 +16,10 @@ const (
 
 	// Name of the annotation that stores the resourceVersion of the service graph, from which an object was last updated.
 	AnnotationLastUpdatedByServiceGraphVersion = "rainbow-h2020.eu/last-updated-by-service-graph-version"
+
+	// Name of the annotation that stores the hash of the spec that was used for creating an object.
+	// See SetSpecHash()
+	AnnotationSpecHash = "rainbow-h2020.eu/spec-hash"
 )
 
 // GetLabel returns the label with the specified key.

@@ -30,6 +30,20 @@ func (me *UnstructuredSloMapping) SetMetadata(metadata map[string]interface{}) {
 	me.Object["metadata"] = metadata
 }
 
+// Merges relevant metadata (needed for updating an object) from a previous version of this SLO into this version's metadata.
+func (me *UnstructuredSloMapping) MergePreviousMetadata(prevMetadata map[string]interface{}) {
+	metadata := me.Object["metadata"].(map[string]interface{})
+
+	mergeField := func(key string) {
+		if value, found := prevMetadata[key]; found {
+			metadata[key] = value
+		}
+	}
+
+	mergeField("resourceVersion")
+	mergeField("uid")
+}
+
 // GetSpec gets the spec object map on this UnstructuredSloMapping.
 func (me *UnstructuredSloMapping) GetSpec() map[string]interface{} {
 	return me.getObject("spec")
