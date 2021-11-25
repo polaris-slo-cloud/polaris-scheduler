@@ -75,6 +75,7 @@ func UpdateStatefulSet(statefulSet *apps.StatefulSet, node *fogappsCRDs.ServiceG
 func updatePodTemplate(podTemplate *core.PodTemplateSpec, node *fogappsCRDs.ServiceGraphNode, graph *fogappsCRDs.ServiceGraph) {
 	podTemplate.Spec.SchedulerName = kubeutil.RainbowSchedulerName
 	podTemplate.ObjectMeta.Labels = getPodLabels(node, graph)
+	podTemplate.ObjectMeta.Annotations = getPodAnnotations(node, graph)
 	podTemplate.Spec.InitContainers = node.InitContainers
 	podTemplate.Spec.Containers = node.Containers
 	podTemplate.Spec.Volumes = node.Volumes

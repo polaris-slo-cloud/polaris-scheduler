@@ -34,3 +34,10 @@ func getPodLabels(node *fogappsCRDs.ServiceGraphNode, graph *fogappsCRDs.Service
 	labels[kubeutil.LabelRefServiceGraphNode] = node.Name
 	return labels
 }
+
+// Gets the annotations for a pod generated from a ServiceGraphNode.
+func getPodAnnotations(node *fogappsCRDs.ServiceGraphNode, graph *fogappsCRDs.ServiceGraph) map[string]string {
+	annotations := make(map[string]string, 1)
+	annotations[kubeutil.AnnotationLastUpdatedByServiceGraphVersion] = graph.GetResourceVersion()
+	return annotations
+}

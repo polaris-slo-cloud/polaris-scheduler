@@ -13,6 +13,9 @@ const (
 
 	// Name of the label to reference a node in a service graph.
 	LabelRefServiceGraphNode = "rainbow-h2020.eu/service-graph-node"
+
+	// Name of the annotation that stores the resourceVersion of the service graph, from which an object was last updated.
+	AnnotationLastUpdatedByServiceGraphVersion = "rainbow-h2020.eu/last-updated-by-service-graph-version"
 )
 
 // GetLabel returns the label with the specified key.
