@@ -2,7 +2,6 @@ package servicegraphmanager
 
 import (
 	core "k8s.io/api/core/v1"
-	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 var (
@@ -36,7 +35,7 @@ func GetServiceGraphManager() ServiceGraphManager {
 }
 
 // Initializes the singleton instance of the ServiceGraphManager.
-func InitServiceGraphManager(k8sClient client.Client) ServiceGraphManager {
-	instance = newServiceGraphManagerImpl(k8sClient)
+func InitServiceGraphManager() ServiceGraphManager {
+	instance = newServiceGraphManagerImpl()
 	return instance
 }

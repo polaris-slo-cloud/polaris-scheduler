@@ -6,6 +6,7 @@ require (
 	gonum.org/v1/gonum v0.9.3
 	k8s.io/api v0.22.2
 	k8s.io/apimachinery v0.22.2
+	k8s.io/client-go v0.22.2
 	k8s.io/code-generator v0.21.7
 	k8s.io/component-base v0.22.2
 	k8s.io/klog/v2 v2.9.0
@@ -14,7 +15,7 @@ require (
 	k8s.io/kube-scheduler v0.21.7 // indirect
 	k8s.io/kubernetes v1.21.7
 	k8s.rainbow-h2020.eu/rainbow/orchestration v0.0.1
-	sigs.k8s.io/controller-runtime v0.10.3 // indirect
+	sigs.k8s.io/controller-runtime v0.10.3
 )
 
 replace (

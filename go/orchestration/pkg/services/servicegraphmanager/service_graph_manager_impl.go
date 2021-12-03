@@ -11,6 +11,7 @@ import (
 	"k8s.rainbow-h2020.eu/rainbow/orchestration/pkg/kubeutil"
 	"k8s.rainbow-h2020.eu/rainbow/orchestration/pkg/model/graph/servicegraph"
 	"k8s.rainbow-h2020.eu/rainbow/orchestration/pkg/serviceplacement"
+	"k8s.rainbow-h2020.eu/rainbow/orchestration/pkg/services/configmanager"
 	"k8s.rainbow-h2020.eu/rainbow/orchestration/pkg/util"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
@@ -35,7 +36,13 @@ type serviceGraphManagerImpl struct {
 	client client.Client
 }
 
-func newServiceGraphManagerImpl(k8sClient client.Client) *serviceGraphManagerImpl {
+func newServiceGraphManagerImpl() *serviceGraphManagerImpl {
+	configMgr := configmanager.GetConfigManager()
+	k8sClient, err := client.New(configMgr.RestConfig(), client.Options{Scheme: configMgr.Scheme()})
+	if err != nil {
+		panic(err)
+	}
+
 	return &serviceGraphManagerImpl{
 		activeStates: sync.Map{},
 		client:       k8sClient,

@@ -16,8 +16,14 @@ type RegionManager interface {
 
 // GetRegionManager returns the singleton instance of the RegionManager.
 func GetRegionManager() RegionManager {
-	if instance == nil {
-		instance = newRegionManagerImpl()
+	if instance != nil {
+		return instance
 	}
+	panic("RegionManager singleton has not been initialized. Did you call InitRegionManager()?")
+}
+
+// Initializes the singleton instance of the RegionManager.
+func InitRegionManager() RegionManager {
+	instance = newRegionManagerImpl()
 	return instance
 }
