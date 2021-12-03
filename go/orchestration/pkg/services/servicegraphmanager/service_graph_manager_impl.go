@@ -10,6 +10,7 @@ import (
 	fogappsCRDs "k8s.rainbow-h2020.eu/rainbow/orchestration/apis/fogapps/v1"
 	"k8s.rainbow-h2020.eu/rainbow/orchestration/pkg/kubeutil"
 	"k8s.rainbow-h2020.eu/rainbow/orchestration/pkg/model/graph/servicegraph"
+	"k8s.rainbow-h2020.eu/rainbow/orchestration/pkg/serviceplacement"
 	"k8s.rainbow-h2020.eu/rainbow/orchestration/pkg/util"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
@@ -135,6 +136,66 @@ func (me *serviceGraphManagerImpl) deleteServiceGraphState(svcGraphState Service
 	me.activeStates.Delete(mapKey)
 }
 
+// Fetches the Deployments and StatefulSet statuses to determine on which nodes the pods of the ServiceGraph nodes have been scheduled.
 func (me *serviceGraphManagerImpl) buildPlacementMap(svcGraphState ServiceGraphState, resultProvider util.ResultProvider) {
+	svcGraphCRD := svcGraphState.ServiceGraphCRD()
 
+	pods, err := me.loadAllPodsForServiceGraph(svcGraphCRD)
+	if err != nil {
+		resultProvider(nil, err)
+		return
+	}
+
+	placementMap := me.computePlacementMap(svcGraphCRD, pods)
+	resultProvider(placementMap, nil)
+}
+
+func (me *serviceGraphManagerImpl) loadAllPodsForServiceGraph(svcGraphCRD *fogappsCRDs.ServiceGraph) ([]core.Pod, error) {
+	labelsQuery := map[string]string{
+		kubeutil.LabelRefServiceGraph: svcGraphCRD.ObjectMeta.Name,
+	}
+	pods := core.PodList{}
+
+	err := me.client.List(
+		context.TODO(),
+		&pods,
+		client.InNamespace(svcGraphCRD.ObjectMeta.Namespace),
+		client.MatchingLabels(labelsQuery),
+	)
+	if err != nil {
+		return nil, err
+	}
+	return pods.Items, nil
+}
+
+func (me *serviceGraphManagerImpl) computePlacementMap(svcGraphCRD *fogappsCRDs.ServiceGraph, pods []core.Pod) serviceplacement.ServiceGraphPlacementMap {
+	// Maps each ServiceGraph node name to the set of K8s nodes, where at least one pod of it is placed.
+	servicePlacements := make(map[string]util.StringSet, len(svcGraphCRD.Spec.Nodes))
+
+	addK8sNode := func(svcGraphNodeName, k8sNodeName string) {
+		k8sNodes, ok := servicePlacements[svcGraphNodeName]
+		if !ok {
+			k8sNodes = util.NewStringSet()
+			servicePlacements[svcGraphNodeName] = k8sNodes
+		}
+		k8sNodes.Add(k8sNodeName)
+	}
+
+	for i := range pods {
+		pod := &pods[i]
+		svcGraphNode, ok := kubeutil.GetLabel(pod, kubeutil.LabelRefServiceGraphNode)
+		if !ok {
+			continue
+		}
+		if k8sNode := pod.Spec.NodeName; k8sNode != "" {
+			addK8sNode(svcGraphNode, k8sNode)
+		}
+	}
+
+	placementMap := serviceplacement.NewServicePlacementMap()
+	for svcGraphNode, placement := range servicePlacements {
+		k8sNodes := placement.Entries()
+		placementMap.SetKubernetesNodes(svcGraphNode, func(prev []string) []string { return k8sNodes })
+	}
+	return placementMap
 }
