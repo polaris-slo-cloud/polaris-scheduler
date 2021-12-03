@@ -14,13 +14,13 @@ import (
 
 const (
 	// PluginName is the name of this scheduler plugin.
-	PluginName = "RainbowPodsPerNode"
+	PluginName = "PodsPerNode"
 
-	preScoreStateKey = "RainbowPodsPerNode.preFilterState"
+	preScoreStateKey = "PodsPerNode.preFilterState"
 )
 
 var (
-	_podsPerNode *RainbowPodsPerNode
+	_podsPerNode *PodsPerNodePlugin
 
 	_ framework.PreScorePlugin  = _podsPerNode
 	_ framework.ScorePlugin     = _podsPerNode
@@ -28,8 +28,8 @@ var (
 	_ framework.StateData       = &preScoreState{}
 )
 
-// RainbowPodsPerNode is a Score plugin that increases colocation of an application's components on a node.
-type RainbowPodsPerNode struct {
+// PodsPerNodePlugin is a Score plugin that increases colocation of an application's components on a node.
+type PodsPerNodePlugin struct {
 	handle framework.Handle
 }
 
@@ -40,23 +40,23 @@ type preScoreState struct {
 
 // New creates a new RainbowPodsPerNode plugin instance.
 func New(obj runtime.Object, handle framework.Handle) (framework.Plugin, error) {
-	return &RainbowPodsPerNode{
+	return &PodsPerNodePlugin{
 		handle: handle,
 	}, nil
 }
 
 // Name returns the name of this scheduler plugin.
-func (me *RainbowPodsPerNode) Name() string {
+func (me *PodsPerNodePlugin) Name() string {
 	return PluginName
 }
 
 // ScoreExtensions returns a ScoreExtensions interface if it implements one, or nil if does not.
-func (me *RainbowPodsPerNode) ScoreExtensions() framework.ScoreExtensions {
+func (me *PodsPerNodePlugin) ScoreExtensions() framework.ScoreExtensions {
 	return me
 }
 
 // PreScore computes the total resources required by the pod and stores that info in the state.
-func (me *RainbowPodsPerNode) PreScore(ctx context.Context, state *framework.CycleState, pod *v1.Pod, nodes []*v1.Node) *framework.Status {
+func (me *PodsPerNodePlugin) PreScore(ctx context.Context, state *framework.CycleState, pod *v1.Pod, nodes []*v1.Node) *framework.Status {
 	requiredResources, err := util.CalcTotalRequiredResources(pod)
 	if err != nil {
 		return framework.AsStatus(err)
@@ -76,7 +76,7 @@ func (me *RainbowPodsPerNode) PreScore(ctx context.Context, state *framework.Cyc
 // Score is called on each filtered node. It must return success and an integer
 // indicating the rank of the node. All scoring plugins must return success or
 // the pod will be rejected.
-func (me *RainbowPodsPerNode) Score(ctx context.Context, state *framework.CycleState, pod *v1.Pod, nodeName string) (int64, *framework.Status) {
+func (me *PodsPerNodePlugin) Score(ctx context.Context, state *framework.CycleState, pod *v1.Pod, nodeName string) (int64, *framework.Status) {
 	svcGraph, err := util.GetServiceGraphFromState(pod, state)
 	if err != nil {
 		// If the pod is not part of a RAINBOW application, we skip it and pass it to the next plugin.
@@ -122,7 +122,7 @@ func (me *RainbowPodsPerNode) Score(ctx context.Context, state *framework.CycleS
 }
 
 // NormalizeScore normalizes all scores to a range between 0 and 100.
-func (me *RainbowPodsPerNode) NormalizeScore(ctx context.Context, state *framework.CycleState, pod *v1.Pod, scores framework.NodeScoreList) *framework.Status {
+func (me *PodsPerNodePlugin) NormalizeScore(ctx context.Context, state *framework.CycleState, pod *v1.Pod, scores framework.NodeScoreList) *framework.Status {
 	util.NormalizeNodeScores(scores)
 	for _, score := range scores {
 		klog.Infof("Pod %s, node: %s, finalScore: %d", pod.Name, score.Name, score.Score)
@@ -130,7 +130,7 @@ func (me *RainbowPodsPerNode) NormalizeScore(ctx context.Context, state *framewo
 	return framework.NewStatus(framework.Success)
 }
 
-func (me *RainbowPodsPerNode) calcMaxReplicasPerNode(state *preScoreState, pod *v1.Pod, nodeInfo *framework.NodeInfo) (int64, error) {
+func (me *PodsPerNodePlugin) calcMaxReplicasPerNode(state *preScoreState, pod *v1.Pod, nodeInfo *framework.NodeInfo) (int64, error) {
 	var maxReplicasByResource map[string]int64 = make(map[string]int64)
 
 	if state.requiredResources.Memory > 0 {

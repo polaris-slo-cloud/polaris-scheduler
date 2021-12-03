@@ -34,7 +34,7 @@ import (
 	"k8s.rainbow-h2020.eu/rainbow/orchestration/pkg/services/servicegraphmanager"
 
 	"k8s.rainbow-h2020.eu/rainbow/scheduler/pkg/schedulerplugins/atomicdeployment"
-	"k8s.rainbow-h2020.eu/rainbow/scheduler/pkg/schedulerplugins/latency"
+	"k8s.rainbow-h2020.eu/rainbow/scheduler/pkg/schedulerplugins/networkqos"
 	"k8s.rainbow-h2020.eu/rainbow/scheduler/pkg/schedulerplugins/nodecost"
 	"k8s.rainbow-h2020.eu/rainbow/scheduler/pkg/schedulerplugins/podspernode"
 	"k8s.rainbow-h2020.eu/rainbow/scheduler/pkg/schedulerplugins/prioritymqsort"
@@ -69,7 +69,7 @@ func main() {
 	command := app.NewSchedulerCommand(
 		app.WithPlugin(prioritymqsort.PluginName, prioritymqsort.New),
 		app.WithPlugin(servicegraph.PluginName, servicegraph.New),
-		app.WithPlugin(latency.PluginName, latency.New),
+		app.WithPlugin(networkqos.PluginName, networkqos.New),
 		app.WithPlugin(podspernode.PluginName, podspernode.New),
 		app.WithPlugin(nodecost.PluginName, nodecost.New),
 		app.WithPlugin(reserve.PluginName, reserve.New),

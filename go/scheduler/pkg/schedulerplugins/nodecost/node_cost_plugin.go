@@ -12,34 +12,34 @@ import (
 
 const (
 	// PluginName is the name of this scheduler plugin.
-	PluginName = "RainbowNodeCost"
+	PluginName = "NodeCost"
 )
 
 var (
-	_cloudCost *RainbowNodeCost
+	_cloudCost *NodeCostPlugin
 
 	_ framework.ScorePlugin = _cloudCost
 )
 
-// RainbowNodeCost is a Score plugin that provides a higher score for cheaper nodes.
-type RainbowNodeCost struct {
+// NodeCostPlugin is a Score plugin that provides a higher score for cheaper nodes.
+type NodeCostPlugin struct {
 	handle framework.Handle
 }
 
 // New creates a new RainbowPodsPerNode plugin instance.
 func New(obj runtime.Object, handle framework.Handle) (framework.Plugin, error) {
-	return &RainbowNodeCost{
+	return &NodeCostPlugin{
 		handle: handle,
 	}, nil
 }
 
 // Name returns the name of this scheduler plugin.
-func (me *RainbowNodeCost) Name() string {
+func (me *NodeCostPlugin) Name() string {
 	return PluginName
 }
 
 // ScoreExtensions returns a ScoreExtensions interface if it implements one, or nil if does not.
-func (me *RainbowNodeCost) ScoreExtensions() framework.ScoreExtensions {
+func (me *NodeCostPlugin) ScoreExtensions() framework.ScoreExtensions {
 	return nil
 }
 
@@ -48,7 +48,7 @@ func (me *RainbowNodeCost) ScoreExtensions() framework.ScoreExtensions {
 // - cloud small: 75
 // - cloud medium: 50
 // - cloud large: 25
-func (me *RainbowNodeCost) Score(ctx context.Context, state *framework.CycleState, pod *v1.Pod, nodeName string) (int64, *framework.Status) {
+func (me *NodeCostPlugin) Score(ctx context.Context, state *framework.CycleState, pod *v1.Pod, nodeName string) (int64, *framework.Status) {
 	nodeInfo, err := util.GetNodeByName(me.handle, nodeName)
 	if err != nil {
 		return 0, framework.AsStatus(fmt.Errorf("%s", err))

@@ -17,32 +17,32 @@ import (
 
 const (
 	// PluginName is the name of this scheduler plugin.
-	PluginName = "RainbowLatency"
+	PluginName = "NetworkQoS"
 )
 
-// RainbowLatency is a Filter plugin that filters out nodes that violate the latency constraints of the application.
-type RainbowLatency struct {
+// NetworkQosPlugin is a Filter plugin that filters out nodes that violate the network QoS constraints of the application.
+type NetworkQosPlugin struct {
 	regionManager regionmanager.RegionManager
 }
 
-var _ framework.FilterPlugin = &RainbowLatency{}
+var _ framework.FilterPlugin = &NetworkQosPlugin{}
 
 // New creates a new RainbowLatency plugin instance.
 func New(obj runtime.Object, handle framework.Handle) (framework.Plugin, error) {
-	return &RainbowLatency{
+	return &NetworkQosPlugin{
 		regionManager: regionmanager.GetRegionManager(),
 	}, nil
 }
 
 // Name returns the name of this scheduler plugin.
-func (me *RainbowLatency) Name() string {
+func (me *NetworkQosPlugin) Name() string {
 	return PluginName
 }
 
 // Filter checks if the latency between the node represented by nodeInfo and the message queue node is within the
 // bounds required by the pod. When scheduling the message queue itself, the latency to the fog-region-head is evaluated.
 // Cloud nodes are always considered to be suitable, regardless of whether they meet the latency requirements.
-func (me *RainbowLatency) Filter(ctx context.Context, state *framework.CycleState, pod *v1.Pod, nodeInfo *framework.NodeInfo) *framework.Status {
+func (me *NetworkQosPlugin) Filter(ctx context.Context, state *framework.CycleState, pod *v1.Pod, nodeInfo *framework.NodeInfo) *framework.Status {
 	region := me.regionManager.RegionGraph()
 	currNode := region.NodeByLabel(nodeInfo.Node().Name)
 	if currNode == nil {
@@ -78,7 +78,7 @@ func (me *RainbowLatency) Filter(ctx context.Context, state *framework.CycleStat
 	return framework.NewStatus(framework.Unschedulable, fmt.Sprintf("Node %s with latency %d ms exceeds max allowed latency of %d ms.", currNode.Label(), int64(currNodeLatency), maxLatency))
 }
 
-func (me *RainbowLatency) getCommunicationTargetNode(regGraph *regiongraph.RegionGraph, svcGraph *servicegraph.ServiceGraph, pod *v1.Pod) (*regiongraph.Node, error) {
+func (me *NetworkQosPlugin) getCommunicationTargetNode(regGraph *regiongraph.RegionGraph, svcGraph *servicegraph.ServiceGraph, pod *v1.Pod) (*regiongraph.Node, error) {
 	if util.IsPodMessageQueue(pod) {
 		return regGraph.RegionHead(), nil
 	}

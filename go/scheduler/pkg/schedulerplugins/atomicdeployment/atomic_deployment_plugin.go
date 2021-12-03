@@ -13,22 +13,22 @@ import (
 
 const (
 	// PluginName is the name of this scheduler plugin.
-	PluginName = "RainbowAtomicDeployment"
+	PluginName = "AtomicDeployment"
 )
 
-// RainbowAtomicDeployment is a Permit plugin that ensures that all of an application's pods are permitted at the same time or not at all.
-type RainbowAtomicDeployment struct {
+// AtomicDeploymentPlugin is a Permit plugin that ensures that all of an application's pods are permitted at the same time or not at all.
+type AtomicDeploymentPlugin struct {
 }
 
-var _ framework.PermitPlugin = &RainbowAtomicDeployment{}
+var _ framework.PermitPlugin = &AtomicDeploymentPlugin{}
 
 // New creates a new RainbowAtomicDeployment plugin instance.
 func New(obj runtime.Object, handle framework.Handle) (framework.Plugin, error) {
-	return &RainbowAtomicDeployment{}, nil
+	return &AtomicDeploymentPlugin{}, nil
 }
 
 // Name returns the name of this scheduler plugin.
-func (me *RainbowAtomicDeployment) Name() string {
+func (me *AtomicDeploymentPlugin) Name() string {
 	return PluginName
 }
 
@@ -38,7 +38,7 @@ func (me *RainbowAtomicDeployment) Name() string {
 // The pod will also be rejected if the wait timeout or the pod is rejected while
 // waiting. Note that if the plugin returns "wait", the framework will wait only
 // after running the remaining plugins given that no other plugin rejects the pod.
-func (me *RainbowAtomicDeployment) Permit(ctx context.Context, state *framework.CycleState, pod *v1.Pod, nodeName string) (*framework.Status, time.Duration) {
+func (me *AtomicDeploymentPlugin) Permit(ctx context.Context, state *framework.CycleState, pod *v1.Pod, nodeName string) (*framework.Status, time.Duration) {
 	if stateData, err := state.Read(util.StopwatchStateKey); err == nil {
 		stopwatch := stateData.(*util.Stopwatch)
 		stopwatch.Stop()

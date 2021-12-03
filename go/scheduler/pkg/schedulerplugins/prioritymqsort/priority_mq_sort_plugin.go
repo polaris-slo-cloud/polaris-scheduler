@@ -9,17 +9,17 @@ import (
 
 const (
 	// PluginName is the name of this scheduler plugin.
-	PluginName = "RainbowPriorityMqSort"
+	PluginName = "PriorityMqSort"
 )
 
 var (
-	_priorityMqSort *RainbowPriorityMqSort
+	_priorityMqSort *PriorityMqSortPlugin
 
 	_ framework.QueueSortPlugin = _priorityMqSort
 )
 
-// RainbowPriorityMqSort is a QueueSortPlugin that prioritizes message-queue pods and otherwise falls back to the original PrioritySort.
-type RainbowPriorityMqSort struct {
+// PriorityMqSortPlugin is a QueueSortPlugin that prioritizes message-queue pods and otherwise falls back to the original PrioritySort.
+type PriorityMqSortPlugin struct {
 	origQueueSort *kubequeuesort.PrioritySort
 }
 
@@ -30,20 +30,20 @@ func New(obj runtime.Object, handle framework.Handle) (framework.Plugin, error) 
 		return nil, err
 	}
 
-	return &RainbowPriorityMqSort{
+	return &PriorityMqSortPlugin{
 		origQueueSort: origQueueSort.(*kubequeuesort.PrioritySort),
 	}, nil
 }
 
 // Name returns the name of this scheduler plugin.
-func (me *RainbowPriorityMqSort) Name() string {
+func (me *PriorityMqSortPlugin) Name() string {
 	return PluginName
 }
 
 // Less prioritizes pods with a more stringent (lower) maxDelay requirement.
 // If both maxDelay are the same, message-queue pods are prioritized, and otherwise falls back to the original PrioritySort.
 // Returns true if podA should be scheduled before podB.
-func (me *RainbowPriorityMqSort) Less(podA *framework.QueuedPodInfo, podB *framework.QueuedPodInfo) bool {
+func (me *PriorityMqSortPlugin) Less(podA *framework.QueuedPodInfo, podB *framework.QueuedPodInfo) bool {
 	aMaxDelay := util.GetPodMaxDelay(podA.Pod)
 	bMaxDelay := util.GetPodMaxDelay(podB.Pod)
 	if aMaxDelay < bMaxDelay {

@@ -13,26 +13,26 @@ import (
 
 const (
 	// PluginName is the name of this scheduler plugin.
-	PluginName = "RainbowServiceGraph"
+	PluginName = "ServiceGraph"
 )
 
-// RainbowServiceGraph is a PreFilter plugin that fetches the service graph for a pod's application
+// ServiceGraphPlugin is a PreFilter plugin that fetches the service graph for a pod's application
 // and stores it in the preFilterState.
-type RainbowServiceGraph struct {
+type ServiceGraphPlugin struct {
 	svcGraphManager servicegraphmanager.ServiceGraphManager
 }
 
-var _ framework.PreFilterPlugin = &RainbowServiceGraph{}
+var _ framework.PreFilterPlugin = &ServiceGraphPlugin{}
 
 // New creates a new RainbowServiceGraph plugin instance.
 func New(obj runtime.Object, handle framework.Handle) (framework.Plugin, error) {
-	return &RainbowServiceGraph{
+	return &ServiceGraphPlugin{
 		svcGraphManager: servicegraphmanager.GetServiceGraphManager(),
 	}, nil
 }
 
 // Name returns the name of this scheduler plugin.
-func (me *RainbowServiceGraph) Name() string {
+func (me *ServiceGraphPlugin) Name() string {
 	return PluginName
 }
 
@@ -42,12 +42,12 @@ func (me *RainbowServiceGraph) Name() string {
 // AddPod/RemovePod will only be called after PreFilter, possibly on a cloned
 // CycleState, and may call those functions more than once before calling
 // Filter again on a specific node.
-func (me *RainbowServiceGraph) PreFilterExtensions() framework.PreFilterExtensions {
+func (me *ServiceGraphPlugin) PreFilterExtensions() framework.PreFilterExtensions {
 	return nil
 }
 
 // PreFilter loads the ServiceGraph for the pod's application and stores it in the CycleState.
-func (me *RainbowServiceGraph) PreFilter(ctx context.Context, state *framework.CycleState, p *v1.Pod) *framework.Status {
+func (me *ServiceGraphPlugin) PreFilter(ctx context.Context, state *framework.CycleState, p *v1.Pod) *framework.Status {
 	stopwatch := util.NewStopwatch()
 	stopwatch.Start()
 	state.Write(util.StopwatchStateKey, stopwatch)

@@ -14,30 +14,30 @@ import (
 
 const (
 	// PluginName is the name of this scheduler plugin.
-	PluginName = "RainbowReserve"
+	PluginName = "Reserve"
 )
 
-// RainbowReserve is a Filter plugin that filters out nodes that violate the latency constraints of the application.
-type RainbowReserve struct {
+// ReservePlugin is a Filter plugin that filters out nodes that violate the latency constraints of the application.
+type ReservePlugin struct {
 	regionManager regionmanager.RegionManager
 }
 
-var _ framework.ReservePlugin = &RainbowReserve{}
+var _ framework.ReservePlugin = &ReservePlugin{}
 
 // New creates a new RainbowReserve plugin instance.
 func New(obj runtime.Object, handle framework.Handle) (framework.Plugin, error) {
-	return &RainbowReserve{
+	return &ReservePlugin{
 		regionManager: regionmanager.GetRegionManager(),
 	}, nil
 }
 
 // Name returns the name of this scheduler plugin.
-func (me *RainbowReserve) Name() string {
+func (me *ReservePlugin) Name() string {
 	return PluginName
 }
 
 // Reserve assigns the Kubernetes node to the node in the ServiceGraph
-func (me *RainbowReserve) Reserve(ctx context.Context, state *framework.CycleState, pod *v1.Pod, nodeName string) *framework.Status {
+func (me *ReservePlugin) Reserve(ctx context.Context, state *framework.CycleState, pod *v1.Pod, nodeName string) *framework.Status {
 	region := me.regionManager.RegionGraph()
 	targetNode := region.NodeByLabel(nodeName)
 	if targetNode == nil {
@@ -67,7 +67,7 @@ func (me *RainbowReserve) Reserve(ctx context.Context, state *framework.CycleSta
 
 // Unreserve removes the Kubernetes node from the node in the ServiceGraph
 // This method must not fail
-func (me *RainbowReserve) Unreserve(ctx context.Context, state *framework.CycleState, pod *v1.Pod, nodeName string) {
+func (me *ReservePlugin) Unreserve(ctx context.Context, state *framework.CycleState, pod *v1.Pod, nodeName string) {
 	svcGraph, err := util.GetServiceGraphFromState(pod, state)
 	if err != nil {
 		return
