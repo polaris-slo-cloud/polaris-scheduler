@@ -45,7 +45,7 @@ func (me *ReservePlugin) Reserve(ctx context.Context, state *framework.CycleStat
 		return framework.AsStatus(fmt.Errorf("Reserve() failed because target node was not found in region graph"))
 	}
 
-	svcGraph, err := util.GetServiceGraphFromState(pod, state)
+	svcGraph, err := util.GetServiceGraphFromCycleState(pod, state)
 	if err != nil {
 		// If the pod does not belong to a RAINBOW application, we just pass it on.
 		klog.Infoln("RainbowReserve: Pod not associated with a ServiceGraph, skipping it.")
@@ -68,7 +68,7 @@ func (me *ReservePlugin) Reserve(ctx context.Context, state *framework.CycleStat
 // Unreserve removes the Kubernetes node from the node in the ServiceGraph
 // This method must not fail
 func (me *ReservePlugin) Unreserve(ctx context.Context, state *framework.CycleState, pod *v1.Pod, nodeName string) {
-	svcGraph, err := util.GetServiceGraphFromState(pod, state)
+	svcGraph, err := util.GetServiceGraphFromCycleState(pod, state)
 	if err != nil {
 		return
 	}

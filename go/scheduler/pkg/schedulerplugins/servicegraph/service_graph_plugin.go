@@ -52,7 +52,7 @@ func (me *ServiceGraphPlugin) PreFilter(ctx context.Context, state *framework.Cy
 	stopwatch.Start()
 	state.Write(util.StopwatchStateKey, stopwatch)
 
-	_, err := util.GetPodInstanceLabel(p)
+	_, err := util.GetPodServiceGraphNodeName(p)
 	if err != nil {
 		klog.Infof("RainbowServiceGraph: The pod %s is not associated with a RAINBOW application, skipping it.", p.Name)
 		return framework.NewStatus(framework.Success)
@@ -64,6 +64,6 @@ func (me *ServiceGraphPlugin) PreFilter(ctx context.Context, state *framework.Cy
 		return framework.AsStatus(err)
 	}
 
-	util.WriteServiceGraphToState(p, state, serviceGraph)
+	util.WriteServiceGraphToCycleState(p, state, serviceGraph)
 	return framework.NewStatus(framework.Success)
 }

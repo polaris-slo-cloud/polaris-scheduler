@@ -55,7 +55,7 @@ func (me *NetworkQosPlugin) Filter(ctx context.Context, state *framework.CycleSt
 		return framework.NewStatus(framework.Success)
 	}
 
-	svcGraph, err := util.GetServiceGraphFromState(pod, state)
+	svcGraph, err := util.GetServiceGraphFromCycleState(pod, state)
 	if err != nil {
 		// If the pod is not part of a RAINBOW application, we skip it and pass it to the next plugin.
 		klog.Infof("RainbowLatency: Pod %s is not part of a RAINBOW application, skipping it.", pod.Name)

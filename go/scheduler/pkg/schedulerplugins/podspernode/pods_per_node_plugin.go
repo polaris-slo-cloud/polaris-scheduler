@@ -77,7 +77,7 @@ func (me *PodsPerNodePlugin) PreScore(ctx context.Context, state *framework.Cycl
 // indicating the rank of the node. All scoring plugins must return success or
 // the pod will be rejected.
 func (me *PodsPerNodePlugin) Score(ctx context.Context, state *framework.CycleState, pod *v1.Pod, nodeName string) (int64, *framework.Status) {
-	svcGraph, err := util.GetServiceGraphFromState(pod, state)
+	svcGraph, err := util.GetServiceGraphFromCycleState(pod, state)
 	if err != nil {
 		// If the pod is not part of a RAINBOW application, we skip it and pass it to the next plugin.
 		klog.Infof("RainbowLatency: Pod %s is not part of a RAINBOW application, skipping it.", pod.Name)
