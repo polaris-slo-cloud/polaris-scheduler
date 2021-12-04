@@ -50,7 +50,7 @@ func (me *PodsPerNodePlugin) Name() string {
 	return PluginName
 }
 
-// ScoreExtensions returns a ScoreExtensions interface if it implements one, or nil if does not.
+// ScoreExtensions returns a ScoreExtensions interface if the plugin implements one, or nil if does not.
 func (me *PodsPerNodePlugin) ScoreExtensions() framework.ScoreExtensions {
 	return me
 }

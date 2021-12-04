@@ -3,17 +3,16 @@ package util
 import (
 	"fmt"
 	"math"
+	"strconv"
 
 	v1 "k8s.io/api/core/v1"
 	framework "k8s.io/kubernetes/pkg/scheduler/framework"
+	"k8s.rainbow-h2020.eu/rainbow/orchestration/pkg/kubeutil"
 )
 
 const (
-	cloudNodeLabel       = "node-role.kubernetes.io/cloud"
-	cloudNodeSmallLabel  = "node-role.kubernetes.io/small"
-	cloudNodeMediumLabel = "node-role.kubernetes.io/medium"
-	cloudNodeLargeLabel  = "node-role.kubernetes.io/large"
-	fogNodeLabel         = "node-role.kubernetes.io/fog"
+	cloudNodeLabel = "node-role.kubernetes.io/cloud"
+	fogNodeLabel   = "node-role.kubernetes.io/fog"
 )
 
 // GetNodeByName gets the specified node from the snapshot obtainable through the handle.
@@ -23,6 +22,18 @@ func GetNodeByName(handle framework.Handle, nodeName string) (*framework.NodeInf
 		return nil, fmt.Errorf("Error getting node %s from snapshot: %s", nodeName, err)
 	}
 	return nodeInfo, nil
+}
+
+// Returns the hourly cost of the specified node or 0 if none can be found.
+func GetNodeCost(nodeInfo *framework.NodeInfo) float64 {
+	costStr, ok := kubeutil.GetLabel(nodeInfo.Node(), kubeutil.LabelNodeCost)
+	if !ok {
+		return 0
+	}
+	if cost, err := strconv.ParseFloat(costStr, 64); err != nil {
+		return cost
+	}
+	return 0
 }
 
 // IsCloudNode returns true if the node is a cloud node, otherwise false.
@@ -35,20 +46,6 @@ func IsCloudNode(node *v1.Node) bool {
 func IsFogNode(node *v1.Node) bool {
 	_, found := node.Labels[fogNodeLabel]
 	return found
-}
-
-// GetCloudNodeType returns a string representing the type of cloud node (small, medium, large).
-func GetCloudNodeType(node *v1.Node) (string, error) {
-	if _, found := node.Labels[cloudNodeSmallLabel]; found {
-		return "small", nil
-	}
-	if _, found := node.Labels[cloudNodeMediumLabel]; found {
-		return "medium", nil
-	}
-	if _, found := node.Labels[cloudNodeLargeLabel]; found {
-		return "large", nil
-	}
-	return "", fmt.Errorf("No cloud size label found on node %s", node.Name)
 }
 
 // NormalizeNodeScores normalizes the nodeScores to a range between 0 and 100

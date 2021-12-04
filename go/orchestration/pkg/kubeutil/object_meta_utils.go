@@ -14,6 +14,9 @@ const (
 	// Name of the label to reference a node in a service graph.
 	LabelRefServiceGraphNode = "rainbow-h2020.eu/service-graph-node"
 
+	// Name of the node label that contains the node's hourly cost (as a floating point number in decimal notation, e.g., "1.49").
+	LabelNodeCost = "rainbow-h2020.eu/node-cost-per-hour"
+
 	// Name of the annotation that stores the resourceVersion of the service graph, from which an object was last updated.
 	AnnotationLastUpdatedByServiceGraphVersion = "rainbow-h2020.eu/last-updated-by-service-graph-version"
 

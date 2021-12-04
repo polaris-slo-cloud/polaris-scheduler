@@ -3,10 +3,12 @@ package nodecost
 import (
 	"context"
 	"fmt"
+	"math"
 
-	v1 "k8s.io/api/core/v1"
+	core "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	framework "k8s.io/kubernetes/pkg/scheduler/framework"
+
 	"k8s.rainbow-h2020.eu/rainbow/scheduler/internal/util"
 )
 
@@ -16,9 +18,11 @@ const (
 )
 
 var (
-	_cloudCost *NodeCostPlugin
+	_nodeCost *NodeCostPlugin
 
-	_ framework.ScorePlugin = _cloudCost
+	_ framework.Plugin          = _nodeCost
+	_ framework.ScorePlugin     = _nodeCost
+	_ framework.ScoreExtensions = _nodeCost
 )
 
 // NodeCostPlugin is a Score plugin that provides a higher score for cheaper nodes.
@@ -26,7 +30,7 @@ type NodeCostPlugin struct {
 	handle framework.Handle
 }
 
-// New creates a new RainbowPodsPerNode plugin instance.
+// New creates a new NodeCostPlugin instance.
 func New(obj runtime.Object, handle framework.Handle) (framework.Plugin, error) {
 	return &NodeCostPlugin{
 		handle: handle,
@@ -38,40 +42,32 @@ func (me *NodeCostPlugin) Name() string {
 	return PluginName
 }
 
-// ScoreExtensions returns a ScoreExtensions interface if it implements one, or nil if does not.
+// ScoreExtensions returns a ScoreExtensions interface if the plugin implements one, or nil if does not.
 func (me *NodeCostPlugin) ScoreExtensions() framework.ScoreExtensions {
-	return nil
+	return me
 }
 
-// Score returns thw following scores:
-// - fog node: 100
-// - cloud small: 75
-// - cloud medium: 50
-// - cloud large: 25
-func (me *NodeCostPlugin) Score(ctx context.Context, state *framework.CycleState, pod *v1.Pod, nodeName string) (int64, *framework.Status) {
+// Returns higher scores for cheaper nodes.
+func (me *NodeCostPlugin) Score(ctx context.Context, state *framework.CycleState, pod *core.Pod, nodeName string) (int64, *framework.Status) {
 	nodeInfo, err := util.GetNodeByName(me.handle, nodeName)
 	if err != nil {
 		return 0, framework.AsStatus(fmt.Errorf("%s", err))
 	}
-	node := nodeInfo.Node()
 
-	if !util.IsCloudNode(node) {
-		return 100, framework.NewStatus(framework.Success)
-	}
+	nodeCost := util.GetNodeCost(nodeInfo)
 
-	cloudNodeType, err := util.GetCloudNodeType(node)
-	if err != nil {
-		return 0, framework.AsStatus(fmt.Errorf("%s", err))
-	}
+	// When calculating the inverse of the cost we add 1 to the nodeCost to account for nodes with cost = 0
+	inverseCost := 1.0/nodeCost + 1.0
+	score := int64(math.Round(inverseCost * 100))
 
-	var score int64
-	switch cloudNodeType {
-	case "small":
-		score = 75
-	case "medium":
-		score = 50
-	case "large":
-		score = 25
-	}
 	return score, framework.NewStatus(framework.Success)
+}
+
+// NormalizeScore normalizes all scores to a range between 0 and 100.
+func (me *NodeCostPlugin) NormalizeScore(ctx context.Context, state *framework.CycleState, pod *core.Pod, scores framework.NodeScoreList) *framework.Status {
+	util.NormalizeNodeScores(scores)
+	// for _, score := range scores {
+	// 	klog.Infof("Pod %s, node: %s, finalScore: %d", pod.Name, score.Name, score.Score)
+	// }
+	return framework.NewStatus(framework.Success)
 }
