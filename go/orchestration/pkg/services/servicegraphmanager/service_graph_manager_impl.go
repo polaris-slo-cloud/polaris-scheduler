@@ -128,7 +128,7 @@ func (me *serviceGraphManagerImpl) createServiceGraphState(svcGraphID *serviceGr
 	placementMapHandle, placementMapResultProvider := util.NewFuture()
 
 	svcGraphState := newServiceGraphStateImpl(
-		&graph,
+		graph,
 		&crd,
 		placementMapHandle,
 		func(state *serviceGraphStateImpl) { me.deleteServiceGraphState(state) },

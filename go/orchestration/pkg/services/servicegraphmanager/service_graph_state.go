@@ -25,7 +25,7 @@ var (
 type ServiceGraphState interface {
 	// Gets the ServiceGraph graph object.
 	// This must be treated as immutable.
-	ServiceGraph() *servicegraph.ServiceGraph
+	ServiceGraph() servicegraph.ServiceGraph
 
 	// Gets the ServiceGraph CRD instance.
 	// This must be treated as immutable.
@@ -35,6 +35,9 @@ type ServiceGraphState interface {
 	//
 	// If the map has not yet been loaded, this method will block until the loading has completed.
 	PlacementMap() (serviceplacement.ServiceGraphPlacementMap, error)
+
+	// Gets the map that contains the scheduling priorities of the nodes.
+	NodePriorityMap() NodePriorityMap
 
 	// Removes the specified pod from the reference count list.
 	Release(pod *core.Pod)
@@ -48,13 +51,17 @@ type onServiceGraphStateUnreferencedFn func(svcGraphState *serviceGraphStateImpl
 type serviceGraphStateImpl struct {
 
 	// The ServiceGraph as a traversable graph.
-	graph *servicegraph.ServiceGraph
+	graph servicegraph.ServiceGraph
 
 	// The ServiceGraph CRD instance.
 	crd *fogappsCRDs.ServiceGraph
 
 	// The ServiceGraphPlacementMap that indicates on which nodes a service has been placed.
 	placementMap util.Future
+
+	// The scheduling priorities of the nodes.
+	// This field is initialized lazily.
+	nodePriorities NodePriorityMap
 
 	// Tracks the pod names that this object is referenced by in a set like fashion.
 	// When the reference count drop to 0 after the initial acquire(),
@@ -70,7 +77,7 @@ type serviceGraphStateImpl struct {
 }
 
 func newServiceGraphStateImpl(
-	graph *servicegraph.ServiceGraph,
+	graph servicegraph.ServiceGraph,
 	crd *fogappsCRDs.ServiceGraph,
 	placementMap util.Future,
 	readyForDeletionCallback onServiceGraphStateUnreferencedFn,
@@ -85,7 +92,7 @@ func newServiceGraphStateImpl(
 	}
 }
 
-func (me *serviceGraphStateImpl) ServiceGraph() *servicegraph.ServiceGraph {
+func (me *serviceGraphStateImpl) ServiceGraph() servicegraph.ServiceGraph {
 	return me.graph
 }
 
@@ -96,6 +103,13 @@ func (me *serviceGraphStateImpl) ServiceGraphCRD() *fogappsCRDs.ServiceGraph {
 func (me *serviceGraphStateImpl) PlacementMap() (serviceplacement.ServiceGraphPlacementMap, error) {
 	placementMap, err := me.placementMap.Get()
 	return placementMap.(serviceplacement.ServiceGraphPlacementMap), err
+}
+
+func (me *serviceGraphStateImpl) NodePriorityMap() NodePriorityMap {
+	if me.nodePriorities == nil {
+		me.nodePriorities = NewNodePriorityMapFromServiceGraph(me.graph)
+	}
+	return me.nodePriorities
 }
 
 func (me *serviceGraphStateImpl) Release(pod *core.Pod) {

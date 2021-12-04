@@ -15,10 +15,13 @@ var (
 // ServiceGraphManager provides methods for obtaining the service graph for a particular application
 type ServiceGraphManager interface {
 	// Gets the ServiceGraphState for the application that the specified pod is part of.
-	// If the pod has no ServiceGraph associated, the ServiceGraphState will be nil.
+	// If the pod has no ServiceGraph associated, the ServiceGraphState AND the error will be nil.
+	// Note that this method only checks the pod's reference to the ServiceGraph, but the reference
+	// to a node within that ServiceGraph.
 	//
 	// The requesting pod is added to reference count of the ServiceGraphState. When the pod's scheduling cycle ends,
-	// the state's Release() method must be called to allow it to be removed from the cache.
+	// the state's Release() method must be called to allow it to be removed from the cache. Each pod may call
+	// AcquireServiceGraphState() multiple times, it is only counted once towards the reference count.
 	//
 	// If the ServiceGraph has already been loaded for another pod that is currently in the pipeline, it is returned immediately.
 	// If not, the ServiceGraph CRD is fetched (blocking the caller until this has completed) and then the building of the

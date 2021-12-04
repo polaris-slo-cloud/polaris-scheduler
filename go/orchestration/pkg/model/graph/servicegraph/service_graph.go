@@ -8,6 +8,9 @@ import (
 // Node represents a node in a ServiceGraph.
 type Node interface {
 	lg.LabeledNode
+
+	// Gets the fogappsCRDs.ServiceGraphNode that defines this node.
+	ServiceGraphNode() *fogappsCRDs.ServiceGraphNode
 }
 
 // Edge represents an edge in a ServiceGraph.

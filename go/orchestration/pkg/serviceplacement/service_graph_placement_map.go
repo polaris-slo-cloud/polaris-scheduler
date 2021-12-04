@@ -9,6 +9,9 @@ type StringSliceTransformFn func(curr []string) []string
 // It provides the following thread safe operations:
 // - lookup of Kubernetes node names for a service graph node
 // - update of Kubernetes node names for a service graph node
+//
+// The node names for each ServiceGraphNode are accessible as an array slice (instead of a Set),
+// because the common use case is iterating through the list of nodes (e.g., the NetworkQosPlugin in the scheduler).
 type ServiceGraphPlacementMap interface {
 
 	// Gets the list of Kubernetes node names, to which at least one pod of the
@@ -23,6 +26,8 @@ type ServiceGraphPlacementMap interface {
 	// The updateFn is called after locking the respective node and receives the current list of nodes
 	// (nil if the ServiceGraphNode has not yet been added). It must return a new list that should
 	// be stored for the ServiceGraphNode.
+	//
+	// Each K8s node name should appear only once in the list.
 	SetKubernetesNodes(svcGraphNodeLabel string, updateFn StringSliceTransformFn)
 }
 

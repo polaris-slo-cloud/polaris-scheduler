@@ -54,7 +54,7 @@ func (me *serviceGraphImpl) UserNodes() []Node {
 func (me *serviceGraphImpl) buildGraph() {
 	for i := range me.crdInstance.Spec.Nodes {
 		crdNode := &me.crdInstance.Spec.Nodes[i]
-		graphNode := me.graph.NewNode(crdNode.Name)
+		graphNode := me.graph.NewNode(crdNode.Name).(Node)
 		graphNode.SetPayload(crdNode)
 		me.graph.AddNode(graphNode)
 

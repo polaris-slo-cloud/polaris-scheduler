@@ -1,6 +1,7 @@
 package servicegraph
 
 import (
+	fogappsCRDs "k8s.rainbow-h2020.eu/rainbow/orchestration/apis/fogapps/v1"
 	lg "k8s.rainbow-h2020.eu/rainbow/orchestration/pkg/model/graph/labeledgraph"
 )
 
@@ -20,4 +21,8 @@ var NewNode lg.LabeledNodeFactoryFn = func(id int64, label string) lg.LabeledNod
 	return &nodeImpl{
 		LabeledNode: lg.NewDefaultLabeledNode(id, label),
 	}
+}
+
+func (me *nodeImpl) ServiceGraphNode() *fogappsCRDs.ServiceGraphNode {
+	return me.Payload().(*fogappsCRDs.ServiceGraphNode)
 }
