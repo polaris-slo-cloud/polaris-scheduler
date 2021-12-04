@@ -11,8 +11,8 @@ import (
 )
 
 const (
-	cloudNodeLabel = "node-role.kubernetes.io/cloud"
-	fogNodeLabel   = "node-role.kubernetes.io/fog"
+	cloudNodeLabel = "rainbow-h2020.eu/cloud-node"
+	fogNodeLabel   = "rainbow-h2020.eu/fog-node"
 )
 
 // GetNodeByName gets the specified node from the snapshot obtainable through the handle.
