@@ -14,37 +14,39 @@ percentageOfNodesToScore: 100
 profiles:
   # - schedulerName: default-scheduler
   - schedulerName: rainbow-scheduler
-    # ToDo: Re-enable plugins one-by-one when they are modified to work for synchronous applications.
-    # plugins:
-    #   # This section is merged with the default configuration, so we do not need to specify the default plugins.
-    #   queueSort:
-    #     enabled:
-    #     - name: RainbowPriorityMqSort
-    #     disabled:
-    #     - name: "*"
-    #   preFilter:
-    #     enabled:
-    #       - name: RainbowServiceGraph
-    #   filter:
-    #     enabled:
-    #       - name: RainbowLatency
-    #   preScore:
-    #     enabled:
-    #       - name: RainbowPodsPerNode
-    #   score:
-    #     enabled:
-    #       - name: RainbowPodsPerNode
-    #         weight: 1
-    #       - name: RainbowNodeCost
-    #         weight: 1
-    #     disabled:
-    #       # These could interfere with the RainbowPodsPerNode scoring.
-    #       - name: NodeResourcesBalancedAllocation
-    #       - name: NodeResourcesLeastAllocated
-    #   reserve:
-    #     enabled:
-    #       - name: RainbowReserve
-    #   permit:
-    #     enabled:
-    #       - name: RainbowAtomicDeployment
+    plugins:
+      # This section is merged with the default configuration, so we do not need to specify the default plugins.
+      queueSort:
+        enabled:
+        - name: ServiceGraph
+        disabled:
+        - name: "*"
+      preFilter:
+        enabled:
+          - name: ServiceGraph
+      filter:
+        enabled:
+          - name: NetworkQoS
+      postFilter:
+        enabled:
+          - name: ServiceGraph
+      preScore:
+        enabled:
+          - name: PodsPerNode
+      score:
+        enabled:
+          - name: PodsPerNode
+            weight: 1
+          - name: NodeCost
+            weight: 1
+        disabled:
+          # These could interfere with the PodsPerNode scoring.
+          - name: NodeResourcesBalancedAllocation
+          - name: NodeResourcesLeastAllocated
+      reserve:
+        enabled:
+          - name: ServiceGraph
+      permit:
+        enabled:
+          - name: ServiceGraph
 
