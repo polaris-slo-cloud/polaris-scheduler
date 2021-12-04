@@ -29,9 +29,14 @@ type ServiceGraphPlacementMap interface {
 	//
 	// Each K8s node name should appear only once in the list.
 	SetKubernetesNodes(svcGraphNodeLabel string, updateFn StringSliceTransformFn)
+
+	// Returns true if this map was created for the initial placement of the ServiceGraph (i.e., if the placement map was initially empty).
+	IsInitialPlacement() bool
 }
 
-// Creates a new ServicePlacementMap
-func NewServicePlacementMap() ServiceGraphPlacementMap {
-	return newServicePlacementMapImpl()
+// Creates a new ServicePlacementMap.
+// isInitialPlacement indicates if this is the first time that pods for this ServiceGraph are placed
+// (i.e., if the placement map will be initially empty)
+func NewServicePlacementMap(isInitialPlacement bool) ServiceGraphPlacementMap {
+	return newServicePlacementMapImpl(isInitialPlacement)
 }

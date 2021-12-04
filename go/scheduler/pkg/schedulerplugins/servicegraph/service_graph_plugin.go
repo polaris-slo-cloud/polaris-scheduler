@@ -53,7 +53,7 @@ type ServiceGraphPlugin struct {
 	atomicDeployment *atomicdeployment.AtomicDeploymentPlugin
 }
 
-// New creates a new RainbowServiceGraph plugin instance.
+// New creates a new ServiceGraphPlugin instance.
 func New(obj runtime.Object, handle framework.Handle) (framework.Plugin, error) {
 	origQueueSort, err := kubequeuesort.New(obj, handle)
 	if err != nil {
@@ -142,7 +142,7 @@ func (me *ServiceGraphPlugin) PreFilter(ctx context.Context, cycleState *framewo
 	if !ok || svcGraphState.ServiceGraph().NodeByLabel(svcGraphNodeName) == nil {
 		// If there is a ServiceGraph, but no valid reference to a node within that ServiceGraph, we signal an error about this pod.
 		svcGraphState.Release(pod)
-		return framework.NewStatus(framework.Error, fmt.Sprintf("The pod %s is not associated with a node within its ServiceGraph", pod.Name))
+		return framework.AsStatus(fmt.Errorf("The pod %s is not associated with a node within its ServiceGraph", pod.Name))
 	}
 
 	util.WriteServiceGraphToCycleState(cycleState, svcGraphState)
@@ -247,6 +247,7 @@ func (me *ServiceGraphPlugin) Permit(ctx context.Context, cycleState *framework.
 		if svcGraphState, err := util.GetServiceGraphFromCycleState(cycleState); err == nil {
 			me.releaseServiceGraphState(ctx, cycleState, pod, svcGraphState)
 		}
+		me.readStopwatch(cycleState, pod)
 	}
 	return status, duration
 }
@@ -284,4 +285,13 @@ func (me *ServiceGraphPlugin) getCommonServiceGraphState(podA *framework.QueuedP
 		return nil
 	}
 	return svcGraphState
+}
+
+func (me *ServiceGraphPlugin) readStopwatch(cycleState *framework.CycleState, pod *core.Pod) {
+	if stateData, err := cycleState.Read(util.StopwatchStateKey); err == nil {
+		stopwatch := stateData.(*util.Stopwatch)
+		stopwatch.Stop()
+		durationMs := float64(stopwatch.Duration().Microseconds()) / 1000
+		klog.Infof("Scheduling pod %s.%s took %f ms", pod.Namespace, pod.Name, durationMs)
+	}
 }

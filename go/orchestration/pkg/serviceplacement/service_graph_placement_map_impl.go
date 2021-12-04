@@ -10,6 +10,10 @@ var (
 	_ ServiceGraphPlacementMap = _servicePlacementMapImpl
 )
 
+//////////////////////////////////////////////////////
+// servicePlacementInfo
+//////////////////////////////////////////////////////
+
 // Stores placement information for one ServiceGraphNode
 type servicePlacementInfo struct {
 	// The name of the ServiceGraphNode
@@ -43,6 +47,10 @@ func (me *servicePlacementInfo) updateK8sNodes(updateFn StringSliceTransformFn) 
 	me.k8sNodes = updateFn(me.k8sNodes)
 }
 
+//////////////////////////////////////////////////////
+// serviceGraphPlacementMapImpl
+//////////////////////////////////////////////////////
+
 // Default implementation of ServiceGraphPlacementMap
 type serviceGraphPlacementMapImpl struct {
 	// Controls access to svcGraphNodes
@@ -50,12 +58,16 @@ type serviceGraphPlacementMapImpl struct {
 
 	// Maps ServiceGraphNode labels to their placement infos
 	svcGraphNodes map[string]*servicePlacementInfo
+
+	// Indicates if this is the initial placement of the ServiceGraph
+	isInitialPlacement bool
 }
 
-func newServicePlacementMapImpl() *serviceGraphPlacementMapImpl {
+func newServicePlacementMapImpl(isInitialPlacement bool) *serviceGraphPlacementMapImpl {
 	ret := serviceGraphPlacementMapImpl{
-		mutex:         sync.RWMutex{},
-		svcGraphNodes: make(map[string]*servicePlacementInfo),
+		mutex:              sync.RWMutex{},
+		svcGraphNodes:      make(map[string]*servicePlacementInfo),
+		isInitialPlacement: isInitialPlacement,
 	}
 	return &ret
 }
@@ -74,6 +86,10 @@ func (me *serviceGraphPlacementMapImpl) GetKubernetesNodes(svcGraphNodeLabel str
 func (me *serviceGraphPlacementMapImpl) SetKubernetesNodes(svcGraphNodeLabel string, updateFn StringSliceTransformFn) {
 	placementInfo := me.getOrCreatePlacementInfo(svcGraphNodeLabel)
 	placementInfo.updateK8sNodes(updateFn)
+}
+
+func (me *serviceGraphPlacementMapImpl) IsInitialPlacement() bool {
+	return me.isInitialPlacement
 }
 
 func (me *serviceGraphPlacementMapImpl) getOrCreatePlacementInfo(svcGraphNodeLabel string) *servicePlacementInfo {

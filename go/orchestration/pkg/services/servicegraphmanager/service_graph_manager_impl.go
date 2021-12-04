@@ -199,7 +199,8 @@ func (me *serviceGraphManagerImpl) computePlacementMap(svcGraphCRD *fogappsCRDs.
 		}
 	}
 
-	placementMap := serviceplacement.NewServicePlacementMap()
+	isInitialPlacement := len(servicePlacements) == 0
+	placementMap := serviceplacement.NewServicePlacementMap(isInitialPlacement)
 	for svcGraphNode, placement := range servicePlacements {
 		k8sNodes := placement.Entries()
 		placementMap.SetKubernetesNodes(svcGraphNode, func(prev []string) []string { return k8sNodes })
