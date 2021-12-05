@@ -24,6 +24,7 @@ profiles:
       preFilter:
         enabled:
           - name: ServiceGraph
+          - name: NetworkQoS
       filter:
         enabled:
           - name: NetworkQoS
