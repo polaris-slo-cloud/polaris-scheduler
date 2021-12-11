@@ -28,6 +28,7 @@ It makes use of all the scheduling plugins enabled by [default](https://kubernet
 | `NetworkQoS`         | `Score`, `NormalizeScore` | Prefer nodes that are likely to maintain the network QoS for a prolonged period of time. |
 | `PodsPerNode`        | `PreScore`, `Score`, `NormalizeScore` | Increase colocation of an application's components on a node. |
 | `NodeCost`           | `PreScore`, `Score`   | Give cheaper nodes a higher score. |
+| `WorkloadType`       | `PreScore, `Score`, `NormalizeScore` | Prefer nodes that have worked well for the type of workload that the pod represents (boilerplate). |
 | `AtomicDeployment`   | `Permit`              | Ensure that either all pods of an application are deployed or none of them. |
 
 
