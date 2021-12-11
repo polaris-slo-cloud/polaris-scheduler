@@ -81,7 +81,13 @@ type networkPathInfo struct {
 }
 
 func (me *networkQosStateData) Clone() framework.StateData {
-	return &networkQosStateData{}
+	return &networkQosStateData{
+		svcGraphState: me.svcGraphState,
+		regionGraph:   me.regionGraph,
+		podSvcNode:    me.podSvcNode,
+		incomingLinks: me.incomingLinks,
+		k8sNodeScores: me.k8sNodeScores,
+	}
 }
 
 // Gets the networkQosStateData from the CycleState or returns a framework.Success state if the current pod is not associated with a ServiceGraph
