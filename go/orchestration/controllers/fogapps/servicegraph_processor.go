@@ -2,7 +2,6 @@ package fogapps
 
 import (
 	"fmt"
-	"reflect"
 
 	"github.com/go-logr/logr"
 	apps "k8s.io/api/apps/v1"
@@ -13,6 +12,7 @@ import (
 	fogappsCRDs "k8s.rainbow-h2020.eu/rainbow/orchestration/apis/fogapps/v1"
 	svcGraphUtil "k8s.rainbow-h2020.eu/rainbow/orchestration/internal/servicegraphutil"
 	"k8s.rainbow-h2020.eu/rainbow/orchestration/pkg/controllerutil"
+	"k8s.rainbow-h2020.eu/rainbow/orchestration/pkg/kubeutil"
 	"k8s.rainbow-h2020.eu/rainbow/orchestration/pkg/slo"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
@@ -233,6 +233,7 @@ func (me *serviceGraphProcessor) createOrUpdateDeployment(node *fogappsCRDs.Serv
 		return nil, err
 	}
 
+	kubeutil.SetSpecHash(deployment, deployment.Spec)
 	me.newChildObjects.Deployments[deployment.Name] = deployment
 	me.updateNodeStatusWithDeployment(node, deployment)
 
@@ -262,6 +263,7 @@ func (me *serviceGraphProcessor) createOrUpdateStatefulSet(node *fogappsCRDs.Ser
 		return nil, err
 	}
 
+	kubeutil.SetSpecHash(statefulSet, statefulSet.Spec)
 	me.newChildObjects.StatefulSets[statefulSet.Name] = statefulSet
 	me.updateNodeStatusWithStatefulSet(node, statefulSet)
 
@@ -309,9 +311,11 @@ func (me *serviceGraphProcessor) createOrUpdateServiceAndIngress(node *fogappsCR
 	}
 
 	if serviceAndIngress.Service != nil {
+		kubeutil.SetSpecHash(serviceAndIngress.Service, serviceAndIngress.Service.Spec)
 		me.newChildObjects.Services[serviceAndIngress.Service.Name] = serviceAndIngress.Service
 	}
 	if serviceAndIngress.Ingress != nil {
+		kubeutil.SetSpecHash(serviceAndIngress.Ingress, serviceAndIngress.Ingress.Spec)
 		me.newChildObjects.Ingresses[serviceAndIngress.Ingress.Name] = serviceAndIngress.Ingress
 	}
 
@@ -325,10 +329,11 @@ func (me *serviceGraphProcessor) createOrUpdateSloMapping(
 ) error {
 	newSloMapping := slo.CreateSloMappingFromServiceGraphNode(sloObj, target, node, me.svcGraph)
 	me.setOwner(newSloMapping)
+	kubeutil.SetSpecHash(newSloMapping, newSloMapping.Spec)
 	newSloMappingUnstructured := newSloMapping.ToUnstructured()
 
 	if existingSloMapping, ok := me.existingChildObjects.SloMappings[newSloMapping.Name]; ok {
-		newSloMappingUnstructured.SetMetadata(existingSloMapping.GetMetadata())
+		newSloMappingUnstructured.MergePreviousMetadata(existingSloMapping.GetMetadata())
 	}
 
 	me.newChildObjects.SloMappings[newSloMapping.Name] = newSloMappingUnstructured
@@ -347,11 +352,7 @@ func (me *serviceGraphProcessor) assembleUpdatesForDeployments() error {
 	for _, existingDeployment := range me.existingChildObjects.Deployments {
 		if updatedDeployment, ok := me.newChildObjects.Deployments[existingDeployment.Name]; ok {
 
-			// ToDo: Containers are currently never equal, because Kubernetes sets some values, which are unset in new containers.
-			// containersEqual := reflect.DeepEqual(existingDeployment.Spec.Template.Spec.Containers, updatedDeployment.Spec.Template.Spec.Containers)
-			// _ = containersEqual
-
-			if !reflect.DeepEqual(existingDeployment.Spec, updatedDeployment.Spec) {
+			if !kubeutil.CheckSpecHashesAreEqual(existingDeployment, updatedDeployment) {
 				// Deployment was changed, we need to update it
 				me.changes.AddChanges(controllerutil.NewResourceUpdate(updatedDeployment))
 			}
@@ -369,7 +370,7 @@ func (me *serviceGraphProcessor) assembleUpdatesForStatefulSets() error {
 	for _, existingStatefulSet := range me.existingChildObjects.StatefulSets {
 		if updatedStatefulSet, ok := me.newChildObjects.StatefulSets[existingStatefulSet.Name]; ok {
 
-			if !reflect.DeepEqual(existingStatefulSet.Spec, updatedStatefulSet.Spec) {
+			if !kubeutil.CheckSpecHashesAreEqual(existingStatefulSet, updatedStatefulSet) {
 				// StatefulSet was changed, we need to update it
 				me.changes.AddChanges(controllerutil.NewResourceUpdate(updatedStatefulSet))
 			}
@@ -387,7 +388,7 @@ func (me *serviceGraphProcessor) assembleUpdatesForServices() error {
 	for _, existingService := range me.existingChildObjects.Services {
 		if updatedService, ok := me.newChildObjects.Services[existingService.Name]; ok {
 
-			if !reflect.DeepEqual(existingService.Spec, updatedService.Spec) {
+			if !kubeutil.CheckSpecHashesAreEqual(existingService, updatedService) {
 				// Service was changed, we need to update it
 				me.changes.AddChanges(controllerutil.NewResourceUpdate(updatedService))
 			}
@@ -405,7 +406,7 @@ func (me *serviceGraphProcessor) assembleUpdatesForIngresses() error {
 	for _, existingIngress := range me.existingChildObjects.Ingresses {
 		if updatedIngress, ok := me.newChildObjects.Ingresses[existingIngress.Name]; ok {
 
-			if !reflect.DeepEqual(existingIngress.Spec, updatedIngress.Spec) {
+			if !kubeutil.CheckSpecHashesAreEqual(existingIngress, updatedIngress) {
 				// Ingress was changed, we need to update it
 				me.changes.AddChanges(controllerutil.NewResourceUpdate(updatedIngress))
 			}
@@ -423,7 +424,7 @@ func (me *serviceGraphProcessor) assembleUpdatesForSloMappings() error {
 	for _, existingSloMapping := range me.existingChildObjects.SloMappings {
 		if updatedSloMapping, ok := me.newChildObjects.SloMappings[existingSloMapping.GetName()]; ok {
 
-			if !reflect.DeepEqual(existingSloMapping.GetSpec(), updatedSloMapping.GetSpec()) {
+			if !kubeutil.CheckSpecHashesAreEqual(existingSloMapping, updatedSloMapping) {
 				// SloMapping was changed, we need to update it
 				me.changes.AddChanges(controllerutil.NewResourceUpdate(&updatedSloMapping.Unstructured))
 			}

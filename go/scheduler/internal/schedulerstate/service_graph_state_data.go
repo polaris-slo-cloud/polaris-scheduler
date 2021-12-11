@@ -1,38 +1,34 @@
 package schedulerstate
 
 import (
-	v1 "k8s.io/api/core/v1"
 	"k8s.io/kubernetes/pkg/scheduler/framework"
-	"k8s.rainbow-h2020.eu/rainbow/orchestration/pkg/model/graph/servicegraph"
+	"k8s.rainbow-h2020.eu/rainbow/orchestration/pkg/services/servicegraphmanager"
 )
 
 const (
-	stateKeyBase = "rainbow-h2020/ServiceGraph/"
+	// The key that under which the ServiceGraphState is stored in a pod's CycleState.
+	ServiceGraphStateKey = "rainbow-h2020/ServiceGraphState"
 )
 
-var _ framework.StateData = &ServiceGraphStateData{}
+var (
+	_ framework.StateData = (*ServiceGraphStateData)(nil)
+)
 
-// ServiceGraphStateData wraps ServiceGraph for placement in the scheduler's CycleState
+// ServiceGraphStateData wraps ServiceGraphState for placement in the scheduler's CycleState
 type ServiceGraphStateData struct {
-	*servicegraph.ServiceGraph
+	servicegraphmanager.ServiceGraphState
 }
 
-// GetServiceGraphStateKey returns the key, under which the pod application's ServiceGraph can be stored in the framework.CycleState.
-func GetServiceGraphStateKey(pod *v1.Pod) framework.StateKey {
-	// The CycleState is unique for every pod, so using just the base key should be fine.
-	return stateKeyBase
-}
-
-// NewServiceGraphStateData creates a new instance of ServiceGraph.
-func NewServiceGraphStateData(serviceGraph *servicegraph.ServiceGraph) *ServiceGraphStateData {
+// NewServiceGraphStateData creates a new instance of ServiceGraphStateData.
+func NewServiceGraphStateData(svcGraphState servicegraphmanager.ServiceGraphState) *ServiceGraphStateData {
 	return &ServiceGraphStateData{
-		ServiceGraph: serviceGraph,
+		ServiceGraphState: svcGraphState,
 	}
 }
 
-// Clone creates a shallow copy of this ServiceGraph.
+// Clone creates a shallow copy of this ServiceGraphStateData.
 func (me *ServiceGraphStateData) Clone() framework.StateData {
 	return &ServiceGraphStateData{
-		ServiceGraph: me.ServiceGraph,
+		ServiceGraphState: me.ServiceGraphState,
 	}
 }

@@ -7,6 +7,7 @@ import (
 	meta "k8s.io/apimachinery/pkg/apis/meta/v1"
 	runtime "k8s.io/apimachinery/pkg/runtime"
 	fogappsCRDs "k8s.rainbow-h2020.eu/rainbow/orchestration/apis/fogapps/v1"
+	"k8s.rainbow-h2020.eu/rainbow/orchestration/pkg/util"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -114,7 +115,7 @@ func (me *SloMapping) convertMetadataToUnstructuredMap() map[string]interface{} 
 	metadata := map[string]interface{}{
 		"name":            me.Name,
 		"namespace":       me.Namespace,
-		"annotations":     me.Annotations,
+		"annotations":     util.DeepCopyStringMapToUnstructuredMap(me.Annotations),
 		"ownerReferences": me.convertOwnerReferencesToUnstructuredMap(),
 	}
 	if me.Generation > 0 {

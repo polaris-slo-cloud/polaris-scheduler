@@ -32,18 +32,18 @@ nodes:
   image: kindest/node:v1.21.1@sha256:69860bda5563ac81e3c0057d654b5253219618a22ec3a346306239bba8cfa1a6
 - role: worker
   image: kindest/node:v1.21.1@sha256:69860bda5563ac81e3c0057d654b5253219618a22ec3a346306239bba8cfa1a6
-- role: worker
-  image: kindest/node:v1.21.1@sha256:69860bda5563ac81e3c0057d654b5253219618a22ec3a346306239bba8cfa1a6
-- role: worker
-  image: kindest/node:v1.21.1@sha256:69860bda5563ac81e3c0057d654b5253219618a22ec3a346306239bba8cfa1a6
-- role: worker
-  image: kindest/node:v1.21.1@sha256:69860bda5563ac81e3c0057d654b5253219618a22ec3a346306239bba8cfa1a6
-- role: worker
-  image: kindest/node:v1.21.1@sha256:69860bda5563ac81e3c0057d654b5253219618a22ec3a346306239bba8cfa1a6
-- role: worker
-  image: kindest/node:v1.21.1@sha256:69860bda5563ac81e3c0057d654b5253219618a22ec3a346306239bba8cfa1a6
-- role: worker
-  image: kindest/node:v1.21.1@sha256:69860bda5563ac81e3c0057d654b5253219618a22ec3a346306239bba8cfa1a6
+# - role: worker
+#   image: kindest/node:v1.21.1@sha256:69860bda5563ac81e3c0057d654b5253219618a22ec3a346306239bba8cfa1a6
+# - role: worker
+#   image: kindest/node:v1.21.1@sha256:69860bda5563ac81e3c0057d654b5253219618a22ec3a346306239bba8cfa1a6
+# - role: worker
+#   image: kindest/node:v1.21.1@sha256:69860bda5563ac81e3c0057d654b5253219618a22ec3a346306239bba8cfa1a6
+# - role: worker
+#   image: kindest/node:v1.21.1@sha256:69860bda5563ac81e3c0057d654b5253219618a22ec3a346306239bba8cfa1a6
+# - role: worker
+#   image: kindest/node:v1.21.1@sha256:69860bda5563ac81e3c0057d654b5253219618a22ec3a346306239bba8cfa1a6
+# - role: worker
+#   image: kindest/node:v1.21.1@sha256:69860bda5563ac81e3c0057d654b5253219618a22ec3a346306239bba8cfa1a6
 EOF
 
 # connect the registry to the cluster network
@@ -65,8 +65,9 @@ data:
 EOF
 
 # Add labels to the nodes
-FOG_WORKER_NODES=("kind-worker" "kind-worker2" "kind-worker3" "kind-worker4" "kind-worker5" "kind-worker6")
-CLOUD_WORKER_NODES=("kind-worker7" "kind-worker8" "kind-worker9")
+FOG_WORKER_NODES=("kind-worker" "kind-worker2" "kind-worker3")
+# FOG_WORKER_NODES=("kind-worker" "kind-worker2" "kind-worker3" "kind-worker4" "kind-worker5" "kind-worker6")
+# CLOUD_WORKER_NODES=("kind-worker7" "kind-worker8" "kind-worker9")
 CONTEXT="kind-kind"
 
 kubectl label --context $CONTEXT node kind-control-plane node-role.kubernetes.io/fog-region-head=""
@@ -77,14 +78,14 @@ for i in ${FOG_WORKER_NODES[@]}; do
     kubectl label --context $CONTEXT node $i node-role.kubernetes.io/fog=""
 done
 
-for i in ${CLOUD_WORKER_NODES[@]}; do
-    kubectl label --context $CONTEXT node $i node-role.kubernetes.io/worker=""
-    kubectl label --context $CONTEXT node $i node-role.kubernetes.io/cloud=""
-done
+# for i in ${CLOUD_WORKER_NODES[@]}; do
+#     kubectl label --context $CONTEXT node $i node-role.kubernetes.io/worker=""
+#     kubectl label --context $CONTEXT node $i node-role.kubernetes.io/cloud=""
+# done
 
-kubectl label --context $CONTEXT node kind-worker7 node-role.kubernetes.io/small=""
-kubectl label --context $CONTEXT node kind-worker8 node-role.kubernetes.io/medium=""
-kubectl label --context $CONTEXT node kind-worker9 node-role.kubernetes.io/large=""
+# kubectl label --context $CONTEXT node kind-worker7 node-role.kubernetes.io/small=""
+# kubectl label --context $CONTEXT node kind-worker8 node-role.kubernetes.io/medium=""
+# kubectl label --context $CONTEXT node kind-worker9 node-role.kubernetes.io/large=""
 
 # Remove the taint from the fog-region-head node.
 kubectl taint --context $CONTEXT node kind-control-plane node-role.kubernetes.io/master-

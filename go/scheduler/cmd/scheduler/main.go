@@ -19,32 +19,56 @@ import (
 	"os"
 	"time"
 
+	"k8s.io/apimachinery/pkg/runtime"
+	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
+	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/component-base/logs"
 	"k8s.io/kubernetes/cmd/kube-scheduler/app"
+	ctrl "sigs.k8s.io/controller-runtime"
 
-	"k8s.rainbow-h2020.eu/rainbow/scheduler/pkg/schedulerplugins/atomicdeployment"
-	"k8s.rainbow-h2020.eu/rainbow/scheduler/pkg/schedulerplugins/latency"
+	clusterv1 "k8s.rainbow-h2020.eu/rainbow/orchestration/apis/cluster/v1"
+	fogappsv1 "k8s.rainbow-h2020.eu/rainbow/orchestration/apis/fogapps/v1"
+	slov1 "k8s.rainbow-h2020.eu/rainbow/orchestration/apis/slo/v1"
+	"k8s.rainbow-h2020.eu/rainbow/orchestration/pkg/services/configmanager"
+	"k8s.rainbow-h2020.eu/rainbow/orchestration/pkg/services/regionmanager"
+	"k8s.rainbow-h2020.eu/rainbow/orchestration/pkg/services/servicegraphmanager"
+
+	"k8s.rainbow-h2020.eu/rainbow/scheduler/pkg/schedulerplugins/networkqos"
 	"k8s.rainbow-h2020.eu/rainbow/scheduler/pkg/schedulerplugins/nodecost"
 	"k8s.rainbow-h2020.eu/rainbow/scheduler/pkg/schedulerplugins/podspernode"
-	"k8s.rainbow-h2020.eu/rainbow/scheduler/pkg/schedulerplugins/prioritymqsort"
-	"k8s.rainbow-h2020.eu/rainbow/scheduler/pkg/schedulerplugins/reserve"
 	"k8s.rainbow-h2020.eu/rainbow/scheduler/pkg/schedulerplugins/servicegraph"
 )
 
+var (
+	scheme = runtime.NewScheme()
+)
+
+func initScheme() {
+	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
+
+	utilruntime.Must(clusterv1.AddToScheme(scheme))
+	utilruntime.Must(fogappsv1.AddToScheme(scheme))
+	utilruntime.Must(slov1.AddToScheme(scheme))
+}
+
 func main() {
 	rand.Seed(time.Now().UnixNano())
+	initScheme()
+
+	// Initialize the ConfigManager, RegionManager, and ServiceGraphManager.
+	configmanager.InitConfigManager(ctrl.GetConfigOrDie(), scheme)
+	regionmanager.InitRegionManager()
+	servicegraphmanager.InitServiceGraphManager()
 
 	// When executed, the command returned by NewSchedulerCommand(), uses
 	// scheduler.WithFrameworkOutOfTreeRegistry(outOfTreeRegistry) to append the specified plugins to
 	// the default plugins (see Kubernetes source: cmd/kube-scheduler/app/server.go).
 	command := app.NewSchedulerCommand(
-		app.WithPlugin(prioritymqsort.PluginName, prioritymqsort.New),
 		app.WithPlugin(servicegraph.PluginName, servicegraph.New),
-		app.WithPlugin(latency.PluginName, latency.New),
+		app.WithPlugin(networkqos.PluginName, networkqos.New),
 		app.WithPlugin(podspernode.PluginName, podspernode.New),
 		app.WithPlugin(nodecost.PluginName, nodecost.New),
-		app.WithPlugin(reserve.PluginName, reserve.New),
-		app.WithPlugin(atomicdeployment.PluginName, atomicdeployment.New),
+		// The AtomicDeploymentPlugin is not included here, because it is wrapped by the ServiceGraphPlugin.
 	)
 
 	logs.InitLogs()

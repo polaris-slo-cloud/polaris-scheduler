@@ -20,9 +20,10 @@ FAKE_MEMORY_RESOURCE_NAME="rainbow-h2020.eu~1fake-memory"
 baseUrl=$1
 nodes=(
     # Fog nodes (correspond to either a Raspberry Pi 3 Model B+ (4 CPU cores, 1GB RAM) or a Raspberry Pi 4 Model B (4 CPU cores, 2GB, 4GB, or 8GB RAM)):
-    "kind-control-plane" "kind-worker" "kind-worker2" "kind-worker3" "kind-worker4" "kind-worker5" "kind-worker6"
+    "kind-control-plane" "kind-worker" "kind-worker2" "kind-worker3"
+    # "kind-worker4" "kind-worker5" "kind-worker6"
     # Cloud nodes:
-    "kind-worker7" "kind-worker8" "kind-worker9"
+    # "kind-worker7" "kind-worker8" "kind-worker9"
 )
 
 
