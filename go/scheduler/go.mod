@@ -4,18 +4,18 @@ go 1.16
 
 require (
 	gonum.org/v1/gonum v0.9.3
-	k8s.io/api v0.22.2
-	k8s.io/apimachinery v0.22.2
-	k8s.io/client-go v0.22.2
+	k8s.io/api v0.21.7
+	k8s.io/apimachinery v0.21.7
+	k8s.io/client-go v0.21.7
 	k8s.io/code-generator v0.21.7
-	k8s.io/component-base v0.22.2
+	k8s.io/component-base v0.21.7
 	k8s.io/klog/v2 v2.9.0
 	// k8s.io/kube-openapi should be the same version as the one used by k8s.io/apiserver.
 	k8s.io/kube-openapi v0.0.0-20211110012726-3cc51fd1e909
 	k8s.io/kube-scheduler v0.21.7 // indirect
 	k8s.io/kubernetes v1.21.7
 	k8s.rainbow-h2020.eu/rainbow/orchestration v0.0.1
-	sigs.k8s.io/controller-runtime v0.10.3
+	sigs.k8s.io/controller-runtime v0.9.7
 )
 
 replace (
@@ -47,8 +47,10 @@ replace (
 	k8s.rainbow-h2020.eu/rainbow/orchestration => ../orchestration
 )
 
-// controller-runtime pre v0.10.0 would cause problems with an incompatible transitive dependency.
-// Thus we exclude controller-runtime v0.9.7 used by the rainbow-orchestrator code (v0.9.7 is the last one that is based on K8s v1.21.x)
-// and use a 0.10.x version. This introduces some K8s v1.22.x dependencies, but the replace statements above should
-// force all used K8s libraries to v1.21.x. So far, there are no problems.
-exclude sigs.k8s.io/controller-runtime v0.9.7
+// controller-runtime v0.9.x uses a version of github.com/googleapis/gnostic that predates a breaking change in its function `openapi_v2.NewDocument()`.
+// K8s 1.21.x already uses the newer version that includes this breaking change.
+// controller-runtime v0.10.x would use the newer version of that library, but it targets K8s v1.22.
+// Since we need to target K8s v1.21.x we could rely on the replace statements to force K8s v1.21 dependencies, but this caused a compiler error
+// with `wait.PollImmediateUntilWithContext()` being undefined at some point.
+// Thus, we exclude the problematic github.com/googleapis/gnostic version. So far, there are no problems.
+exclude github.com/googleapis/gnostic v0.5.5
