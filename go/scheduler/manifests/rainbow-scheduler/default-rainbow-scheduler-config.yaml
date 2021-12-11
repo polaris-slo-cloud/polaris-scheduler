@@ -42,6 +42,8 @@ profiles:
             weight: 1
           - name: NodeCost
             weight: 1
+          - name: WorkloadType
+            weight: 1
         disabled:
           # These could interfere with the PodsPerNode scoring.
           - name: NodeResourcesBalancedAllocation
