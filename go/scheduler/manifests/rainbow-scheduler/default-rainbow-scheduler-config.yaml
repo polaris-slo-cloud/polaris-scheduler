@@ -51,5 +51,6 @@ profiles:
           - name: ServiceGraph
       permit:
         enabled:
+          # The ServiceGraph plugin also wraps AtomicDeployment.
           - name: ServiceGraph
 
