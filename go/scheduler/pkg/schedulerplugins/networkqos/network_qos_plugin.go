@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"math"
+	"sync"
 
 	"gonum.org/v1/gonum/graph"
 	graphpath "gonum.org/v1/gonum/graph/path"
@@ -11,6 +12,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	framework "k8s.io/kubernetes/pkg/scheduler/framework"
 
+	clusterCRDs "k8s.rainbow-h2020.eu/rainbow/orchestration/apis/cluster/v1"
 	fogappsCRDs "k8s.rainbow-h2020.eu/rainbow/orchestration/apis/fogapps/v1"
 	"k8s.rainbow-h2020.eu/rainbow/orchestration/pkg/model/graph/regiongraph"
 	"k8s.rainbow-h2020.eu/rainbow/orchestration/pkg/model/graph/servicegraph"
@@ -31,6 +33,8 @@ var (
 	_ framework.Plugin          = _networkQosPlugin
 	_ framework.PreFilterPlugin = _networkQosPlugin
 	_ framework.FilterPlugin    = _networkQosPlugin
+	_ framework.ScorePlugin     = _networkQosPlugin
+	_ framework.ScoreExtensions = _networkQosPlugin
 )
 
 // NetworkQosPlugin is a Filter plugin that filters out nodes that violate the network QoS constraints of the application.
@@ -65,7 +69,7 @@ func (me *NetworkQosPlugin) PreFilter(ctx context.Context, cycleState *framework
 	svcGraph := svcGraphState.ServiceGraph()
 	podSvcNode, _ := util.GetServiceGraphNode(svcGraph, pod)
 	region := me.regionManager.RegionGraph()
-	incomingLinks, err := me.getIncomingSvcLinksWithQoS(svcGraphState, podSvcNode, region)
+	incomingLinks, err := me.getIncomingSvcLinks(svcGraphState, podSvcNode, region)
 	if err != nil {
 		return framework.AsStatus(err)
 	}
@@ -76,6 +80,7 @@ func (me *NetworkQosPlugin) PreFilter(ctx context.Context, cycleState *framework
 			regionGraph:   region,
 			podSvcNode:    podSvcNode,
 			incomingLinks: incomingLinks,
+			k8sNodeScores: sync.Map{},
 		}
 		cycleState.Lock()
 		cycleState.Write(networkQosStateKey, &qosState)
@@ -109,7 +114,10 @@ func (me *NetworkQosPlugin) Filter(ctx context.Context, cycleState *framework.Cy
 		return framework.AsStatus(err)
 	}
 
-	for _, incomingServiceLink := range qosState.incomingLinks {
+	// Loop through the incoming service links and if the candidate node fails to meet the QoS requirements
+	// even for a single link, return Unschedulable.
+	shortestPaths := make([]*networkPathInfo, len(qosState.incomingLinks))
+	for i, incomingServiceLink := range qosState.incomingLinks {
 		shortestCompliantPath := me.findShortestCompliantPath(incomingServiceLink, candidateK8sNode, region)
 		if shortestCompliantPath == nil {
 			return framework.NewStatus(
@@ -117,14 +125,62 @@ func (me *NetworkQosPlugin) Filter(ctx context.Context, cycleState *framework.Cy
 				fmt.Sprintf("Node %s with does not meet the NetworkQoS requirements for ServiceLink from %s.", candidateK8sNode.Label(), incomingServiceLink.link.ServiceLink().Source),
 			)
 		}
+		shortestPaths[i] = shortestCompliantPath
 	}
+
+	// Compute the node's score and store it for the Score phase.
+	// We do the computation now to not require us to store the networkPathInfos for all nodes.
+	nodeScore := me.computeNodeScore(shortestPaths)
+	qosState.k8sNodeScores.Store(candidateK8sNodeInfo.Node().Name, nodeScore)
+
+	return framework.NewStatus(framework.Success)
+}
+
+// ScoreExtensions returns a ScoreExtensions interface if the plugin implements one, or nil if does not.
+func (me *NetworkQosPlugin) ScoreExtensions() framework.ScoreExtensions {
+	return me
+}
+
+// Score is called on each filtered node. It must return success and an integer
+// indicating the rank of the node. All scoring plugins must return success or
+// the pod will be rejected.
+func (me *NetworkQosPlugin) Score(ctx context.Context, cycleState *framework.CycleState, pod *core.Pod, nodeName string) (int64, *framework.Status) {
+	qosState, noSvcGraphStatus := getNetworkQosStateDataOrStatus(cycleState)
+	if noSvcGraphStatus != nil {
+		return 100, noSvcGraphStatus
+	}
+
+	score, ok := qosState.k8sNodeScores.Load(nodeName)
+	if !ok {
+		return 0, framework.AsStatus(fmt.Errorf("the node %s has no score in qosState.k8sNodeScores", nodeName))
+	}
+	intScore, ok := score.(int64)
+	if !ok {
+		return 0, framework.AsStatus(fmt.Errorf("could not convert qosState.k8sNodeScores[%s] into an int64", nodeName))
+	}
+	return intScore, framework.NewStatus(framework.Success)
+}
+
+// NormalizeScore normalizes all scores to a range between 0 and 100.
+func (me *NetworkQosPlugin) NormalizeScore(ctx context.Context, cycleState *framework.CycleState, pod *core.Pod, scores framework.NodeScoreList) *framework.Status {
+	_, noSvcGraphStatus := getNetworkQosStateDataOrStatus(cycleState)
+	if noSvcGraphStatus != nil {
+		return noSvcGraphStatus
+	}
+
+	util.NormalizeNodeScores(scores)
+
+	// Purge qosState from CycleState to allow freeing memory.
+	cycleState.Lock()
+	cycleState.Delete(networkQosStateKey)
+	cycleState.Unlock()
 
 	return framework.NewStatus(framework.Success)
 }
 
 // Finds the incoming service links to the ServiceGraph node that corresponds to the pod to be scheduled.
-// Only service links that have NetworkQosRequirements set are returned.
-func (me *NetworkQosPlugin) getIncomingSvcLinksWithQoS(
+// All incoming service links are returned, regardless of whether they have QosRequirements set or not.
+func (me *NetworkQosPlugin) getIncomingSvcLinks(
 	svcGraphState servicegraphmanager.ServiceGraphState,
 	podSvcNode servicegraph.Node,
 	region regiongraph.RegionGraph,
@@ -147,24 +203,16 @@ func (me *NetworkQosPlugin) getIncomingSvcLinksWithQoS(
 
 		incomingLink := svcGraph.Graph().Edge(currSvcNodeId, destSvcNodeId).(servicegraph.Edge)
 		if incomingLink != nil {
-			if qosReqs := incomingLink.ServiceLink().QosRequirements; me.checkLinkQosRequirementsPresent(qosReqs) {
-				nodeAndLinkPair := incomingServiceLink{
-					link:            incomingLink,
-					qosRequirements: qosReqs,
-					k8sSrcNodes:     me.buildK8sSourceNodeInfosForLink(incomingLink, placementMap, region),
-				}
-				incomingLinks = append(incomingLinks, &nodeAndLinkPair)
+			nodeAndLinkPair := incomingServiceLink{
+				link:            incomingLink,
+				qosRequirements: incomingLink.ServiceLink().QosRequirements,
+				k8sSrcNodes:     me.buildK8sSourceNodeInfosForLink(incomingLink, placementMap, region),
 			}
+			incomingLinks = append(incomingLinks, &nodeAndLinkPair)
 		}
 	}
 
 	return incomingLinks, nil
-}
-
-// Returns true if any LinkQoSRequirements are set.
-func (me *NetworkQosPlugin) checkLinkQosRequirementsPresent(requirements *fogappsCRDs.LinkQosRequirements) bool {
-	ok := requirements != nil
-	return ok && (requirements.Throughput != nil || requirements.Latency != nil || requirements.PacketLoss != nil)
 }
 
 func (me *NetworkQosPlugin) buildK8sSourceNodeInfosForLink(
@@ -190,7 +238,7 @@ func (me *NetworkQosPlugin) buildK8sSourceNodeInfosForLink(
 func (me *NetworkQosPlugin) getK8sNodeFromRegion(region regiongraph.RegionGraph, nodeName string) (regiongraph.Node, error) {
 	k8sNode := region.NodeByLabel(nodeName)
 	if k8sNode == nil {
-		return nil, fmt.Errorf("The node %s was not found in the region graph", nodeName)
+		return nil, fmt.Errorf("the node %s was not found in the region graph", nodeName)
 	}
 	return k8sNode, nil
 }
@@ -219,7 +267,8 @@ func (me *NetworkQosPlugin) findShortestCompliantPath(
 
 func (me *NetworkQosPlugin) computeNetworkPathInfo(path []graph.Node, region regiongraph.RegionGraph) networkPathInfo {
 	pathInfo := networkPathInfo{
-		lowestBandwithKbps: math.MaxInt64,
+		lowestBandwithKbps:            math.MaxInt64,
+		lowestNetworkQualityClassKbps: math.MaxInt64,
 	}
 
 	pathLength := len(path)
@@ -228,6 +277,14 @@ func (me *NetworkQosPlugin) computeNetworkPathInfo(path []graph.Node, region reg
 		endNode := path[i+1]
 		link := region.Graph().Edge(startNode.ID(), endNode.ID()).(regiongraph.Edge)
 		linkQos := link.NetworkLinkQoS()
+
+		// Quality class
+		if linkQos.QualityClass != "" {
+			linkQualityClassKbps := clusterCRDs.NetworkQualitClassToKbps(linkQos.QualityClass)
+			if linkQualityClassKbps < pathInfo.lowestNetworkQualityClassKbps {
+				pathInfo.lowestNetworkQualityClassKbps = linkQualityClassKbps
+			}
+		}
 
 		// Throughput
 		if linkQos.Throughput.BandwidthKbps < pathInfo.lowestBandwithKbps {
@@ -253,7 +310,18 @@ func (me *NetworkQosPlugin) computeNetworkPathInfo(path []graph.Node, region reg
 }
 
 func (me *NetworkQosPlugin) checkPathMeetsRequirements(pathInfo *networkPathInfo, requirements *fogappsCRDs.LinkQosRequirements) bool {
+	// If there are no requirements, the path definitely fulfills them.
+	if requirements == nil {
+		return true
+	}
+
 	ok := true
+
+	// QualityClass
+	if req := requirements.LinkType; req != nil && req.MinQualityClass != nil {
+		requestedQualityClassKbps := clusterCRDs.NetworkQualitClassToKbps(*req.MinQualityClass)
+		ok = ok && pathInfo.lowestNetworkQualityClassKbps >= requestedQualityClassKbps
+	}
 
 	// Throughput
 	if req := requirements.Throughput; req != nil {
@@ -277,4 +345,32 @@ func (me *NetworkQosPlugin) checkPathMeetsRequirements(pathInfo *networkPathInfo
 	}
 
 	return ok
+}
+
+// Computes a node score, based on the highest bandwidth and latency variance values of the shortestPaths.
+func (me *NetworkQosPlugin) computeNodeScore(shortestPaths []*networkPathInfo) int64 {
+	var bandwidthVarianceSum int64 = 0
+	var packetDelayVarianceSum int64 = 0
+	for _, path := range shortestPaths {
+		bandwidthVarianceSum += path.highestBandwidthVariance
+		packetDelayVarianceSum += int64(path.highestPacketDelayVariance)
+	}
+
+	pathsCount := len(shortestPaths)
+	var avgBandwidthVariance float64
+	var avgPacketDelayVariance float64
+	if pathsCount > 0 {
+		avgBandwidthVariance = float64(bandwidthVarianceSum) / float64(pathsCount)
+		avgPacketDelayVariance = float64(packetDelayVarianceSum) / float64(pathsCount)
+	} else {
+		// There were no incoming service links, so we set the variances to 0 to get the best score.
+		avgBandwidthVariance = 0
+		avgPacketDelayVariance = 0
+	}
+
+	var highestScore float64 = 1000000
+	bandwidthScore := highestScore / (avgBandwidthVariance + 1)
+	packetDelayScore := highestScore / (avgPacketDelayVariance + 1)
+	overallScore := math.Round((bandwidthScore + packetDelayScore) / 2)
+	return int64(overallScore)
 }

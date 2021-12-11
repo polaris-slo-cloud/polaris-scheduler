@@ -1,6 +1,8 @@
 package networkqos
 
 import (
+	"sync"
+
 	graphpath "gonum.org/v1/gonum/graph/path"
 	"k8s.io/kubernetes/pkg/scheduler/framework"
 
@@ -51,6 +53,10 @@ type networkQosStateData struct {
 
 	// The incoming ServiceGraph links to the podSvcNode.
 	incomingLinks []*incomingServiceLink
+
+	// Stores the score (int64) for each K8s node that passes the Filter phase.
+	// The node name is used as the key.
+	k8sNodeScores sync.Map
 }
 
 // Stores Information about a path between two nodes in the RegionGraph.
@@ -69,10 +75,19 @@ type networkPathInfo struct {
 
 	// The highest packet loss in basis points of any link along the path.
 	highestPacketLossBp int32
+
+	// The lowest QualityClass (in Kbps) of any network link in the path.
+	lowestNetworkQualityClassKbps int64
 }
 
 func (me *networkQosStateData) Clone() framework.StateData {
-	return &networkQosStateData{}
+	return &networkQosStateData{
+		svcGraphState: me.svcGraphState,
+		regionGraph:   me.regionGraph,
+		podSvcNode:    me.podSvcNode,
+		incomingLinks: me.incomingLinks,
+		k8sNodeScores: me.k8sNodeScores,
+	}
 }
 
 // Gets the networkQosStateData from the CycleState or returns a framework.Success state if the current pod is not associated with a ServiceGraph

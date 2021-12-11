@@ -2,22 +2,18 @@
 
 ## Node Roles
 
-This scheduler assumes existence of the following node roles, i.e., `node-role.kubernetes.io/<role>` labels:
+This scheduler assumes existence of the following node roles, i.e., `rainbow-h2020.eu/<role>` labels:
 
-* `control-plane`
-* `master`
-* `worker`: a worker node (can be in the fog or in the cloud).
-* `fog-region-head`: the cluster head of a fog region.
-* `fog`: a fog node.
-* `cloud`: a cloud node.
+* `fog-node`: a fog node.
+* `cloud-node`: a cloud node.
 
 **ToDo**: Maybe we can relax this assumption to not require any fog or cloud labels?
 
 
 ## Application Components
 
-Currently this scheduler is designed for asynchronous applications.
-It is necessary to annotate the pods of the message queue with the label: `app.kubernetes.io/component: message-queue`.
+This scheduler relies on each pod being associated with a ServiceGraph through the labels `rainbow-h2020.eu/service-graph` and `rainbow-h2020.eu/service-graph-node`.
+Pods that do not have these labels will still be scheduled, but they cannot benefit from the optimizations brought by this scheduler.
 
 
 ## Scheduler Algorithm Overview
@@ -25,20 +21,16 @@ It is necessary to annotate the pods of the message queue with the label: `app.k
 The RAINBOW scheduler extends the the default Kubernetes scheduler using the [scheduling-framework](https://kubernetes.io/docs/concepts/scheduling-eviction/scheduling-framework/).
 It makes use of all the scheduling plugins enabled by [default](https://kubernetes.io/docs/reference/scheduling/config/#scheduling-plugins-1) and adds the following custom plugins:
 
-| Plugin                      | Extension Points    | Purpose |
-|-----------------------------|---------------------|---------|
-| `RainbowPriorityMqSort`     | `QueueSort`         | Ensure that a message queue is scheduled before other pods. |
-| `RainbowServiceGraph`       | `PreFilter`         | Get and cache the service graph of the application, to which the pod belongs. |
-| `RainbowLatency`            | `Filter`            | Filter out nodes that violate the latency constraints of the application. |
-| `RainbowPodsPerNode`        | `PreScore`, `Score`, `NormalizeScore` | Increase colocation of an application's components on a node. |
-| `RainbowNodeCost`           | `PreScore`, `Score` | Give cheaper nodes a higher score. |
-| `RainbowReserve`            | `Reserve`           | Updates the service graph with the info about the selected node. |
-| `RainbowAtomicDeployment`   | `Permit`            | Ensure that either all pods of an application are deployed or none of them. |
+| Plugin               | Extension Points      | Purpose |
+|----------------------|-----------------------|---------|
+| `ServiceGraph`       | `QueueSort`, `PreFilter`, `PostFilter`, `Reserve`, `Permit` | Load and cache the ServiceGraph of the pod's application, sort the pods, based on a breadth-first search on the ServiceGraph, and update (in-memory) the ServiceGraph with placement decisions. |
+| `NetworkQoS`         | `PreFilter`, `Filter` | Filter out nodes that violate the network QoS constraints of the pod. |
+| `NetworkQoS`         | `Score`, `NormalizeScore` | Prefer nodes that are likely to maintain the network QoS for a prolonged period of time. |
+| `PodsPerNode`        | `PreScore`, `Score`, `NormalizeScore` | Increase colocation of an application's components on a node. |
+| `NodeCost`           | `PreScore`, `Score`   | Give cheaper nodes a higher score. |
+| `WorkloadType`       | `PreScore, `Score`, `NormalizeScore` | Prefer nodes that have worked well for the type of workload that the pod represents (boilerplate). |
+| `AtomicDeployment`   | `Permit`              | Ensure that either all pods of an application are deployed or none of them. |
 
-
-**ToDo:**
-- Move removal of cloud nodes if there is at least one eligible fog node from  RainbowPodsPerNode to a PostFilter plugin
-- Merge RainbowReserve into the RainbowServiceGraph plugin
 
 ## Some notes about the scheduler extension points
 

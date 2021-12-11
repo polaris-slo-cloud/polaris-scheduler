@@ -36,9 +36,13 @@ profiles:
           - name: PodsPerNode
       score:
         enabled:
+          - name: NetworkQoS
+            weight: 1
           - name: PodsPerNode
             weight: 1
           - name: NodeCost
+            weight: 1
+          - name: WorkloadType
             weight: 1
         disabled:
           # These could interfere with the PodsPerNode scoring.
@@ -49,5 +53,6 @@ profiles:
           - name: ServiceGraph
       permit:
         enabled:
+          # The ServiceGraph plugin also wraps AtomicDeployment.
           - name: ServiceGraph
 

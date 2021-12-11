@@ -37,6 +37,7 @@ import (
 	"k8s.rainbow-h2020.eu/rainbow/scheduler/pkg/schedulerplugins/nodecost"
 	"k8s.rainbow-h2020.eu/rainbow/scheduler/pkg/schedulerplugins/podspernode"
 	"k8s.rainbow-h2020.eu/rainbow/scheduler/pkg/schedulerplugins/servicegraph"
+	"k8s.rainbow-h2020.eu/rainbow/scheduler/pkg/schedulerplugins/workloadtype"
 )
 
 var (
@@ -68,6 +69,7 @@ func main() {
 		app.WithPlugin(networkqos.PluginName, networkqos.New),
 		app.WithPlugin(podspernode.PluginName, podspernode.New),
 		app.WithPlugin(nodecost.PluginName, nodecost.New),
+		app.WithPlugin(workloadtype.PluginName, workloadtype.New),
 		// The AtomicDeploymentPlugin is not included here, because it is wrapped by the ServiceGraphPlugin.
 	)
 

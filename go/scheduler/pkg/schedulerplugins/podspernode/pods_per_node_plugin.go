@@ -123,7 +123,12 @@ func (me *PodsPerNodePlugin) Score(ctx context.Context, cycleState *framework.Cy
 }
 
 // NormalizeScore normalizes all scores to a range between 0 and 100.
-func (me *PodsPerNodePlugin) NormalizeScore(ctx context.Context, state *framework.CycleState, pod *core.Pod, scores framework.NodeScoreList) *framework.Status {
+func (me *PodsPerNodePlugin) NormalizeScore(ctx context.Context, cycleState *framework.CycleState, pod *core.Pod, scores framework.NodeScoreList) *framework.Status {
+	_, noSvcGraphStatus := util.GetServiceGraphFromCycleStateOrStatus(cycleState)
+	if noSvcGraphStatus != nil {
+		return noSvcGraphStatus
+	}
+
 	util.NormalizeNodeScores(scores)
 	// for _, score := range scores {
 	// 	klog.Infof("Pod %s, node: %s, finalScore: %d", pod.Name, score.Name, score.Score)
