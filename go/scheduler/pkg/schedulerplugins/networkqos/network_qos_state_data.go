@@ -75,6 +75,9 @@ type networkPathInfo struct {
 
 	// The highest packet loss in basis points of any link along the path.
 	highestPacketLossBp int32
+
+	// The lowest QualityClass (in Kbps) of any network link in the path.
+	lowestNetworkQualityClassKbps int64
 }
 
 func (me *networkQosStateData) Clone() framework.StateData {

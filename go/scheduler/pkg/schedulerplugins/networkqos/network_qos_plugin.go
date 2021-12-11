@@ -12,6 +12,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	framework "k8s.io/kubernetes/pkg/scheduler/framework"
 
+	clusterCRDs "k8s.rainbow-h2020.eu/rainbow/orchestration/apis/cluster/v1"
 	fogappsCRDs "k8s.rainbow-h2020.eu/rainbow/orchestration/apis/fogapps/v1"
 	"k8s.rainbow-h2020.eu/rainbow/orchestration/pkg/model/graph/regiongraph"
 	"k8s.rainbow-h2020.eu/rainbow/orchestration/pkg/model/graph/servicegraph"
@@ -255,7 +256,8 @@ func (me *NetworkQosPlugin) findShortestCompliantPath(
 
 func (me *NetworkQosPlugin) computeNetworkPathInfo(path []graph.Node, region regiongraph.RegionGraph) networkPathInfo {
 	pathInfo := networkPathInfo{
-		lowestBandwithKbps: math.MaxInt64,
+		lowestBandwithKbps:            math.MaxInt64,
+		lowestNetworkQualityClassKbps: math.MaxInt64,
 	}
 
 	pathLength := len(path)
@@ -264,6 +266,14 @@ func (me *NetworkQosPlugin) computeNetworkPathInfo(path []graph.Node, region reg
 		endNode := path[i+1]
 		link := region.Graph().Edge(startNode.ID(), endNode.ID()).(regiongraph.Edge)
 		linkQos := link.NetworkLinkQoS()
+
+		// Quality class
+		if linkQos.QualityClass != "" {
+			linkQualityClassKbps := clusterCRDs.NetworkQualitClassToKbps(linkQos.QualityClass)
+			if linkQualityClassKbps < pathInfo.lowestNetworkQualityClassKbps {
+				pathInfo.lowestNetworkQualityClassKbps = linkQualityClassKbps
+			}
+		}
 
 		// Throughput
 		if linkQos.Throughput.BandwidthKbps < pathInfo.lowestBandwithKbps {
@@ -295,6 +305,12 @@ func (me *NetworkQosPlugin) checkPathMeetsRequirements(pathInfo *networkPathInfo
 	}
 
 	ok := true
+
+	// QualityClass
+	if req := requirements.LinkType; req != nil && req.MinQualityClass != nil {
+		requestedQualityClassKbps := clusterCRDs.NetworkQualitClassToKbps(*req.MinQualityClass)
+		ok = ok && pathInfo.lowestNetworkQualityClassKbps >= requestedQualityClassKbps
+	}
 
 	// Throughput
 	if req := requirements.Throughput; req != nil {

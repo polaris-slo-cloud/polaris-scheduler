@@ -84,7 +84,9 @@ spec:
                 enum:
                 - QC1Mbps
                 - QC10Mbps
+                - QC100Mbps
                 - QC1Gbps
+                - QC10Gbps
                 type: string
               throughput:
                 description: The throughput of the network link.
