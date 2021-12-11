@@ -169,6 +169,12 @@ func (me *NetworkQosPlugin) NormalizeScore(ctx context.Context, cycleState *fram
 	}
 
 	util.NormalizeNodeScores(scores)
+
+	// Purge qosState from CycleState to allow freeing memory.
+	cycleState.Lock()
+	cycleState.Delete(networkQosStateKey)
+	cycleState.Unlock()
+
 	return framework.NewStatus(framework.Success)
 }
 
