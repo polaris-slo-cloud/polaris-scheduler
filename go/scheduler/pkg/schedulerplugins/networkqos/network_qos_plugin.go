@@ -162,7 +162,12 @@ func (me *NetworkQosPlugin) Score(ctx context.Context, cycleState *framework.Cyc
 }
 
 // NormalizeScore normalizes all scores to a range between 0 and 100.
-func (me *NetworkQosPlugin) NormalizeScore(ctx context.Context, state *framework.CycleState, pod *core.Pod, scores framework.NodeScoreList) *framework.Status {
+func (me *NetworkQosPlugin) NormalizeScore(ctx context.Context, cycleState *framework.CycleState, pod *core.Pod, scores framework.NodeScoreList) *framework.Status {
+	_, noSvcGraphStatus := getNetworkQosStateDataOrStatus(cycleState)
+	if noSvcGraphStatus != nil {
+		return noSvcGraphStatus
+	}
+
 	util.NormalizeNodeScores(scores)
 	return framework.NewStatus(framework.Success)
 }
