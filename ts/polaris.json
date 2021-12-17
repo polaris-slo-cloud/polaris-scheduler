@@ -9,7 +9,8 @@
                 "tsConfig": "tsconfig.base.json",
                 "outDir": "crds",
                 "polarisTypes": [
-                    "ImageThroughputSloMapping"
+                    "ImageThroughputSloMapping",
+                    "CustomStreamSightSloMapping"
                 ]
             }
         },

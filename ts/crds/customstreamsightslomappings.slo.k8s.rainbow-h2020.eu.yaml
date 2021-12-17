@@ -1,0 +1,247 @@
+kind: CustomResourceDefinition
+apiVersion: apiextensions.k8s.io/v1
+metadata:
+  annotations:
+    polaris-slo-cloud.github.io/schema-gen-version: 0.2.0-beta.22
+  name: customstreamsightslomappings.slo.k8s.rainbow-h2020.eu
+spec:
+  group: slo.k8s.rainbow-h2020.eu
+  names:
+    kind: CustomStreamSightSloMapping
+    listKind: CustomStreamSightSloMappingList
+    singular: customstreamsightslomapping
+    plural: customstreamsightslomappings
+  scope: Namespaced
+  versions:
+    - name: v1
+      served: true
+      storage: true
+      schema:
+        openAPIV3Schema:
+          type: object
+          required:
+            - metadata
+            - spec
+            - apiVersion
+            - kind
+          description: >-
+            Represents the SLO mapping for the CustomStreamSight SLO, which
+            allows specifying custom StreamSight queries in its configuration.
+          properties:
+            metadata:
+              type: object
+            spec:
+              type: object
+              required:
+                - elasticityStrategy
+                - sloConfig
+                - targetRef
+              description: The spec type for the CustomStreamSight SLO.
+              properties:
+                targetRef:
+                  type: object
+                  required:
+                    - kind
+                    - name
+                    - apiVersion
+                  description: Identifies that target workload for an SLO mapping.
+                  properties:
+                    kind:
+                      type: string
+                      description: >-
+                        Kind is a string value representing the REST resource
+                        this object represents. Servers may infer this from the
+                        endpoint the client submits requests to. Cannot be
+                        updated. In CamelCase. More info:
+                        https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+                    name:
+                      type: string
+                      description: The name of the instance.
+                    apiVersion:
+                      type: string
+                      description: >-
+                        APIVersion defines the versioned schema of this
+                        representation of an object. Servers should convert
+                        recognized schemas to the latest internal value, and may
+                        reject unrecognized values. More info:
+                        https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
+                elasticityStrategy:
+                  type: object
+                  required:
+                    - kind
+                    - apiVersion
+                  description: Identifies an elasticity strategy kind/type.
+                  properties:
+                    kind:
+                      type: string
+                      description: >-
+                        Kind is a string value representing the REST resource
+                        this object represents. Servers may infer this from the
+                        endpoint the client submits requests to. Cannot be
+                        updated. In CamelCase. More info:
+                        https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+                    apiVersion:
+                      type: string
+                      description: >-
+                        APIVersion defines the versioned schema of this
+                        representation of an object. Servers should convert
+                        recognized schemas to the latest internal value, and may
+                        reject unrecognized values. More info:
+                        https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
+                stabilizationWindow:
+                  type: object
+                  description: >-
+                    StabilizationWindow allows configuring the period of time
+                    that an elasticity strategy controller will wait after
+                    applying the strategy once, before applying it again (if the
+                    SLO is still violated), to avoid unnecessary scaling.
+
+
+                    For example, suppose that ScaleUpSeconds = 180 and a
+                    horizontal elasticity strategy scales out at time `t` due to
+                    an SLO violation. At time `t + 20 seconds` the SLO's
+                    evaluation still results in a violation, but the elasticity
+                    strategy does not scale again, because the stabilization
+                    window for scaling up/out has not yet passed. If the SLO
+                    evaluation at `t + 200 seconds` still results in a
+                    violation, the controller will scale again.
+                  properties:
+                    scaleUpSeconds:
+                      type: integer
+                      description: >-
+                        The number of seconds after the previous scaling
+                        operation to wait before an elasticity action that
+                        increases resources (e.g., scale up/out) or an
+                        equivalent configuration change can be issued due to an
+                        SLO violation.
+                      minimum: 0
+                      default: 60
+                      format: int64
+                    scaleDownSeconds:
+                      type: integer
+                      description: >-
+                        The number of seconds after the previous scaling
+                        operation to wait before an elasticity action that
+                        decreases resources (e.g., scale down/in) or an
+                        equivalent configuration change can be issued due to an
+                        SLO violation.
+                      minimum: 0
+                      default: 300
+                      format: int64
+                sloConfig:
+                  type: object
+                  properties:
+                    streams:
+                      type: object
+                      additionalProperties:
+                        type: string
+                      description: Convenience type for a map object with string keys.
+                    insights:
+                      type: object
+                      additionalProperties:
+                        type: string
+                      description: Convenience type for a map object with string keys.
+                    targetState:
+                      type: object
+                      properties:
+                        conjuncts:
+                          type: array
+                          items:
+                            type: object
+                            properties:
+                              disjuncts:
+                                type: array
+                                items:
+                                  type: object
+                                  properties:
+                                    insight:
+                                      type: string
+                                      description: >-
+                                        The insight, for which the state is
+                                        defined.
+                                    targetValue:
+                                      type: number
+                                      description: >-
+                                        The desired target value for the
+                                        insight.
+                                    tolerance:
+                                      type: number
+                                      description: >-
+                                        A tolerance around the target value.
+
+
+                                        Above `targetValue + tolerance` we scale
+                                        up/out. Below `targetValue - tolerance`
+                                        we scale down/in
+                                    invertScalingDirection:
+                                      type: boolean
+                                      description: >-
+                                        (optional) If `true`, then the
+                                        above/below rules if `targetValue` and
+                                        `tolerance` are inverted.
+                                  required:
+                                    - insight
+                                    - targetValue
+                                    - tolerance
+                                  additionalProperties: false
+                                  description: >-
+                                    Defines the desired target state of a
+                                    StreamSight insight's value.
+                                description: >-
+                                  The states, which should be evaluated and
+                                  combined with an OR operator.
+                            required:
+                              - disjuncts
+                            additionalProperties: false
+                            description: >-
+                              Defines a set of  {@link  InsightTargetState } 
+                              objects, which are combined with an OR operator.
+                          description: >-
+                            The disjunction clauses, which are evaluated and
+                            combined with an AND operator.
+                      required:
+                        - conjuncts
+                      description: >-
+                        Defines an expression about StreamSight insights in CNF
+                        (Conjunctive Normal Form).
+
+
+                        The `conjuncts` property contains a list of
+                        disjunctions, which are evaluated and combined with an
+                        AND operator.
+
+
+                        Kubernetes CRDs do not seem to support recursive
+                        definitions (see
+                        https://github.com/kubernetes/kubernetes/issues/91669),
+                        which means that we cannot support arbitrary nesting of
+                        AND and OR expression objects. Thus, we have decided to
+                        require insight expression to be defined in a normalized
+                        form, i.e., CNF.
+                  required:
+                    - streams
+                    - insights
+                    - targetState
+                  description: >-
+                    Represents the configuration options of the
+                    CustomStreamSight SLO, which allows specifying custom
+                    StreamSight queries.
+                staticElasticityStrategyConfig:
+                  type: object
+                  description: Convenience type for a map object with string keys.
+            apiVersion:
+              type: string
+              description: >-
+                APIVersion defines the versioned schema of this representation
+                of an object. Servers should convert recognized schemas to the
+                latest internal value, and may reject unrecognized values. More
+                info:
+                https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
+            kind:
+              type: string
+              description: >-
+                Kind is a string value representing the REST resource this
+                object represents. Servers may infer this from the endpoint the
+                client submits requests to. Cannot be updated. In CamelCase.
+                More info:
+                https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
