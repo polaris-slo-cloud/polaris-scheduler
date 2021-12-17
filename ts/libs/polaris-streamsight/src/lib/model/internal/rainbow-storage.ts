@@ -7,28 +7,52 @@
 export interface GetMetricsRequest {
 
     /**
-     * The IDs of the metrics to get or the IDs of the entities for which to get all metrics.
+     * The IDs of the metrics to get.
      */
-    metricId: string[];
+    metricID: string[];
+
+    /**
+     * The IDs of the entities for which to get the metrics.
+     *
+     * If this is not specified, the metrics are retrieved for all entities.
+     */
+    entityID?: string[];
+
+    /**
+     * The pod names for which to get the metrics. Use `%` as a wildcard.
+     */
+    podName?: string[];
+
+    /**
+     * The namespace of the pods, for which to get the metrics.
+     */
+    podNamespace?: string[];
+
+    /**
+     * Allows limiting the results to specific containers.
+     */
+    containerName?: string[];
+
+    /**
+     * Limit the results to metrics from specific nodes.
+     *
+     * An empty array is equivalent to all nodes.
+     */
+    nodes?: string[];
 
     /**
      * Unix timestamp designating the starting point of the metrics.
      *
-     * Optional, if `latest` is `true`.
+     * If not set, the latest metrics are retrieved.
      */
     from?: number;
 
     /**
      * Unix timestamp designating the end point of the metrics.
      *
-     * Optional, if `latest` is `true`.
+     * If not set, the latest metrics are retrieved.
      */
     to?: number;
-
-    /**
-     * Only get the latest metric values.
-     */
-    latest: boolean;
 
 }
 
@@ -43,6 +67,13 @@ export interface GetAnalyticsRequest {
      * The keys, for which to retrieve the analytics data.
      */
     key: string[];
+
+    /**
+     * (optional) Limits the results to metrics from specific nodes.
+     *
+     * An empty array is equivalent to all nodes.
+     */
+    nodes?: string[];
 
 }
 
