@@ -3,8 +3,7 @@ import { PolarisQueryResult, QueryError, TimeSeries, TimeSeriesQuery, TimeSeries
 import { Observable, from as observableFrom } from 'rxjs';
 import { IRestResponse, RestClient } from 'typed-rest-client/RestClient';
 import { PolarisStreamSightConfig, getRainbowStorageBaseUrl } from '../../config';
-import { AnalyticsMetric, GetAnalyticsRequest, GetAnalyticsResponse } from '../../model';
-import { RestRequestError } from '../public';
+import { AnalyticsMetric, GetAnalyticsRequest, GetAnalyticsResponse, RestRequestError } from '../../model';
 
 const ANALYTICS_QUERY_PATH = '/analytics/get';
 
@@ -30,7 +29,7 @@ export class RainbowStorageNativeQuery implements TimeSeriesQuery<any> {
         private metricName: string,
         private query: GetAnalyticsRequest,
     ) {
-        this.client = new RestClient('polaris-raw-metrics-query');
+        this.client = new RestClient('polaris-query-backend');
         this.baseUrl = getRainbowStorageBaseUrl(config);
     }
 

@@ -175,6 +175,10 @@
                         "jestConfig": "libs/polaris-streamsight/jest.config.js",
                         "passWithNoTests": true
                     }
+                },
+                "gen-crds": {
+                    "executor": "@polaris-sloc/polaris-nx:generate-crds",
+                    "options": {}
                 }
             },
             "tags": [

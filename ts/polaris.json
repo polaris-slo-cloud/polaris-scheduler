@@ -17,6 +17,16 @@
         "image-throughput-slo-controller": {
             "projectType": "slo-controller",
             "tsEntryPoint": "apps/image-throughput-slo-controller/src/main.ts"
+        },
+        "polaris-streamsight": {
+            "projectType": "library",
+            "tsEntryPoint": "libs/polaris-streamsight/src/index.ts",
+            "importPath": "@rainbow-h2020/polaris-streamsight",
+            "crds": {
+                "tsConfig": "tsconfig.base.json",
+                "outDir": "libs/polaris-streamsight/crds",
+                "polarisTypes": []
+            }
         }
     }
 }
