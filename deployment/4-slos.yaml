@@ -135,12 +135,35 @@ spec:
                       type: object
                       additionalProperties:
                         type: string
-                      description: Convenience type for a map object with string keys.
+                      description: >-
+                        Defines the StreamSight streams that should be available
+                        for the insights.
+
+
+                        Each key in this object defines the name of the stream
+                        and its value is the definition of the stream.
+
+
+                        Within each stream definition, there are two
+                        placeholders that will be filled in by the SLO
+                        controller:
+
+                        - `${namespace}`: The namespace, where the SloMapping is
+                        deployed.
+
+                        - `${podName}`: A wildcard expression with the prefix of
+                        the pod names.
                     insights:
                       type: object
                       additionalProperties:
                         type: string
-                      description: Convenience type for a map object with string keys.
+                      description: >-
+                        Defines the insights that can be used in the
+                        `targetState` below.
+
+
+                        Each key in this object defines the name of an insight
+                        and its value specifies the query for it.
                     targetState:
                       type: object
                       properties:

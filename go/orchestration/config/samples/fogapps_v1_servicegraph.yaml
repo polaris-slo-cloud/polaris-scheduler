@@ -80,21 +80,21 @@ spec:
           # If no CPU architectures are specified, this means that all architectures are supported.
           architectures:
             - amd64
-      slos:
-        # SLOs for this node.
-        - name: cpu-usage
-          sloType:
-            apiVersion: slo.polaris-slo-cloud.github.io/v1
-            kind: CPUUsageSloMapping
-          elasticityStrategy:
-            apiVersion: elasticity.polaris-slo-cloud.github.io/v1
-            kind: HorizontalElasticityStrategy
-          sloConfig:
-            targetAvgCPUUtilizationPercentage: 70
-          # Optional configuration of the stabilization window, within which the elasticity strategy will not be executed twice.
-          stabilizationWindow:
-            scaleUpSeconds: 40
-            scaleDownSeconds: 60
+      # slos:
+      #   # SLOs for this node.
+      #   - name: cpu-usage
+      #     sloType:
+      #       apiVersion: slo.polaris-slo-cloud.github.io/v1
+      #       kind: CPUUsageSloMapping
+      #     elasticityStrategy:
+      #       apiVersion: elasticity.polaris-slo-cloud.github.io/v1
+      #       kind: HorizontalElasticityStrategy
+      #     sloConfig:
+      #       targetAvgCPUUtilizationPercentage: 70
+      #     # Optional configuration of the stabilization window, within which the elasticity strategy will not be executed twice.
+      #     stabilizationWindow:
+      #       scaleUpSeconds: 40
+      #       scaleDownSeconds: 60
 
     # Taxi IoT Node
     - name: taxi-iot
@@ -156,16 +156,55 @@ spec:
             - amd64
             - arm64
       slos:
-        - name: image-throughput
+        - name: avg-cpu
           sloType:
             apiVersion: slo.k8s.rainbow-h2020.eu/v1
-            kind: ImageThroughputSloMapping
+            kind: CustomStreamSightSloMapping
           elasticityStrategy:
             apiVersion: elasticity.polaris-slo-cloud.github.io/v1
             kind: HorizontalElasticityStrategy
           sloConfig:
-            targetImagesPerMinute: 600
-            minCpuUsage: 80
+            # Defines the StreamSight streams that should be available for the insights.
+            #
+            # Each key in this object defines the name of the stream and its value is the definition of the stream.
+            #
+            # Within each stream definition, there are two placeholders that will be filled in by the SLO controller:
+            # - `${namespace}`: The namespace, where the SloMapping is deployed.
+            # - `${podName}`: A wildcard expression with the prefix of the pod names.
+            streams:
+              pod_cpu_stream: 'stream from storageLayer(periodicity=1000, metricID="cpu", entityType="POD", namespace="${namespace}", name="${podName}" );'
+              second_stream: 'stream from storageLayer(periodicity=1000, metricID="cpu", entityType="POD", namespace="${namespace}", name="${podName}" );'
+
+            # Defines the insights that can be used in the `targetState` below.
+            # Each key in this object defines the name of an insight and its value specifies the query for it.
+            insights:
+              avg_pod_cpu: 'COMPUTE AVG("cpu" FROM (pod_cpu_stream), 10s) EVERY 10s;'
+              second_insight: 'COMPUTE AVG("cpu" FROM (second_stream), 10s) EVERY 10s;'
+
+            # Defines the target state for the `insights`, i.e., the state in which the SLO should keep them, in Conjunctive Normal Form (CNF).
+            targetState:
+              # The disjunction clauses, which are evaluated and combined with an AND operator.
+              conjuncts:
+                - disjuncts: # The states, which should be evaluated and combined with an OR operator.
+                    - insight: avg_pod_cpu # The insight, for which the state is defined.
+                      # The desired target value for the insight.
+                      # By default we assume that a lower metric value is "better", e.g.,
+                      # for network latency a lower value is considered better than a higher value.
+                      # In this case, the following scaling approach is used:
+                      # - Above `targetValue + tolerance` we scale up/out.
+                      # - Below `targetValue - tolerance` we scale down/in
+                      # This behavior can be inverted by setting the `higherIsBetter` property to `true`.
+                      targetValue: 60
+                      # A tolerance around the target value.
+                      tolerance: 10
+                      # (optional) If `true`, then a higher metric value is considered "better" and, thus,
+                      # the above/below rules of `targetValue` and `tolerance` are inverted.
+                      higherIsBetter: false
+
+            # Specifies the tolerance around 100%, within which no scaling will be performed.
+            # For example, if tolerance is `10`, no scaling will be performed as long as the SloCompliance is between `90` and `110`.
+            elasticityStrategyTolerance: 10
+
           # Optional configuration of the stabilization window, within which the elasticity strategy will not be executed twice.
           stabilizationWindow:
             scaleUpSeconds: 40

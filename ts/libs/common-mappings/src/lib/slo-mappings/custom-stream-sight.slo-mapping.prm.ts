@@ -1,5 +1,4 @@
 import {
-    IndexByKey,
     ObjectKind,
     PolarisType,
     SloCompliance,
@@ -26,14 +25,14 @@ export interface CustomStreamSightSloConfig {
      * - `${namespace}`: The namespace, where the SloMapping is deployed.
      * - `${podName}`: A wildcard expression with the prefix of the pod names.
      */
-    streams: IndexByKey<string>;
+    streams: Record<string, string>;
 
     /**
-     * Defines the insights that can be used in the `conditions` below.
+     * Defines the insights that can be used in the `targetState` below.
      *
      * Each key in this object defines the name of an insight and its value specifies the query for it.
      */
-    insights: IndexByKey<string>
+    insights: Record<string, string>;
 
     /**
      * Defines the target state for the `insights`, i.e., the state in which the SLO should keep them,
