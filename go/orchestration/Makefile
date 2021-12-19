@@ -124,7 +124,7 @@ undeploy: ## Undeploy controller from the K8s cluster specified in ~/.kube/confi
 .PHONY: deployment-yaml
 deployment-yaml: manifests kustomize ## Write the CRDs and orchestrator deployment YAML to a single file.
 	$(KUSTOMIZE) build config/crd > $(OUTPUT_DEPLOYMENT_YAML_FILE)
-	$(shell echo -e "\n---\n") >> $(OUTPUT_DEPLOYMENT_YAML_FILE)
+	echo -e "\n---\n" >> $(OUTPUT_DEPLOYMENT_YAML_FILE)
 	cd config/manager && $(KUSTOMIZE) edit set image controller=${IMG}
 	$(KUSTOMIZE) build config/default >> $(OUTPUT_DEPLOYMENT_YAML_FILE)
 
