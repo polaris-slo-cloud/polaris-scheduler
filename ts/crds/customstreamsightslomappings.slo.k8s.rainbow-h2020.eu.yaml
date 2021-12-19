@@ -221,7 +221,6 @@ spec:
                                     - insight
                                     - targetValue
                                     - tolerance
-                                  additionalProperties: false
                                   description: >-
                                     Defines the desired target state of a
                                     StreamSight insight's value.
@@ -230,9 +229,8 @@ spec:
                                   combined with an OR operator.
                             required:
                               - disjuncts
-                            additionalProperties: false
                             description: >-
-                              Defines a set of  {@link  InsightTargetState } 
+                              Defines a set of  {@link  InsightTargetState }
                               objects, which are combined with an OR operator.
                           description: >-
                             The disjunction clauses, which are evaluated and
