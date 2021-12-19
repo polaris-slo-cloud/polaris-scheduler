@@ -63,6 +63,10 @@ type serviceGraphChildObjects struct {
 //+kubebuilder:rbac:groups=fogapps.k8s.rainbow-h2020.eu,resources=servicegraphs/status,verbs=get;update;patch
 //+kubebuilder:rbac:groups=fogapps.k8s.rainbow-h2020.eu,resources=servicegraphs/finalizers,verbs=update
 
+//+kubebuilder:rbac:groups=cluster.k8s.rainbow-h2020.eu,resources=networklinks,verbs=get;list;watch;create;update;patch;delete
+//+kubebuilder:rbac:groups=cluster.k8s.rainbow-h2020.eu,resources=networklinks/status,verbs=get;update;patch
+//+kubebuilder:rbac:groups=cluster.k8s.rainbow-h2020.eu,resources=networklinks/finalizers,verbs=update
+
 // Permissions on Deployments and StatefulSets:
 //+kubebuilder:rbac:groups=apps,resources=deployments;statefulsets,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=apps,resources=deployments/status;statefulsets/status,verbs=get

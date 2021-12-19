@@ -7481,6 +7481,32 @@ rules:
   verbs:
   - get
 - apiGroups:
+  - cluster.k8s.rainbow-h2020.eu
+  resources:
+  - networklinks
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - cluster.k8s.rainbow-h2020.eu
+  resources:
+  - networklinks/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - cluster.k8s.rainbow-h2020.eu
+  resources:
+  - networklinks/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
   - ""
   resources:
   - services
