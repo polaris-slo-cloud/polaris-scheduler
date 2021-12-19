@@ -41,6 +41,16 @@ export interface CustomStreamSightSloConfig {
      */
     targetState: CNFInsightExpression;
 
+    /**
+     * (optional) Specifies the tolerance around 100%, within which no scaling will be performed.
+     *
+     * For example, if tolerance is `10`, no scaling will be performed as long as the SloCompliance
+     * is between `90` and `110`.
+     *
+     * @default 10
+     */
+    elasticityStrategyTolerance?: number;
+
 }
 
 /**

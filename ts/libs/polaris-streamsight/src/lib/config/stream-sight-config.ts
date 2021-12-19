@@ -1,6 +1,6 @@
 
-const RAINBOW_STORAGE_DEFAULT_PORT = 50000;
 const STREAM_SIGHT_DEFAULT_PORT = 5000;
+const RAINBOW_STORAGE_DEFAULT_PORT = 50000;
 
 /**
  * Configuration for the Polaris StreamSight query backend.
@@ -34,7 +34,7 @@ export interface PolarisStreamSightConfig {
     /**
      * The port, where the StreamSight analytics service is listening.
      */
-    streamSightPort?: string;
+    streamSightPort?: number;
 
     /**
      * Number of milliseconds before a request goes into timeout.

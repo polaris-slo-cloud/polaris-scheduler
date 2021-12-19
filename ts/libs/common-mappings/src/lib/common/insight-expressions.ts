@@ -7,21 +7,31 @@ export interface InsightTargetState {
     /** The insight, for which the state is defined. */
     insight: string;
 
-    /** The desired target value for the insight. */
+    /**
+     * The desired target value for the insight.
+     *
+     * By default we assume that a lower metric value is "better", e.g.,
+     * for network latency a lower value is considered better than a higher value.
+     * In this case, the following scaling approach is used:
+     * - Above `targetValue + tolerance` we scale up/out.
+     * - Below `targetValue - tolerance` we scale down/in
+     *
+     * This behavior can be inverted by setting the `higherIsBetter` property to `true`.
+     *
+     * @minimum 1
+     */
     targetValue: number;
 
     /**
      * A tolerance around the target value.
-     *
-     * Above `targetValue + tolerance` we scale up/out.
-     * Below `targetValue - tolerance` we scale down/in
      */
     tolerance: number;
 
     /**
-     * (optional) If `true`, then the above/below rules if `targetValue` and `tolerance` are inverted.
+     * (optional) If `true`, then a higher metric value is considered "better" and, thus,
+     * the above/below rules of `targetValue` and `tolerance` are inverted.
      */
-    invertScalingDirection?: boolean;
+    higherIsBetter?: boolean;
 
 }
 
