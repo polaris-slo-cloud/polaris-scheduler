@@ -33,6 +33,8 @@ import (
 
 	fogappsv1 "k8s.rainbow-h2020.eu/rainbow/orchestration/apis/fogapps/v1"
 	fogappscontrollers "k8s.rainbow-h2020.eu/rainbow/orchestration/controllers/fogapps"
+	"k8s.rainbow-h2020.eu/rainbow/orchestration/pkg/services/configmanager"
+	"k8s.rainbow-h2020.eu/rainbow/orchestration/pkg/services/regionmanager"
 	//+kubebuilder:scaffold:imports
 )
 
@@ -72,6 +74,10 @@ var _ = BeforeSuite(func() {
 	k8sClient, err = client.New(cfg, client.Options{Scheme: scheme.Scheme})
 	Expect(err).NotTo(HaveOccurred())
 	Expect(k8sClient).NotTo(BeNil())
+
+	// Initialize the ConfigManager and the RegionManager.
+	configmanager.InitConfigManager(ctrl.GetConfigOrDie(), scheme.Scheme)
+	regionmanager.InitRegionManager()
 
 	// Start the controllers.
 	k8sManager, err := ctrl.NewManager(cfg, ctrl.Options{
