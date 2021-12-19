@@ -11,11 +11,16 @@ rm -rf "$OUTPUT"
 # YAML files to be combined into the output file.
 INPUT_YAML_FILES=(
     # common-mappings
-    crds/imagethroughputslomappings.slo.k8s.rainbow-h2020.eu.yaml
+    "crds/customstreamsightslomappings.slo.k8s.rainbow-h2020.eu.yaml"
+    # "crds/imagethroughputslomappings.slo.k8s.rainbow-h2020.eu.yaml"
+
+    # custom-stream-sight-slo-controller
+    "apps/custom-stream-sight-slo-controller/manifests/kubernetes/1-rbac.yaml"
+    "apps/custom-stream-sight-slo-controller/manifests/kubernetes/2-slo-controller.yaml"
 
     # image-throughput-slo-controller
-    "apps/image-throughput-slo-controller/manifests/kubernetes/1-rbac.yaml"
-    "apps/image-throughput-slo-controller/manifests/kubernetes/2-slo-controller.yaml"
+    # "apps/image-throughput-slo-controller/manifests/kubernetes/1-rbac.yaml"
+    # "apps/image-throughput-slo-controller/manifests/kubernetes/2-slo-controller.yaml"
 )
 
 for inputPath in ${INPUT_YAML_FILES[@]}; do
