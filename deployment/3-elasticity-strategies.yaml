@@ -1,615 +1,469 @@
-
----
-apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
+apiVersion: apiextensions.k8s.io/v1
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.4.1
-  creationTimestamp: null
+    polaris-slo-cloud.github.io/schema-gen-version: 0.2.0-beta.19
   name: horizontalelasticitystrategies.elasticity.polaris-slo-cloud.github.io
 spec:
   group: elasticity.polaris-slo-cloud.github.io
   names:
     kind: HorizontalElasticityStrategy
     listKind: HorizontalElasticityStrategyList
-    plural: horizontalelasticitystrategies
     singular: horizontalelasticitystrategy
+    plural: horizontalelasticitystrategies
   scope: Namespaced
   versions:
-  - name: v1
-    schema:
-      openAPIV3Schema:
-        description: HorizontalElasticityStrategy is the Schema for the horizontalelasticitystrategies
-          API
-        properties:
-          apiVersion:
-            description: 'APIVersion defines the versioned schema of this representation
-              of an object. Servers should convert recognized schemas to the latest
-              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
-            type: string
-          kind:
-            description: 'Kind is a string value representing the REST resource this
-              object represents. Servers may infer this from the endpoint the client
-              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
-            type: string
-          metadata:
-            type: object
-          spec:
-            description: HorizontalElasticityStrategySpec defines the desired state
-              of HorizontalElasticityStrategy
-            properties:
-              sloOutputParams:
-                description: Specifies how much the current state of the system complies
-                  with the SLO.
-                properties:
-                  currSloCompliancePercentage:
-                    description: "Specifies how much the current state of the system
-                      complies with the SLO. \n This value must be specified as an
-                      integer, e.g., `50` meaning 50%, `100` meaning 100%, `200` meaning
-                      200%. \n If this value is `100`, the SLO is met exactly and
-                      no scaling action is required. \n If this value is greater than
-                      `100`, the SLO is violated and scaling out/up is required. \n
-                      If this value is less than `100`, the system is performing better
-                      than the SLO demands and scaling in/down will be performed."
-                    format: int32
-                    type: integer
-                  tolerance:
-                    description: "Specifies the tolerance around 100%, within which
-                      no scaling will be performed. \n For example, if tolerance is
-                      `10`, no scaling will be performed as long as `currSloCompliancePercentage`
-                      is between `90` and `110`."
-                    format: int32
-                    type: integer
-                type: object
-              stabilizationWindow:
-                description: Configures the duration of the period after the last
-                  elasticity strategy execution, during which the strategy will not
-                  be executed again (to avoid unnecessary scaling).
-                properties:
-                  scaleDownSeconds:
-                    default: 300
-                    description: The number of seconds after the previous scaling
-                      operation to wait before an elasticity action that decreases
-                      resources (e.g., scale down/in) or an equivalent configuration
-                      change can be issued due to an SLO violation.
-                    format: int32
-                    minimum: 0
-                    type: integer
-                  scaleUpSeconds:
-                    default: 60
-                    description: The number of seconds after the previous scaling
-                      operation to wait before an elasticity action that increases
-                      resources (e.g., scale up/out) or an equivalent configuration
-                      change can be issued due to an SLO violation.
-                    format: int32
-                    minimum: 0
-                    type: integer
-                type: object
-              staticConfig:
-                description: Optional static configuration parameters for a HorizontalElasticityStrategy
-                properties:
-                  maxReplicas:
-                    description: "The maximum number of replicas that the target workload
-                      may have. \n Default: unlimited"
-                    format: int32
-                    minimum: 1
-                    type: integer
-                  minReplicas:
-                    default: 1
-                    description: "The minium number of replicas that the target workload
-                      must have. \n Default: 1"
-                    format: int32
-                    minimum: 0
-                    type: integer
-                type: object
-              targetRef:
-                description: Specifies the target on which to execute the elasticity
-                  strategy.
-                properties:
-                  apiVersion:
-                    description: API version of the referent
-                    type: string
-                  kind:
-                    description: 'Kind of the referent; More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds"'
-                    type: string
-                  name:
-                    description: 'Name of the referent; More info: http://kubernetes.io/docs/user-guide/identifiers#names'
-                    type: string
-                required:
-                - kind
-                - name
-                type: object
-            required:
-            - sloOutputParams
-            - targetRef
-            type: object
-          status:
-            description: HorizontalElasticityStrategyStatus defines the observed state
-              of HorizontalElasticityStrategy
-            type: object
-        type: object
-    served: true
-    storage: true
-status:
-  acceptedNames:
-    kind: ""
-    plural: ""
-  conditions: []
-  storedVersions: []
+    - name: v1
+      served: true
+      storage: true
+      schema:
+        openAPIV3Schema:
+          type: object
+          required:
+            - metadata
+            - spec
+            - apiVersion
+            - kind
+          description: Denotes an elasticity strategy that employs horizontal scaling.
+          properties:
+            metadata:
+              type: object
+            spec:
+              type: object
+              required:
+                - targetRef
+                - sloOutputParams
+              description: >-
+                A generic class that is used to set up specs for an elasticity
+                strategy.
+
+
+                A concrete `ElasticityStrategy` may use
+                `ElasticityStrategySpec<T>` directly as the type for its spec,
+                or a class derived from this one, if, e.g., the transformation
+                needs to be customized.
+
+
+                Parameters that are defined by the output of the SLO are stored
+                in `sloOutputParams`. The type of this property determines if an
+                elasticity strategy is compatible with a certain SLO.
+
+
+                `staticConfig` should be used for other configuration data,
+                which is not changed by the SLO.
+              properties:
+                targetRef:
+                  type: object
+                  required:
+                    - kind
+                    - name
+                    - apiVersion
+                  description: Identifies that target workload for an SLO mapping.
+                  properties:
+                    kind:
+                      type: string
+                      description: >-
+                        Kind is a string value representing the REST resource
+                        this object represents. Servers may infer this from the
+                        endpoint the client submits requests to. Cannot be
+                        updated. In CamelCase. More info:
+                        https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+                    name:
+                      type: string
+                      description: The name of the instance.
+                    apiVersion:
+                      type: string
+                      description: >-
+                        APIVersion defines the versioned schema of this
+                        representation of an object. Servers should convert
+                        recognized schemas to the latest internal value, and may
+                        reject unrecognized values. More info:
+                        https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
+                sloOutputParams:
+                  type: object
+                  properties:
+                    currSloCompliancePercentage:
+                      type: integer
+                      description: >-
+                        Specifies how much the current state of the system
+                        complies with the SLO.
+
+
+                        This value must be specified as an integer, e.g., `50`
+                        meaning 50%, `100` meaning 100%, `200` meaning 200%.
+
+
+                        If this value is `100`, the SLO is met exactly and no
+                        scaling action is required.
+
+
+                        If this value is greater than `100`, the SLO is violated
+                        and scaling out/up is required.
+
+
+                        If this value is less than `100`, the system is
+                        performing better than the SLO demands and scaling
+                        in/down will be performed.
+                      format: int64
+                    tolerance:
+                      type: integer
+                      description: >-
+                        Specifies the tolerance around 100%, within which no
+                        scaling will be performed.
+
+
+                        For example, if tolerance is `10`, no scaling will be
+                        performed as long as `currSloCompliancePercentage` is
+                        between `90` and `110`.
+                      format: int64
+                  required:
+                    - currSloCompliancePercentage
+                  description: >-
+                    Defines a generic mechanism for specifying how much an SLO
+                    is being violated or outperformed.
+                stabilizationWindow:
+                  type: object
+                  description: >-
+                    StabilizationWindow allows configuring the period of time
+                    that an elasticity strategy controller will wait after
+                    applying the strategy once, before applying it again (if the
+                    SLO is still violated), to avoid unnecessary scaling.
+
+
+                    For example, suppose that ScaleUpSeconds = 180 and a
+                    horizontal elasticity strategy scales out at time `t` due to
+                    an SLO violation. At time `t + 20 seconds` the SLO's
+                    evaluation still results in a violation, but the elasticity
+                    strategy does not scale again, because the stabilization
+                    window for scaling up/out has not yet passed. If the SLO
+                    evaluation at `t + 200 seconds` still results in a
+                    violation, the controller will scale again.
+                  properties:
+                    scaleUpSeconds:
+                      type: integer
+                      description: >-
+                        The number of seconds after the previous scaling
+                        operation to wait before an elasticity action that
+                        increases resources (e.g., scale up/out) or an
+                        equivalent configuration change can be issued due to an
+                        SLO violation.
+                      minimum: 0
+                      default: 60
+                      format: int64
+                    scaleDownSeconds:
+                      type: integer
+                      description: >-
+                        The number of seconds after the previous scaling
+                        operation to wait before an elasticity action that
+                        decreases resources (e.g., scale down/in) or an
+                        equivalent configuration change can be issued due to an
+                        SLO violation.
+                      minimum: 0
+                      default: 300
+                      format: int64
+                staticConfig:
+                  type: object
+                  properties:
+                    minReplicas:
+                      type: integer
+                      description: >-
+                        The minimum number of replicas that the target workload
+                        must have.
+                      default: 1
+                      format: int64
+                    maxReplicas:
+                      type: integer
+                      description: >-
+                        The maximum number of replicas that the target workload
+                        may have.
+
+
+                        Default: unlimited
+                      format: int64
+                  description: >-
+                    Commonly used, optional, static configuration for an
+                    elasticity strategy that employs horizontal scaling.
+            apiVersion:
+              type: string
+              description: >-
+                APIVersion defines the versioned schema of this representation
+                of an object. Servers should convert recognized schemas to the
+                latest internal value, and may reject unrecognized values. More
+                info:
+                https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
+            kind:
+              type: string
+              description: >-
+                Kind is a string value representing the REST resource this
+                object represents. Servers may infer this from the endpoint the
+                client submits requests to. Cannot be updated. In CamelCase.
+                More info:
+                https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
 
 ---
 
-
----
-apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
+apiVersion: apiextensions.k8s.io/v1
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.4.1
-  creationTimestamp: null
+    polaris-slo-cloud.github.io/schema-gen-version: 0.2.0-beta.19
   name: verticalelasticitystrategies.elasticity.polaris-slo-cloud.github.io
 spec:
   group: elasticity.polaris-slo-cloud.github.io
   names:
     kind: VerticalElasticityStrategy
     listKind: VerticalElasticityStrategyList
-    plural: verticalelasticitystrategies
     singular: verticalelasticitystrategy
+    plural: verticalelasticitystrategies
   scope: Namespaced
   versions:
-  - name: v1
-    schema:
-      openAPIV3Schema:
-        description: VerticalElasticityStrategy is the Schema for the verticalelasticitystrategies
-          API
-        properties:
-          apiVersion:
-            description: 'APIVersion defines the versioned schema of this representation
-              of an object. Servers should convert recognized schemas to the latest
-              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
-            type: string
-          kind:
-            description: 'Kind is a string value representing the REST resource this
-              object represents. Servers may infer this from the endpoint the client
-              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
-            type: string
-          metadata:
-            type: object
-          spec:
-            description: VerticalElasticityStrategySpec defines the desired state
-              of VerticalElasticityStrategy
-            properties:
-              sloOutputParams:
-                description: Specifies how much the current state of the system complies
-                  with the SLO.
-                properties:
-                  currSloCompliancePercentage:
-                    description: "Specifies how much the current state of the system
-                      complies with the SLO. \n This value must be specified as an
-                      integer, e.g., `50` meaning 50%, `100` meaning 100%, `200` meaning
-                      200%. \n If this value is `100`, the SLO is met exactly and
-                      no scaling action is required. \n If this value is greater than
-                      `100`, the SLO is violated and scaling out/up is required. \n
-                      If this value is less than `100`, the system is performing better
-                      than the SLO demands and scaling in/down will be performed."
-                    format: int32
-                    type: integer
-                  tolerance:
-                    description: "Specifies the tolerance around 100%, within which
-                      no scaling will be performed. \n For example, if tolerance is
-                      `10`, no scaling will be performed as long as `currSloCompliancePercentage`
-                      is between `90` and `110`."
-                    format: int32
-                    type: integer
-                type: object
-              stabilizationWindow:
-                description: Configures the duration of the period after the last
-                  elasticity strategy execution, during which the strategy will not
-                  be executed again (to avoid unnecessary scaling).
-                properties:
-                  scaleDownSeconds:
-                    default: 300
-                    description: The number of seconds after the previous scaling
-                      operation to wait before an elasticity action that decreases
-                      resources (e.g., scale down/in) or an equivalent configuration
-                      change can be issued due to an SLO violation.
-                    format: int32
-                    minimum: 0
-                    type: integer
-                  scaleUpSeconds:
-                    default: 60
-                    description: The number of seconds after the previous scaling
-                      operation to wait before an elasticity action that increases
-                      resources (e.g., scale up/out) or an equivalent configuration
-                      change can be issued due to an SLO violation.
-                    format: int32
-                    minimum: 0
-                    type: integer
-                type: object
-              staticConfig:
-                description: Static configuration parameters for a VerticalElasticityStrategy
-                properties:
-                  maxResources:
-                    description: The maximum resources allowed for a single workload
-                      instance.
-                    properties:
-                      memoryMiB:
-                        description: The memory in MiB.
-                        format: int64
-                        minimum: 1
-                        type: integer
-                      milliCpu:
-                        description: The CPU cores in milli CPU (1000 milli CPU =
-                          1 CPU core).
-                        format: int32
-                        minimum: 1
-                        type: integer
-                    required:
-                    - memoryMiB
-                    - milliCpu
-                    type: object
-                  minResources:
-                    description: The minimum resources allowed for a single workload
-                      instance.
-                    properties:
-                      memoryMiB:
-                        description: The memory in MiB.
-                        format: int64
-                        minimum: 1
-                        type: integer
-                      milliCpu:
-                        description: The CPU cores in milli CPU (1000 milli CPU =
-                          1 CPU core).
-                        format: int32
-                        minimum: 1
-                        type: integer
-                    required:
-                    - memoryMiB
-                    - milliCpu
-                    type: object
-                  scaleDownPercent:
-                    default: 10
-                    description: "The percentage by which to decrease the existing
-                      resources in a single scale down step. \n E.g., `scaleDownPercent:
-                      10` means that the existing `memoryMib` and `milliCpu` values
-                      will be decreased by 10 percent in a single scale down step."
-                    format: int32
-                    minimum: 1
-                    type: integer
-                  scaleUpPercent:
-                    default: 10
-                    description: "The percentage by which to increase the existing
-                      resources in a single scale up step. \n E.g., `scaleUpPercent:
-                      10` means that the existing `memoryMib` and `milliCpu` values
-                      will be increased by 10 percent in a single scale up step."
-                    format: int32
-                    minimum: 1
-                    type: integer
-                required:
-                - maxResources
-                - minResources
-                type: object
-              targetRef:
-                description: Specifies the target on which to execute the elasticity
-                  strategy.
-                properties:
-                  apiVersion:
-                    description: API version of the referent
-                    type: string
-                  kind:
-                    description: 'Kind of the referent; More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds"'
-                    type: string
-                  name:
-                    description: 'Name of the referent; More info: http://kubernetes.io/docs/user-guide/identifiers#names'
-                    type: string
-                required:
-                - kind
-                - name
-                type: object
-            required:
-            - sloOutputParams
-            - staticConfig
-            - targetRef
-            type: object
-          status:
-            description: VerticalElasticityStrategyStatus defines the observed state
-              of VerticalElasticityStrategy
-            type: object
-        type: object
-    served: true
-    storage: true
-status:
-  acceptedNames:
-    kind: ""
-    plural: ""
-  conditions: []
-  storedVersions: []
-
----
+    - name: v1
+      served: true
+      storage: true
+      schema:
+        openAPIV3Schema:
+          type: object
+          required:
+            - metadata
+            - spec
+            - apiVersion
+            - kind
+          description: Denotes an elasticity strategy that employs vertical scaling.
+          properties:
+            metadata:
+              type: object
+            spec:
+              type: object
+              required:
+                - targetRef
+                - sloOutputParams
+              description: >-
+                A generic class that is used to set up specs for an elasticity
+                strategy.
 
 
----
-apiVersion: apiextensions.k8s.io/v1
-kind: CustomResourceDefinition
-metadata:
-  annotations:
-    controller-gen.kubebuilder.io/version: v0.4.1
-  creationTimestamp: null
-  name: costefficiencyslomappings.slo.polaris-slo-cloud.github.io
-spec:
-  group: slo.polaris-slo-cloud.github.io
-  names:
-    kind: CostEfficiencySloMapping
-    listKind: CostEfficiencySloMappingList
-    plural: costefficiencyslomappings
-    singular: costefficiencyslomapping
-  scope: Namespaced
-  versions:
-  - name: v1
-    schema:
-      openAPIV3Schema:
-        description: CostEfficiencySloMapping is the Schema for the costefficiencyslomappings
-          API
-        properties:
-          apiVersion:
-            description: 'APIVersion defines the versioned schema of this representation
-              of an object. Servers should convert recognized schemas to the latest
-              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
-            type: string
-          kind:
-            description: 'Kind is a string value representing the REST resource this
-              object represents. Servers may infer this from the endpoint the client
-              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
-            type: string
-          metadata:
-            type: object
-          spec:
-            description: CostEfficiencySloMappingSpec defines the desired state of
-              CostEfficiencySloMapping
-            properties:
-              elasticityStrategy:
-                description: Specifies the type of ElasticityStrategy to use for this
-                  SLO mapping.
-                properties:
-                  apiVersion:
-                    description: The API group and version of the ElasticityStrategy.
-                    type: string
-                  kind:
-                    description: The kind of ElasticityStrategy.
-                    type: string
-                required:
-                - apiVersion
-                - kind
-                type: object
-              sloConfig:
-                description: CostEfficiencySloConfig contains the configuration for
-                  a CostEfficiencySloMappingSpec.
-                properties:
-                  minRequestsPercentile;omitempty:
-                    description: The minimum percentile of requests that should be
-                      handled within the time threshold.
-                    format: int32
-                    type: integer
-                  responseTimeThresholdMs:
-                    description: The number of milliseconds, within which the requests
-                      should be handled.
-                    format: int32
-                    minimum: 0
-                    type: integer
-                  targetCostEfficiency:
-                    description: The desired cost efficiency.
-                    format: int32
-                    minimum: 0
-                    type: integer
-                required:
-                - responseTimeThresholdMs
-                - targetCostEfficiency
-                type: object
-              stabilizationWindow:
-                description: Configures the duration of the period after the last
-                  elasticity strategy execution, during which the strategy will not
-                  be executed again (to avoid unnecessary scaling).
-                properties:
-                  scaleDownSeconds:
-                    default: 300
-                    description: The number of seconds after the previous scaling
-                      operation to wait before an elasticity action that decreases
-                      resources (e.g., scale down/in) or an equivalent configuration
-                      change can be issued due to an SLO violation.
-                    format: int32
-                    minimum: 0
-                    type: integer
-                  scaleUpSeconds:
-                    default: 60
-                    description: The number of seconds after the previous scaling
-                      operation to wait before an elasticity action that increases
-                      resources (e.g., scale up/out) or an equivalent configuration
-                      change can be issued due to an SLO violation.
-                    format: int32
-                    minimum: 0
-                    type: integer
-                type: object
-              staticElasticityStrategyConfig:
-                description: "Any static configuration parameters, which are unknown
-                  to the SLO, but which may be required to configure the chosen kind
-                  of elasticity strategy should be specified here. They will be copied
-                  over into the spec of the elasticity strategy. \n // Note that the
-                  Go deepCopy() method will only be able to create shallow copies
-                  of this field, because it does not know its internal structure."
-                type: object
-                x-kubernetes-preserve-unknown-fields: true
-              targetRef:
-                description: Specifies the target on which to execute the elasticity
-                  strategy.
-                properties:
-                  apiVersion:
-                    description: API version of the referent
-                    type: string
-                  kind:
-                    description: 'Kind of the referent; More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds"'
-                    type: string
-                  name:
-                    description: 'Name of the referent; More info: http://kubernetes.io/docs/user-guide/identifiers#names'
-                    type: string
-                required:
-                - kind
-                - name
-                type: object
-            required:
-            - elasticityStrategy
-            - sloConfig
-            - targetRef
-            type: object
-          status:
-            description: CostEfficiencySloMappingStatus defines the observed state
-              of CostEfficiencySloMapping
-            type: object
-        type: object
-    served: true
-    storage: true
-status:
-  acceptedNames:
-    kind: ""
-    plural: ""
-  conditions: []
-  storedVersions: []
-
----
+                A concrete `ElasticityStrategy` may use
+                `ElasticityStrategySpec<T>` directly as the type for its spec,
+                or a class derived from this one, if, e.g., the transformation
+                needs to be customized.
 
 
----
-apiVersion: apiextensions.k8s.io/v1
-kind: CustomResourceDefinition
-metadata:
-  annotations:
-    controller-gen.kubebuilder.io/version: v0.4.1
-  creationTimestamp: null
-  name: cpuusageslomappings.slo.polaris-slo-cloud.github.io
-spec:
-  group: slo.polaris-slo-cloud.github.io
-  names:
-    kind: CPUUsageSloMapping
-    listKind: CPUUsageSloMappingList
-    plural: cpuusageslomappings
-    singular: cpuusageslomapping
-  scope: Namespaced
-  versions:
-  - name: v1
-    schema:
-      openAPIV3Schema:
-        description: CPUUsageSloMapping is the Schema for the cpuusageslomappings
-          API
-        properties:
-          apiVersion:
-            description: 'APIVersion defines the versioned schema of this representation
-              of an object. Servers should convert recognized schemas to the latest
-              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
-            type: string
-          kind:
-            description: 'Kind is a string value representing the REST resource this
-              object represents. Servers may infer this from the endpoint the client
-              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
-            type: string
-          metadata:
-            type: object
-          spec:
-            description: CPUUsageSloMappingSpec is used to apply a CPUUsageSLO to
-              a target workload.
-            properties:
-              elasticityStrategy:
-                description: Specifies the type of ElasticityStrategy to use for this
-                  SLO mapping.
-                properties:
-                  apiVersion:
-                    description: The API group and version of the ElasticityStrategy.
-                    type: string
-                  kind:
-                    description: The kind of ElasticityStrategy.
-                    type: string
-                required:
-                - apiVersion
-                - kind
-                type: object
-              sloConfig:
-                description: CPUUsageSloConfig contains the configuration for a CPUUsageSloMappingSpec.
-                properties:
-                  targetAvgCPUUtilizationPercentage:
-                    description: The target average CPU utilization percentage of
-                      the workload's pods (percentage of the allocated CPUs).
-                    format: int32
-                    maximum: 100
-                    minimum: 1
-                    type: integer
-                required:
-                - targetAvgCPUUtilizationPercentage
-                type: object
-              stabilizationWindow:
-                description: Configures the duration of the period after the last
-                  elasticity strategy execution, during which the strategy will not
-                  be executed again (to avoid unnecessary scaling).
-                properties:
-                  scaleDownSeconds:
-                    default: 300
-                    description: The number of seconds after the previous scaling
-                      operation to wait before an elasticity action that decreases
-                      resources (e.g., scale down/in) or an equivalent configuration
-                      change can be issued due to an SLO violation.
-                    format: int32
-                    minimum: 0
-                    type: integer
-                  scaleUpSeconds:
-                    default: 60
-                    description: The number of seconds after the previous scaling
-                      operation to wait before an elasticity action that increases
-                      resources (e.g., scale up/out) or an equivalent configuration
-                      change can be issued due to an SLO violation.
-                    format: int32
-                    minimum: 0
-                    type: integer
-                type: object
-              staticElasticityStrategyConfig:
-                description: "Any static configuration parameters, which are unknown
-                  to the SLO, but which may be required to configure the chosen kind
-                  of elasticity strategy should be specified here. They will be copied
-                  over into the spec of the elasticity strategy. \n // Note that the
-                  Go deepCopy() method will only be able to create shallow copies
-                  of this field, because it does not know its internal structure."
-                type: object
-                x-kubernetes-preserve-unknown-fields: true
-              targetRef:
-                description: Specifies the target on which to execute the elasticity
-                  strategy.
-                properties:
-                  apiVersion:
-                    description: API version of the referent
-                    type: string
-                  kind:
-                    description: 'Kind of the referent; More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds"'
-                    type: string
-                  name:
-                    description: 'Name of the referent; More info: http://kubernetes.io/docs/user-guide/identifiers#names'
-                    type: string
-                required:
-                - kind
-                - name
-                type: object
-            required:
-            - elasticityStrategy
-            - sloConfig
-            - targetRef
-            type: object
-          status:
-            description: CPUUsageSloMappingStatus defines the observed state of CPUUsageSloMapping
-            type: object
-        type: object
-    served: true
-    storage: true
-status:
-  acceptedNames:
-    kind: ""
-    plural: ""
-  conditions: []
-  storedVersions: []
+                Parameters that are defined by the output of the SLO are stored
+                in `sloOutputParams`. The type of this property determines if an
+                elasticity strategy is compatible with a certain SLO.
+
+
+                `staticConfig` should be used for other configuration data,
+                which is not changed by the SLO.
+              properties:
+                targetRef:
+                  type: object
+                  required:
+                    - kind
+                    - name
+                    - apiVersion
+                  description: Identifies that target workload for an SLO mapping.
+                  properties:
+                    kind:
+                      type: string
+                      description: >-
+                        Kind is a string value representing the REST resource
+                        this object represents. Servers may infer this from the
+                        endpoint the client submits requests to. Cannot be
+                        updated. In CamelCase. More info:
+                        https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+                    name:
+                      type: string
+                      description: The name of the instance.
+                    apiVersion:
+                      type: string
+                      description: >-
+                        APIVersion defines the versioned schema of this
+                        representation of an object. Servers should convert
+                        recognized schemas to the latest internal value, and may
+                        reject unrecognized values. More info:
+                        https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
+                sloOutputParams:
+                  type: object
+                  properties:
+                    currSloCompliancePercentage:
+                      type: integer
+                      description: >-
+                        Specifies how much the current state of the system
+                        complies with the SLO.
+
+
+                        This value must be specified as an integer, e.g., `50`
+                        meaning 50%, `100` meaning 100%, `200` meaning 200%.
+
+
+                        If this value is `100`, the SLO is met exactly and no
+                        scaling action is required.
+
+
+                        If this value is greater than `100`, the SLO is violated
+                        and scaling out/up is required.
+
+
+                        If this value is less than `100`, the system is
+                        performing better than the SLO demands and scaling
+                        in/down will be performed.
+                      format: int64
+                    tolerance:
+                      type: integer
+                      description: >-
+                        Specifies the tolerance around 100%, within which no
+                        scaling will be performed.
+
+
+                        For example, if tolerance is `10`, no scaling will be
+                        performed as long as `currSloCompliancePercentage` is
+                        between `90` and `110`.
+                      format: int64
+                  required:
+                    - currSloCompliancePercentage
+                  description: >-
+                    Defines a generic mechanism for specifying how much an SLO
+                    is being violated or outperformed.
+                stabilizationWindow:
+                  type: object
+                  description: >-
+                    StabilizationWindow allows configuring the period of time
+                    that an elasticity strategy controller will wait after
+                    applying the strategy once, before applying it again (if the
+                    SLO is still violated), to avoid unnecessary scaling.
+
+
+                    For example, suppose that ScaleUpSeconds = 180 and a
+                    horizontal elasticity strategy scales out at time `t` due to
+                    an SLO violation. At time `t + 20 seconds` the SLO's
+                    evaluation still results in a violation, but the elasticity
+                    strategy does not scale again, because the stabilization
+                    window for scaling up/out has not yet passed. If the SLO
+                    evaluation at `t + 200 seconds` still results in a
+                    violation, the controller will scale again.
+                  properties:
+                    scaleUpSeconds:
+                      type: integer
+                      description: >-
+                        The number of seconds after the previous scaling
+                        operation to wait before an elasticity action that
+                        increases resources (e.g., scale up/out) or an
+                        equivalent configuration change can be issued due to an
+                        SLO violation.
+                      minimum: 0
+                      default: 60
+                      format: int64
+                    scaleDownSeconds:
+                      type: integer
+                      description: >-
+                        The number of seconds after the previous scaling
+                        operation to wait before an elasticity action that
+                        decreases resources (e.g., scale down/in) or an
+                        equivalent configuration change can be issued due to an
+                        SLO violation.
+                      minimum: 0
+                      default: 300
+                      format: int64
+                staticConfig:
+                  type: object
+                  properties:
+                    minResources:
+                      type: object
+                      properties:
+                        memoryMiB:
+                          type: integer
+                          description: |-
+                            The memory in MiB.
+
+                            This must be an integer.
+                          format: int64
+                        milliCpu:
+                          type: integer
+                          description: >-
+                            The CPU cores in milli CPU (1000 milli CPU = 1 CPU
+                            core).
+
+
+                            This must be an integer.
+                          format: int64
+                      required:
+                        - memoryMiB
+                        - milliCpu
+                      description: >-
+                        Describes the resources used/required by a container or
+                        set of containers.
+                    maxResources:
+                      type: object
+                      properties:
+                        memoryMiB:
+                          type: integer
+                          description: |-
+                            The memory in MiB.
+
+                            This must be an integer.
+                          format: int64
+                        milliCpu:
+                          type: integer
+                          description: >-
+                            The CPU cores in milli CPU (1000 milli CPU = 1 CPU
+                            core).
+
+
+                            This must be an integer.
+                          format: int64
+                      required:
+                        - memoryMiB
+                        - milliCpu
+                      description: >-
+                        Describes the resources used/required by a container or
+                        set of containers.
+                    scaleUpPercent:
+                      type: integer
+                      description: >-
+                        The percentage by which to increase the existing
+                        resources in a single scale up step.
+
+
+                        E.g., `scaleUpPercent: 10` means that the existing
+                        `memoryMib` and `milliCpu` values will be increased by
+                        10 percent in a single scale up step.
+                      default: 10
+                      format: int64
+                    scaleDownPercent:
+                      type: integer
+                      description: >-
+                        The percentage by which to decrease the existing
+                        resources in a single scale down step.
+
+
+                        E.g., `scaleDownPercent: 10` means that the existing
+                        `memoryMib` and `milliCpu` values will be decreased by
+                        10 percent in a single scale down step.
+                      default: 10
+                      format: int64
+                  required:
+                    - minResources
+                    - maxResources
+                  description: >-
+                    Commonly used, optional, static configuration for an
+                    elasticity strategy that employs vertical scaling.
+            apiVersion:
+              type: string
+              description: >-
+                APIVersion defines the versioned schema of this representation
+                of an object. Servers should convert recognized schemas to the
+                latest internal value, and may reject unrecognized values. More
+                info:
+                https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
+            kind:
+              type: string
+              description: >-
+                Kind is a string value representing the REST resource this
+                object represents. Servers may infer this from the endpoint the
+                client submits requests to. Cannot be updated. In CamelCase.
+                More info:
+                https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
 
 ---
 
@@ -719,7 +573,7 @@ spec:
           operator: Exists
           effect: NoSchedule
       containers:
-      - image: polarissloc/horizontal-elasticity-strategy:0.2.0
+      - image: polarissloc/horizontal-elasticity-strategy:0.2.1
         name: elasticity-controller
         resources:
           limits:
@@ -735,129 +589,126 @@ spec:
 
 ---
 
-# apiVersion: v1
-# kind: Namespace
-# metadata:
-#   name: polaris
-# ---
-# apiVersion: v1
-# kind: ServiceAccount
-# metadata:
-#   name: vertical-elasticity-strategy-controller
-#   namespace: polaris
-# ---
-# apiVersion: rbac.authorization.k8s.io/v1
-# kind: ClusterRole
-# metadata:
-#   # ClusterRoles are not namespaced
-#   name: vertical-elasticity-strategy-controller
-# rules:
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: polaris
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: vertical-elasticity-strategy-controller
+  namespace: polaris
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  # ClusterRoles are not namespaced
+  name: vertical-elasticity-strategy-controller
+rules:
 
-# # Allow reading all Elasticity Strategy types
-# # - apiGroups:
-# #   - elasticity.polaris-slo-cloud.github.io
-# #   resources:
-# #   - "*"
-# #   verbs:
-# #   - get
-# #   - watch
-# #   - list
-
-# # Allow reading supported Elasticity Strategy types
+# Allow reading all Elasticity Strategy types
 # - apiGroups:
 #   - elasticity.polaris-slo-cloud.github.io
 #   resources:
-#   - verticalelasticitystrategies
+#   - "*"
 #   verbs:
 #   - get
 #   - watch
 #   - list
-# - apiGroups:
-#   - elasticity.polaris-slo-cloud.github.io
-#   resources:
-#   - verticalelasticitystrategies/status
-#   verbs:
-#   - get
 
-# # Allow reading and updating all Deployments, StatefulSets, ReplicaSets, and DaemonSets
-# - apiGroups:
-#   - 'apps'
-#   resources:
-#   - deployments
-#   - statefulsets
-#   - replicasets
-#   - daemonsets
-#   verbs:
-#   - get
-#   - list
-#   - update
-#   - watch
-# ---
-# apiVersion: rbac.authorization.k8s.io/v1
-# kind: ClusterRoleBinding
-# # Optionally, we could create a RoleBinding and to scope the permissions to a specific namespace
-# metadata:
-#   name: control-vertical-elasticity-strategies
-# subjects:
-#   - kind: ServiceAccount
-#     name: vertical-elasticity-strategy-controller
-#     namespace: polaris
-# roleRef:
-#   apiGroup: rbac.authorization.k8s.io
-#   kind: ClusterRole
-#   name: vertical-elasticity-strategy-controller
+# Allow reading supported Elasticity Strategy types
+- apiGroups:
+  - elasticity.polaris-slo-cloud.github.io
+  resources:
+  - verticalelasticitystrategies
+  verbs:
+  - get
+  - watch
+  - list
+- apiGroups:
+  - elasticity.polaris-slo-cloud.github.io
+  resources:
+  - verticalelasticitystrategies/status
+  verbs:
+  - get
 
-# ---
+# Allow reading and updating all Deployments, StatefulSets, ReplicaSets, and DaemonSets
+- apiGroups:
+  - 'apps'
+  resources:
+  - deployments
+  - statefulsets
+  - replicasets
+  - daemonsets
+  verbs:
+  - get
+  - list
+  - update
+  - watch
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+# Optionally, we could create a RoleBinding and to scope the permissions to a specific namespace
+metadata:
+  name: control-vertical-elasticity-strategies
+subjects:
+  - kind: ServiceAccount
+    name: vertical-elasticity-strategy-controller
+    namespace: polaris
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: vertical-elasticity-strategy-controller
 
-# apiVersion: apps/v1
-# kind: Deployment
-# metadata:
-#   labels:
-#     component: vertical-elasticity-strategy-controller
-#     tier: control-plane
-#   name: vertical-elasticity-strategy-controller
-#   namespace: polaris
-# spec:
-#   selector:
-#     matchLabels:
-#       component: vertical-elasticity-strategy-controller
-#       tier: control-plane
-#   replicas: 1
-#   template:
-#     metadata:
-#       labels:
-#         component: vertical-elasticity-strategy-controller
-#         tier: control-plane
-#     spec:
-#       serviceAccountName: vertical-elasticity-strategy-controller
-#       affinity:
-#         nodeAffinity:
-#           requiredDuringSchedulingIgnoredDuringExecution:
-#             nodeSelectorTerms:
-#               - matchExpressions:
-#                   # Ensure that the controller is only scheduled on Intel 64-bit nodes.
-#                   - key: kubernetes.io/arch
-#                     operator: In
-#                     values:
-#                       - amd64
-#       tolerations:
-#         # Ensure that the controller can be scheduled on master nodes.
-#         - key: node-role.kubernetes.io/master
-#           operator: Exists
-#           effect: NoSchedule
-#       containers:
-#       - image: polarissloc/vertical-elasticity-strategy:0.2.0
-#         name: elasticity-controller
-#         resources:
-#           limits:
-#             cpu: 1000m
-#             memory: 1Gi
-#         securityContext:
-#           privileged: false
-#         env:
-#           # Workaround for an issue with kubernetes-client when using IPv6 (https://github.com/kubernetes-client/javascript/issues/599)
-#           - name: KUBERNETES_SERVICE_HOST
-#             value: kubernetes.default.svc
+---
 
-
-# ---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    component: vertical-elasticity-strategy-controller
+    tier: control-plane
+  name: vertical-elasticity-strategy-controller
+  namespace: polaris
+spec:
+  selector:
+    matchLabels:
+      component: vertical-elasticity-strategy-controller
+      tier: control-plane
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        component: vertical-elasticity-strategy-controller
+        tier: control-plane
+    spec:
+      serviceAccountName: vertical-elasticity-strategy-controller
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  # Ensure that the controller is only scheduled on Intel 64-bit nodes.
+                  - key: kubernetes.io/arch
+                    operator: In
+                    values:
+                      - amd64
+      tolerations:
+        # Ensure that the controller can be scheduled on master nodes.
+        - key: node-role.kubernetes.io/master
+          operator: Exists
+          effect: NoSchedule
+      containers:
+      - image: polarissloc/vertical-elasticity-strategy:0.2.1
+        name: elasticity-controller
+        resources:
+          limits:
+            cpu: 1000m
+            memory: 1Gi
+        securityContext:
+          privileged: false
+        env:
+          # Workaround for an issue with kubernetes-client when using IPv6 (https://github.com/kubernetes-client/javascript/issues/599)
+          - name: KUBERNETES_SERVICE_HOST
+            value: kubernetes.default.svc
