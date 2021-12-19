@@ -1,0 +1,57 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    component: custom-stream-sight-slo-controller
+    tier: control-plane
+  name: custom-stream-sight-slo-controller
+  namespace: polaris
+spec:
+  selector:
+    matchLabels:
+      component: custom-stream-sight-slo-controller
+      tier: control-plane
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        component: custom-stream-sight-slo-controller
+        tier: control-plane
+    spec:
+      serviceAccountName: custom-stream-sight-slo-controller
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  # Ensure that the controller is only scheduled on Intel 64-bit nodes.
+                  - key: kubernetes.io/arch
+                    operator: In
+                    values:
+                      - amd64
+      tolerations:
+        # Ensure that the controller can be scheduled on master nodes.
+        - key: node-role.kubernetes.io/master
+          operator: Exists
+          effect: NoSchedule
+      containers:
+        - image: polarissloc/custom-stream-sight-slo-controller:latest
+          name: slo-controller
+          resources:
+            limits:
+              cpu: 1000m
+              memory: 512Mi
+          env:
+            # The hostname and port of the Prometheus service:
+            - name: PROMETHEUS_HOST
+              value: prometheus-release-1-prome-prometheus.default.svc
+            - name: PROMETHEUS_PORT
+              value: "9090"
+            # SLO Control Loop interval in milliseconds.
+            - name: SLO_CONTROL_LOOP_INTERVAL_MSEC
+              value: "20000"
+            # Workaround for an issue with kubernetes-client when using IPv6 (https://github.com/kubernetes-client/javascript/issues/599)
+            - name: KUBERNETES_SERVICE_HOST
+              value: kubernetes.default.svc
+          securityContext:
+            privileged: false

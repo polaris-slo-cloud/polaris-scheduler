@@ -1,0 +1,70 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: polaris
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: custom-stream-sight-slo-controller
+  namespace: polaris
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  # ClusterRoles are not namespaced
+  name: custom-stream-sight-slo-controller
+rules:
+  # Allow reading all SLO mappings
+  # - apiGroups:
+  #   - slo.polaris-slo-cloud.github.io
+  #   resources:
+  #   - "*"
+  #   verbs:
+  #   - get
+  #   - watch
+  #   - list
+
+  # Allow reading supported SLO mappings
+  - apiGroups:
+      - slo.polaris-slo-cloud.github.io
+    resources:
+      - customstreamsightslomappings
+    verbs:
+      - get
+      - watch
+      - list
+  - apiGroups:
+      - slo.polaris-slo-cloud.github.io
+    resources:
+      - customstreamsightslomappings/status
+    verbs:
+      - get
+
+  # Allow writing all elasticity strategies
+  - apiGroups:
+      - elasticity.polaris-slo-cloud.github.io
+    resources:
+      - "*"
+    verbs:
+      - create
+      - delete
+      - get
+      - list
+      - patch
+      - update
+      - watch
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+# Optionally, we could create a RoleBinding and to scope the permissions to a specific namespace
+metadata:
+  name: control-customstreamsightslomappings-slos
+subjects:
+  - kind: ServiceAccount
+    name: custom-stream-sight-slo-controller
+    namespace: polaris
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: custom-stream-sight-slo-controller

@@ -55,6 +55,7 @@ build:
     - npx nx build common-mappings
     - npx nx build polaris-streamsight
     - npx nx build image-throughput-slo-controller
+    - npx nx build custom-stream-sight-slo-controller
 
 test:
   stage: test
@@ -63,6 +64,7 @@ test:
     - npm run test common-mappings
     - npm run test polaris-streamsight
     - npm run test image-throughput-slo-controller
+    - npm run test custom-stream-sight-slo-controller
   artifacts:
     untracked: false
     when: always
@@ -73,3 +75,4 @@ test:
         - ts/junit-reports/common-mappings.xml
         - ts/junit-reports/polaris-streamsight.xml
         - ts/junit-reports/image-throughput-slo-controller.xml
+        - ts/junit-reports/custom-stream-sight-slo-controller.xml

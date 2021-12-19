@@ -51,6 +51,87 @@
                 "scope:core"
             ]
         },
+        "custom-stream-sight-slo-controller": {
+            "root": "apps/custom-stream-sight-slo-controller",
+            "sourceRoot": "apps/custom-stream-sight-slo-controller/src",
+            "projectType": "application",
+            "targets": {
+                "build": {
+                    "executor": "@nrwl/node:build",
+                    "outputs": [
+                        "{options.outputPath}"
+                    ],
+                    "options": {
+                        "outputPath": "dist/apps/custom-stream-sight-slo-controller",
+                        "main": "apps/custom-stream-sight-slo-controller/src/main.ts",
+                        "tsConfig": "apps/custom-stream-sight-slo-controller/tsconfig.app.json",
+                        "assets": [
+                            "apps/custom-stream-sight-slo-controller/src/assets"
+                        ],
+                        "externalDependencies": "none"
+                    },
+                    "configurations": {
+                        "production": {
+                            "optimization": true,
+                            "extractLicenses": true,
+                            "inspect": false,
+                            "fileReplacements": [
+                                {
+                                    "replace": "apps/custom-stream-sight-slo-controller/src/environments/environment.ts",
+                                    "with": "apps/custom-stream-sight-slo-controller/src/environments/environment.prod.ts"
+                                }
+                            ]
+                        }
+                    }
+                },
+                "serve": {
+                    "executor": "@nrwl/node:execute",
+                    "options": {
+                        "buildTarget": "custom-stream-sight-slo-controller:build"
+                    }
+                },
+                "lint": {
+                    "executor": "@nrwl/linter:eslint",
+                    "outputs": [
+                        "{options.outputFile}"
+                    ],
+                    "options": {
+                        "lintFilePatterns": [
+                            "apps/custom-stream-sight-slo-controller/**/*.ts"
+                        ]
+                    }
+                },
+                "test": {
+                    "executor": "@nrwl/jest:jest",
+                    "outputs": [
+                        "coverage/apps/custom-stream-sight-slo-controller"
+                    ],
+                    "options": {
+                        "jestConfig": "apps/custom-stream-sight-slo-controller/jest.config.js",
+                        "passWithNoTests": true
+                    }
+                },
+                "docker-build": {
+                    "executor": "@nrwl/workspace:run-commands",
+                    "options": {
+                        "commands": [
+                            "docker build -f ./apps/custom-stream-sight-slo-controller/Dockerfile --build-arg POLARIS_APP_TYPE=slo --build-arg POLARIS_APP_NAME=custom-stream-sight-slo-controller -t polarissloc/custom-stream-sight-slo-controller:latest ."
+                        ],
+                        "parallel": false
+                    }
+                },
+                "deploy": {
+                    "executor": "@nrwl/workspace:run-commands",
+                    "options": {
+                        "commands": [
+                            "kubectl apply -f ./apps/custom-stream-sight-slo-controller/manifests/kubernetes"
+                        ],
+                        "parallel": false
+                    }
+                }
+            },
+            "tags": []
+        },
         "image-throughput-slo-controller": {
             "root": "apps/image-throughput-slo-controller",
             "sourceRoot": "apps/image-throughput-slo-controller/src",
