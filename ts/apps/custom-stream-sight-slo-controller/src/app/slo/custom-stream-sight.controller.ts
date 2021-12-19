@@ -72,6 +72,9 @@ export class CustomStreamSightSlo implements ServiceLevelObjective<CustomStreamS
 
     private async calculateSloCompliance(): Promise<number> {
         const sample = await this.streamSightMetricSource.getCurrentValue().toPromise();
+        if (!sample) {
+            throw new StreamSightSloError('Could not retrieve insight values from RAINBOW storage.', this.sloMapping);
+        }
         const insights = sample.value;
 
         const complianceFloat = this.evaluateCNF(this.sloMapping.spec.sloConfig.targetState, insights);
