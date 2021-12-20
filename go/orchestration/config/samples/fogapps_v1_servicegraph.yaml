@@ -167,7 +167,6 @@ spec:
             # Defines the StreamSight streams that should be available for the insights.
             #
             # Each key in this object defines the name of the stream and its value is the definition of the stream.
-            #
             # Within each stream definition, there are two placeholders that will be filled in by the SLO controller:
             # - `${namespace}`: The namespace, where the SloMapping is deployed.
             # - `${podName}`: A wildcard expression with the prefix of the pod names.
@@ -178,8 +177,8 @@ spec:
             # Defines the insights that can be used in the `targetState` below.
             # Each key in this object defines the name of an insight and its value specifies the query for it.
             insights:
-              avg_pod_cpu: 'COMPUTE AVG("cpu" FROM (pod_cpu_stream), 10s) EVERY 10s;'
-              second_insight: 'COMPUTE AVG("cpu" FROM (second_stream), 10s) EVERY 10s;'
+              avg_pod_cpu: 'COMPUTE avg("cpu" FROM (pod_cpu_stream), 10s) EVERY 10s;'
+              second_insight: 'COMPUTE avg("cpu" FROM (second_stream), 10s) EVERY 10s;'
 
             # Defines the target state for the `insights`, i.e., the state in which the SLO should keep them, in Conjunctive Normal Form (CNF).
             targetState:
