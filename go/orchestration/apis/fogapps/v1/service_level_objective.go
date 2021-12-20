@@ -37,10 +37,9 @@ type SloUserConfig struct {
 	// +optional
 	StabilizationWindow *sloCrds.StabilizationWindow `json:"stabilizationWindow,omitempty"`
 
-	// ToDo: Make staticElasticityStrategyConfig available via ServiceGraph, if necessary.
 	// Static configuration to be passed to the chosen elasticity strategy.
 	//
 	// +optional
 	// +kubebuilder:pruning:PreserveUnknownFields
-	// StaticElasticityStrategyConfig *runtime.RawExtension `json:"staticElasticityStrategyConfig,omitempty"`
+	StaticElasticityStrategyConfig *runtime.RawExtension `json:"staticElasticityStrategyConfig,omitempty"`
 }
