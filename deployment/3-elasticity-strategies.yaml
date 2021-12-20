@@ -577,8 +577,8 @@ spec:
         name: elasticity-controller
         resources:
           limits:
-            cpu: 1000m
-            memory: 1Gi
+            cpu: 500m
+            memory: 512Mi
         securityContext:
           privileged: false
         env:
@@ -704,8 +704,8 @@ spec:
         name: elasticity-controller
         resources:
           limits:
-            cpu: 1000m
-            memory: 1Gi
+            cpu: 500m
+            memory: 512Mi
         securityContext:
           privileged: false
         env:
