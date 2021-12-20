@@ -277,6 +277,7 @@ spec:
                 staticElasticityStrategyConfig:
                   type: object
                   description: Convenience type for a map object with string keys.
+                  additionalProperties: true
             apiVersion:
               type: string
               description: >-

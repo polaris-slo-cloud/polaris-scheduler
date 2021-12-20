@@ -210,6 +210,17 @@ spec:
             scaleUpSeconds: 40
             scaleDownSeconds: 60
 
+          # Optional static elasticity strategy config
+          # staticElasticityStrategyConfig:
+          #   test: a
+          #   testObj:
+          #     a: 1
+          #     b: 2
+          #   testArray:
+          #     - one
+          #     - two
+          #     - three
+
     # Taxi Edge Brooklyn Node
     - name: taxi-edge-brooklyn
       labels:
