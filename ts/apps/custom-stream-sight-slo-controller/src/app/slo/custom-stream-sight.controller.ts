@@ -150,6 +150,6 @@ export class CustomStreamSightSlo implements ServiceLevelObjective<CustomStreamS
         } else {
             sloCompliance = insightValue / targetState.targetValue;
         }
-        return sloCompliance;
+        return Math.abs(sloCompliance);
     }
 }
