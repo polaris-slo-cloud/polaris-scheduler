@@ -27,7 +27,7 @@ rules:
 
   # Allow reading supported SLO mappings
   - apiGroups:
-      - slo.polaris-slo-cloud.github.io
+      - slo.k8s.rainbow-h2020.eu
     resources:
       - customstreamsightslomappings
     verbs:
@@ -35,7 +35,7 @@ rules:
       - watch
       - list
   - apiGroups:
-      - slo.polaris-slo-cloud.github.io
+      - slo.k8s.rainbow-h2020.eu
     resources:
       - customstreamsightslomappings/status
     verbs:
@@ -44,6 +44,18 @@ rules:
   # Allow writing all elasticity strategies
   - apiGroups:
       - elasticity.polaris-slo-cloud.github.io
+    resources:
+      - "*"
+    verbs:
+      - create
+      - delete
+      - get
+      - list
+      - patch
+      - update
+      - watch
+  - apiGroups:
+      - elasticity.k8s.rainbow-h2020.eu
     resources:
       - "*"
     verbs:
