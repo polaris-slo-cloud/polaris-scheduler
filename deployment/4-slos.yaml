@@ -300,13 +300,13 @@ spec:
 apiVersion: v1
 kind: Namespace
 metadata:
-  name: polaris
+  name: rainbow-system
 ---
 apiVersion: v1
 kind: ServiceAccount
 metadata:
   name: custom-stream-sight-slo-controller
-  namespace: polaris
+  namespace: rainbow-system
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
@@ -374,7 +374,7 @@ metadata:
 subjects:
   - kind: ServiceAccount
     name: custom-stream-sight-slo-controller
-    namespace: polaris
+    namespace: rainbow-system
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
@@ -389,7 +389,7 @@ metadata:
     component: custom-stream-sight-slo-controller
     tier: control-plane
   name: custom-stream-sight-slo-controller
-  namespace: polaris
+  namespace: rainbow-system
 spec:
   selector:
     matchLabels:
@@ -444,6 +444,8 @@ spec:
               value: kubernetes.default.svc
           securityContext:
             privileged: false
+      imagePullSecrets:
+        - name: regcred
 
 ---
 

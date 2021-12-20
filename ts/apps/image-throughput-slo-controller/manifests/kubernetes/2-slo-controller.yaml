@@ -60,3 +60,5 @@ spec:
               value: kubernetes.default.svc
           securityContext:
             privileged: false
+      imagePullSecrets:
+        - name: regcred
