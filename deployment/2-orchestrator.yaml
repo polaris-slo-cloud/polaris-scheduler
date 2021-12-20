@@ -211,6 +211,45 @@ spec:
                     qosRequirements:
                       description: The QoS requirements that the underlying NetworkLink must fulfill.
                       properties:
+                        elasticityStrategy:
+                          description: Configures the elasticity strategy that should be executed when the LinkQosRequirements are violated at runtime. If no elasticity strategy is configured, the LinkQosRequirements are only enforced at deployment time, but not at runtime.
+                          properties:
+                            elasticityStrategy:
+                              description: The elasticity strategy that should be triggered when the LinkQosRequirements are violated.
+                              properties:
+                                apiVersion:
+                                  description: The API group and version of the ElasticityStrategy.
+                                  type: string
+                                kind:
+                                  description: The kind of ElasticityStrategy.
+                                  type: string
+                              required:
+                              - apiVersion
+                              - kind
+                              type: object
+                            stabilizationWindow:
+                              description: Configures the duration of the period after the last elasticity strategy execution, during which the strategy will not be executed again (to avoid unnecessary scaling).
+                              properties:
+                                scaleDownSeconds:
+                                  default: 300
+                                  description: The number of seconds after the previous scaling operation to wait before an elasticity action that decreases resources (e.g., scale down/in) or an equivalent configuration change can be issued due to an SLO violation.
+                                  format: int32
+                                  minimum: 0
+                                  type: integer
+                                scaleUpSeconds:
+                                  default: 60
+                                  description: The number of seconds after the previous scaling operation to wait before an elasticity action that increases resources (e.g., scale up/out) or an equivalent configuration change can be issued due to an SLO violation.
+                                  format: int32
+                                  minimum: 0
+                                  type: integer
+                              type: object
+                            staticElasticityStrategyConfig:
+                              description: Static configuration to be passed to the chosen elasticity strategy.
+                              type: object
+                              x-kubernetes-preserve-unknown-fields: true
+                          required:
+                          - elasticityStrategy
+                          type: object
                         latency:
                           description: The latency requirements for the the network link.
                           properties:
@@ -331,6 +370,10 @@ spec:
                                 minimum: 0
                                 type: integer
                             type: object
+                          staticElasticityStrategyConfig:
+                            description: Static configuration to be passed to the chosen elasticity strategy.
+                            type: object
+                            x-kubernetes-preserve-unknown-fields: true
                         required:
                         - elasticityStrategy
                         - name
@@ -2520,6 +2563,10 @@ spec:
                                 minimum: 0
                                 type: integer
                             type: object
+                          staticElasticityStrategyConfig:
+                            description: Static configuration to be passed to the chosen elasticity strategy.
+                            type: object
+                            x-kubernetes-preserve-unknown-fields: true
                         required:
                         - elasticityStrategy
                         - name
@@ -3532,6 +3579,10 @@ spec:
                           minimum: 0
                           type: integer
                       type: object
+                    staticElasticityStrategyConfig:
+                      description: Static configuration to be passed to the chosen elasticity strategy.
+                      type: object
+                      x-kubernetes-preserve-unknown-fields: true
                   required:
                   - elasticityStrategy
                   - name
@@ -3980,6 +4031,45 @@ spec:
                     qosRequirements:
                       description: The QoS requirements that the underlying NetworkLink must fulfill.
                       properties:
+                        elasticityStrategy:
+                          description: Configures the elasticity strategy that should be executed when the LinkQosRequirements are violated at runtime. If no elasticity strategy is configured, the LinkQosRequirements are only enforced at deployment time, but not at runtime.
+                          properties:
+                            elasticityStrategy:
+                              description: The elasticity strategy that should be triggered when the LinkQosRequirements are violated.
+                              properties:
+                                apiVersion:
+                                  description: The API group and version of the ElasticityStrategy.
+                                  type: string
+                                kind:
+                                  description: The kind of ElasticityStrategy.
+                                  type: string
+                              required:
+                              - apiVersion
+                              - kind
+                              type: object
+                            stabilizationWindow:
+                              description: Configures the duration of the period after the last elasticity strategy execution, during which the strategy will not be executed again (to avoid unnecessary scaling).
+                              properties:
+                                scaleDownSeconds:
+                                  default: 300
+                                  description: The number of seconds after the previous scaling operation to wait before an elasticity action that decreases resources (e.g., scale down/in) or an equivalent configuration change can be issued due to an SLO violation.
+                                  format: int32
+                                  minimum: 0
+                                  type: integer
+                                scaleUpSeconds:
+                                  default: 60
+                                  description: The number of seconds after the previous scaling operation to wait before an elasticity action that increases resources (e.g., scale up/out) or an equivalent configuration change can be issued due to an SLO violation.
+                                  format: int32
+                                  minimum: 0
+                                  type: integer
+                              type: object
+                            staticElasticityStrategyConfig:
+                              description: Static configuration to be passed to the chosen elasticity strategy.
+                              type: object
+                              x-kubernetes-preserve-unknown-fields: true
+                          required:
+                          - elasticityStrategy
+                          type: object
                         latency:
                           description: The latency requirements for the the network link.
                           properties:
@@ -4100,6 +4190,10 @@ spec:
                                 minimum: 0
                                 type: integer
                             type: object
+                          staticElasticityStrategyConfig:
+                            description: Static configuration to be passed to the chosen elasticity strategy.
+                            type: object
+                            x-kubernetes-preserve-unknown-fields: true
                         required:
                         - elasticityStrategy
                         - name
@@ -6289,6 +6383,10 @@ spec:
                                 minimum: 0
                                 type: integer
                             type: object
+                          staticElasticityStrategyConfig:
+                            description: Static configuration to be passed to the chosen elasticity strategy.
+                            type: object
+                            x-kubernetes-preserve-unknown-fields: true
                         required:
                         - elasticityStrategy
                         - name
@@ -7301,6 +7399,10 @@ spec:
                           minimum: 0
                           type: integer
                       type: object
+                    staticElasticityStrategyConfig:
+                      description: Static configuration to be passed to the chosen elasticity strategy.
+                      type: object
+                      x-kubernetes-preserve-unknown-fields: true
                   required:
                   - elasticityStrategy
                   - name
@@ -7738,7 +7840,7 @@ spec:
         - --leader-elect
         command:
         - /manager
-        image: registry.gitlab.com/rainbow-project1/rainbow-integration/rainbow-orchestrator:0.6.0
+        image: registry.gitlab.com/rainbow-project1/rainbow-integration/rainbow-orchestrator:0.7.0
         livenessProbe:
           httpGet:
             path: /healthz
