@@ -38,19 +38,74 @@ spec:
     - name: collisionpredictionavoidance-message-processing
       sloType:
         apiVersion: slo.k8s.rainbow-h2020.eu/v1
-        kind: MessageProcessingSloMapping
+        kind: CustomStreamSightSloMapping
       elasticityStrategy:
         apiVersion: elasticity.polaris-slo-cloud.github.io/v1
         kind: HorizontalElasticityStrategy
       sloConfig:
-        messageQueueNodeName: demo-rabbitmqbroker-us68w2bjix
-        messageQueues:
-        - name: rmt_robot_rk
-          tolerance: 0
-        - name: plm_walker_rk
-          tolerance: 0
-        cpuUpperThreshold: 60
-        cpuLowerThreshold: 40
+        # Defines the StreamSight streams that should be available for the insights.
+        #
+        # Each key in this object defines the name of the stream and its value is the definition of the stream.
+        # Within each stream definition, there are two placeholders that will be filled in by the SLO controller:
+        # - `${namespace}`: The namespace, where the SloMapping is deployed.
+        # - `${podName}`: A wildcard expression with the prefix of the pod names.
+        streams:
+          pod_cpu: 'stream from storageLayer(periodicity=1000, metricID="cpu", entityType="POD", namespace="${namespace}", name="${podName}" );'
+          mq_publish: 'stream from storageLayer(periodicity=1000, metricID="rmt_robot_rk_publish");'
+          mq_delivery: 'stream from storageLayer(periodicity=1000, metricID="rmt_robot_rk_delivery");'
+
+        # Defines the insights that can be used in the `targetState` below.
+        # Each key in this object defines the name of an insight and its value specifies the query for it.
+        insights:
+          # Average CPU usage across all pods.
+          avg_pod_cpu: 'COMPUTE avg("cpu" FROM (pod_cpu), 10s) EVERY 10s;'
+          # MQ delay rate = mq_publish / mq_delivery, i.e., a value of 100 is perfect, above 100 we are accumulating messages and need to scale out, below 100 we are faster than required and may scale in.
+          mq_delay_rate: 'COMPUTE (max("rmt_robot_rk_publish" FROM (mq_publish), 10s) / max("rmt_robot_rk_delivery" FROM (mq_delivery), 10s)) * 100 EVERY 10s;'
+
+        # Defines the target state for the `insights`, i.e., the state in which the SLO should keep them, in Conjunctive Normal Form (CNF).
+        targetState:
+          # The disjunction clauses, which are evaluated and combined with an AND operator.
+          conjuncts:
+            - disjuncts: # The states, which should be evaluated and combined with an OR operator.
+                - insight: mq_delay_rate # The insight, for which the state is defined.
+                  # The desired target value for the insight.
+                  # By default we assume that a lower metric value is "better", e.g.,
+                  # for network latency a lower value is considered better than a higher value.
+                  # In this case, the following scaling approach is used:
+                  # - Above `targetValue + tolerance` we scale up/out.
+                  # - Below `targetValue - tolerance` we scale down/in
+                  # This behavior can be inverted by setting the `higherIsBetter` property to `true`.
+                  targetValue: 100
+                  # A tolerance around the target value.
+                  tolerance: 10
+                  # (optional) If `true`, then a higher metric value is considered "better" and, thus,
+                  # the above/below rules of `targetValue` and `tolerance` are inverted.
+                  higherIsBetter: false
+            - disjuncts: # The states, which should be evaluated and combined with an OR operator.
+                - insight: avg_pod_cpu # The insight, for which the state is defined.
+                  # The desired target value for the insight.
+                  # By default we assume that a lower metric value is "better", e.g.,
+                  # for network latency a lower value is considered better than a higher value.
+                  # In this case, the following scaling approach is used:
+                  # - Above `targetValue + tolerance` we scale up/out.
+                  # - Below `targetValue - tolerance` we scale down/in
+                  # This behavior can be inverted by setting the `higherIsBetter` property to `true`.
+                  targetValue: 50
+                  # A tolerance around the target value.
+                  tolerance: 10
+                  # (optional) If `true`, then a higher metric value is considered "better" and, thus,
+                  # the above/below rules of `targetValue` and `tolerance` are inverted.
+                  higherIsBetter: false
+
+        # Specifies the tolerance around 100%, within which no scaling will be performed.
+        # For example, if tolerance is `10`, no scaling will be performed as long as the SloCompliance is between `90` and `110`.
+        elasticityStrategyTolerance: 10
+
+      # Optional configuration of the stabilization window, within which the elasticity strategy will not be executed twice.
+      stabilizationWindow:
+        scaleUpSeconds: 10
+        scaleDownSeconds: 60
+
   - name: "demo-personnellocationmotioncapturing-vae4v0baqd"
     labels:
       app.kubernetes.io/name: "demo-65e2rzba0i"
@@ -86,17 +141,74 @@ spec:
     - name: personnellocationmotioncapturing-message-processing
       sloType:
         apiVersion: slo.k8s.rainbow-h2020.eu/v1
-        kind: MessageProcessingSloMapping
+        kind: CustomStreamSightSloMapping
       elasticityStrategy:
         apiVersion: elasticity.polaris-slo-cloud.github.io/v1
         kind: HorizontalElasticityStrategy
       sloConfig:
-        messageQueueNodeName: demo-rabbitmqbroker-us68w2bjix
-        messageQueues:
-        - name: generator_personnel_rk
-          tolerance: 0
-        cpuUpperThreshold: 60
-        cpuLowerThreshold: 40
+        # Defines the StreamSight streams that should be available for the insights.
+        #
+        # Each key in this object defines the name of the stream and its value is the definition of the stream.
+        # Within each stream definition, there are two placeholders that will be filled in by the SLO controller:
+        # - `${namespace}`: The namespace, where the SloMapping is deployed.
+        # - `${podName}`: A wildcard expression with the prefix of the pod names.
+        streams:
+          pod_cpu: 'stream from storageLayer(periodicity=1000, metricID="cpu", entityType="POD", namespace="${namespace}", name="${podName}" );'
+          mq_publish: 'stream from storageLayer(periodicity=1000, metricID="generator_personnel_rk_publish");'
+          mq_delivery: 'stream from storageLayer(periodicity=1000, metricID="generator_personnel_rk_delivery");'
+
+        # Defines the insights that can be used in the `targetState` below.
+        # Each key in this object defines the name of an insight and its value specifies the query for it.
+        insights:
+          # Average CPU usage across all pods.
+          avg_pod_cpu: 'COMPUTE avg("cpu" FROM (pod_cpu), 10s) EVERY 10s;'
+          # MQ delay rate = mq_publish / mq_delivery, i.e., a value of 100 is perfect, above 100 we are accumulating messages and need to scale out, below 100 we are faster than required and may scale in.
+          mq_delay_rate: 'COMPUTE (max("generator_personnel_rk_publish" FROM (mq_publish), 10s) / max("generator_personnel_rk_delivery" FROM (mq_delivery), 10s)) * 100 EVERY 10s;'
+
+        # Defines the target state for the `insights`, i.e., the state in which the SLO should keep them, in Conjunctive Normal Form (CNF).
+        targetState:
+          # The disjunction clauses, which are evaluated and combined with an AND operator.
+          conjuncts:
+            - disjuncts: # The states, which should be evaluated and combined with an OR operator.
+                - insight: mq_delay_rate # The insight, for which the state is defined.
+                  # The desired target value for the insight.
+                  # By default we assume that a lower metric value is "better", e.g.,
+                  # for network latency a lower value is considered better than a higher value.
+                  # In this case, the following scaling approach is used:
+                  # - Above `targetValue + tolerance` we scale up/out.
+                  # - Below `targetValue - tolerance` we scale down/in
+                  # This behavior can be inverted by setting the `higherIsBetter` property to `true`.
+                  targetValue: 100
+                  # A tolerance around the target value.
+                  tolerance: 10
+                  # (optional) If `true`, then a higher metric value is considered "better" and, thus,
+                  # the above/below rules of `targetValue` and `tolerance` are inverted.
+                  higherIsBetter: false
+            - disjuncts: # The states, which should be evaluated and combined with an OR operator.
+                - insight: avg_pod_cpu # The insight, for which the state is defined.
+                  # The desired target value for the insight.
+                  # By default we assume that a lower metric value is "better", e.g.,
+                  # for network latency a lower value is considered better than a higher value.
+                  # In this case, the following scaling approach is used:
+                  # - Above `targetValue + tolerance` we scale up/out.
+                  # - Below `targetValue - tolerance` we scale down/in
+                  # This behavior can be inverted by setting the `higherIsBetter` property to `true`.
+                  targetValue: 50
+                  # A tolerance around the target value.
+                  tolerance: 10
+                  # (optional) If `true`, then a higher metric value is considered "better" and, thus,
+                  # the above/below rules of `targetValue` and `tolerance` are inverted.
+                  higherIsBetter: false
+
+        # Specifies the tolerance around 100%, within which no scaling will be performed.
+        # For example, if tolerance is `10`, no scaling will be performed as long as the SloCompliance is between `90` and `110`.
+        elasticityStrategyTolerance: 10
+
+      # Optional configuration of the stabilization window, within which the elasticity strategy will not be executed twice.
+      stabilizationWindow:
+        scaleUpSeconds: 10
+        scaleDownSeconds: 60
+
   - name: "demo-rabbitmqbroker-us68w2bjix"
     labels:
       app.kubernetes.io/name: "demo-65e2rzba0i"
@@ -199,17 +311,74 @@ spec:
     - name: robotmotiontracker-message-processing
       sloType:
         apiVersion: slo.k8s.rainbow-h2020.eu/v1
-        kind: MessageProcessingSloMapping
+        kind: CustomStreamSightSloMapping
       elasticityStrategy:
         apiVersion: elasticity.polaris-slo-cloud.github.io/v1
         kind: HorizontalElasticityStrategy
       sloConfig:
-        messageQueueNodeName: demo-rabbitmqbroker-us68w2bjix
-        messageQueues:
-        - name: generator_robot_rk
-          tolerance: 0
-        cpuUpperThreshold: 60
-        cpuLowerThreshold: 40
+        # Defines the StreamSight streams that should be available for the insights.
+        #
+        # Each key in this object defines the name of the stream and its value is the definition of the stream.
+        # Within each stream definition, there are two placeholders that will be filled in by the SLO controller:
+        # - `${namespace}`: The namespace, where the SloMapping is deployed.
+        # - `${podName}`: A wildcard expression with the prefix of the pod names.
+        streams:
+          pod_cpu: 'stream from storageLayer(periodicity=1000, metricID="cpu", entityType="POD", namespace="${namespace}", name="${podName}" );'
+          mq_publish: 'stream from storageLayer(periodicity=1000, metricID="generator_robot_rk_publish");'
+          mq_delivery: 'stream from storageLayer(periodicity=1000, metricID="generator_robot_rk_delivery");'
+
+        # Defines the insights that can be used in the `targetState` below.
+        # Each key in this object defines the name of an insight and its value specifies the query for it.
+        insights:
+          # Average CPU usage across all pods.
+          avg_pod_cpu: 'COMPUTE avg("cpu" FROM (pod_cpu), 10s) EVERY 10s;'
+          # MQ delay rate = mq_publish / mq_delivery, i.e., a value of 100 is perfect, above 100 we are accumulating messages and need to scale out, below 100 we are faster than required and may scale in.
+          mq_delay_rate: 'COMPUTE (max("generator_robot_rk_publish" FROM (mq_publish), 10s) / max("generator_robot_rk_delivery" FROM (mq_delivery), 10s)) * 100 EVERY 10s;'
+
+        # Defines the target state for the `insights`, i.e., the state in which the SLO should keep them, in Conjunctive Normal Form (CNF).
+        targetState:
+          # The disjunction clauses, which are evaluated and combined with an AND operator.
+          conjuncts:
+            - disjuncts: # The states, which should be evaluated and combined with an OR operator.
+                - insight: mq_delay_rate # The insight, for which the state is defined.
+                  # The desired target value for the insight.
+                  # By default we assume that a lower metric value is "better", e.g.,
+                  # for network latency a lower value is considered better than a higher value.
+                  # In this case, the following scaling approach is used:
+                  # - Above `targetValue + tolerance` we scale up/out.
+                  # - Below `targetValue - tolerance` we scale down/in
+                  # This behavior can be inverted by setting the `higherIsBetter` property to `true`.
+                  targetValue: 100
+                  # A tolerance around the target value.
+                  tolerance: 10
+                  # (optional) If `true`, then a higher metric value is considered "better" and, thus,
+                  # the above/below rules of `targetValue` and `tolerance` are inverted.
+                  higherIsBetter: false
+            - disjuncts: # The states, which should be evaluated and combined with an OR operator.
+                - insight: avg_pod_cpu # The insight, for which the state is defined.
+                  # The desired target value for the insight.
+                  # By default we assume that a lower metric value is "better", e.g.,
+                  # for network latency a lower value is considered better than a higher value.
+                  # In this case, the following scaling approach is used:
+                  # - Above `targetValue + tolerance` we scale up/out.
+                  # - Below `targetValue - tolerance` we scale down/in
+                  # This behavior can be inverted by setting the `higherIsBetter` property to `true`.
+                  targetValue: 50
+                  # A tolerance around the target value.
+                  tolerance: 10
+                  # (optional) If `true`, then a higher metric value is considered "better" and, thus,
+                  # the above/below rules of `targetValue` and `tolerance` are inverted.
+                  higherIsBetter: false
+
+        # Specifies the tolerance around 100%, within which no scaling will be performed.
+        # For example, if tolerance is `10`, no scaling will be performed as long as the SloCompliance is between `90` and `110`.
+        elasticityStrategyTolerance: 10
+
+      # Optional configuration of the stabilization window, within which the elasticity strategy will not be executed twice.
+      stabilizationWindow:
+        scaleUpSeconds: 10
+        scaleDownSeconds: 60
+
   links:
   - source: "demo-collisionpredictionavoidance-ub61xbpgf3"
     target: "demo-redisserver-70ccnizi0k"
