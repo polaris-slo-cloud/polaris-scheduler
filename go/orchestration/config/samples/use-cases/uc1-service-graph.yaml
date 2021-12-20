@@ -1,0 +1,311 @@
+apiVersion: "fogapps.k8s.rainbow-h2020.eu/v1"
+kind: "ServiceGraph"
+metadata:
+  name: "hrc-1-demo-65e2rzba0i"
+  namespace: "hrc-1-demo-65e2rzba0i"
+spec:
+  nodes:
+  - name: "demo-collisionpredictionavoidance-ub61xbpgf3"
+    labels:
+      app.kubernetes.io/name: "demo-65e2rzba0i"
+      app.kubernetes.io/version: "0.0.1"
+      app.kubernetes.io/instance: "demo-collisionpredictionavoidance-ub61xbpgf3"
+      app.kubernetes.io/component: "demo-collisionpredictionavoidance-ub61xbpgf3"
+    containers:
+    - name: "demo-collisionpredictionavoidance-ub61xbpgf3"
+      image: "virtualorigami/pyrobomotra"
+      resources:
+        limits:
+          memory: "2048Mi"
+          cpu: "1000m"
+      securityContext:
+        privileged: false
+    imagePullSecrets: []
+    replicas:
+      min: 1
+      max: 1
+    exposedPorts:
+      type: "ClusterInternal"
+      ports:
+      - name: "cparedis"
+        port: 6379
+      hostNetwork: false
+    nodeHardware:
+      cpuInfo:
+        architectures:
+        - "arm64"
+    slos:
+    - name: collisionpredictionavoidance-message-processing
+      sloType:
+        apiVersion: slo.k8s.rainbow-h2020.eu/v1
+        kind: MessageProcessingSloMapping
+      elasticityStrategy:
+        apiVersion: elasticity.polaris-slo-cloud.github.io/v1
+        kind: HorizontalElasticityStrategy
+      sloConfig:
+        messageQueueNodeName: demo-rabbitmqbroker-us68w2bjix
+        messageQueues:
+        - name: rmt_robot_rk
+          tolerance: 0
+        - name: plm_walker_rk
+          tolerance: 0
+        cpuUpperThreshold: 60
+        cpuLowerThreshold: 40
+  - name: "demo-personnellocationmotioncapturing-vae4v0baqd"
+    labels:
+      app.kubernetes.io/name: "demo-65e2rzba0i"
+      app.kubernetes.io/version: "0.0.1"
+      app.kubernetes.io/instance: "demo-personnellocationmotioncapturing-vae4v0baqd"
+      app.kubernetes.io/component: "demo-personnellocationmotioncapturing-vae4v0baqd"
+    containers:
+    - name: "demo-personnellocationmotioncapturing-vae4v0baqd"
+      image: "virtualorigami/pypersonnelloc"
+      resources:
+        limits:
+          memory: "2048Mi"
+          cpu: "1000m"
+      securityContext:
+        privileged: false
+    imagePullSecrets: []
+    replicas:
+      min: 1
+      max: 1
+    exposedPorts:
+      type: "ClusterInternal"
+      ports:
+      - name: "plmcrabbitmqbroker"
+        port: 5672
+      - name: "plmcredisserver"
+        port: 6379
+      hostNetwork: false
+    nodeHardware:
+      cpuInfo:
+        architectures:
+        - "arm64"
+    slos:
+    - name: personnellocationmotioncapturing-message-processing
+      sloType:
+        apiVersion: slo.k8s.rainbow-h2020.eu/v1
+        kind: MessageProcessingSloMapping
+      elasticityStrategy:
+        apiVersion: elasticity.polaris-slo-cloud.github.io/v1
+        kind: HorizontalElasticityStrategy
+      sloConfig:
+        messageQueueNodeName: demo-rabbitmqbroker-us68w2bjix
+        messageQueues:
+        - name: generator_personnel_rk
+          tolerance: 0
+        cpuUpperThreshold: 60
+        cpuLowerThreshold: 40
+  - name: "demo-rabbitmqbroker-us68w2bjix"
+    labels:
+      app.kubernetes.io/name: "demo-65e2rzba0i"
+      app.kubernetes.io/version: "0.0.1"
+      app.kubernetes.io/instance: "demo-rabbitmqbroker-us68w2bjix"
+      app.kubernetes.io/component: "demo-rabbitmqbroker-us68w2bjix"
+    containers:
+    - name: "demo-rabbitmqbroker-us68w2bjix"
+      image: "arm64v8/rabbitmq:3.9-management"
+      resources:
+        limits:
+          memory: "2048Mi"
+          cpu: "1000m"
+      env:
+      - name: "RABBITMQ_DEFAULT_USER"
+        value: "admin"
+      - name: "RABBITMQ_NODENAME"
+        value: "Rabbit_Node_1"
+      - name: "RABBITMQ_DEFAULT_PASS"
+        value: "rabbit"
+      securityContext:
+        privileged: false
+    imagePullSecrets: []
+    replicas:
+      min: 1
+      max: 1
+    exposedPorts:
+      type: "ClusterInternal"
+      ports:
+      - name: "rabbitmqbrokermessaging"
+        port: 5672
+      - name: "rabbitmqbrokermanagement"
+        port: 15672
+      hostNetwork: false
+    nodeHardware:
+      cpuInfo:
+        architectures:
+        - "arm64"
+  - name: "demo-redisserver-70ccnizi0k"
+    labels:
+      app.kubernetes.io/name: "demo-65e2rzba0i"
+      app.kubernetes.io/version: "0.0.1"
+      app.kubernetes.io/instance: "demo-redisserver-70ccnizi0k"
+      app.kubernetes.io/component: "demo-redisserver-70ccnizi0k"
+    containers:
+    - name: "demo-redisserver-70ccnizi0k"
+      image: "arm64v8/redis"
+      resources:
+        limits:
+          memory: "1096Mi"
+          cpu: "1000m"
+      securityContext:
+        privileged: false
+    imagePullSecrets: []
+    replicas:
+      min: 1
+      max: 1
+    exposedPorts:
+      type: "ClusterInternal"
+      ports:
+      - name: "redisserverstorage"
+        port: 6379
+      hostNetwork: false
+    nodeHardware:
+      cpuInfo:
+        architectures:
+        - "arm64"
+  - name: "demo-robotmotiontracker-egh3maz8he"
+    labels:
+      app.kubernetes.io/name: "demo-65e2rzba0i"
+      app.kubernetes.io/version: "0.0.1"
+      app.kubernetes.io/instance: "demo-robotmotiontracker-egh3maz8he"
+      app.kubernetes.io/component: "demo-robotmotiontracker-egh3maz8he"
+    containers:
+    - name: "demo-robotmotiontracker-egh3maz8he"
+      image: "virtualorigami/pyrobomotra"
+      resources:
+        limits:
+          memory: "2048Mi"
+          cpu: "2000m"
+      securityContext:
+        privileged: false
+    imagePullSecrets: []
+    replicas:
+      min: 1
+      max: 1
+    exposedPorts:
+      type: "ClusterInternal"
+      ports:
+      - name: "rmtrabbitmqbroker"
+        port: 5672
+      - name: "rmtredisserver"
+        port: 6379
+      hostNetwork: false
+    nodeHardware:
+      cpuInfo:
+        architectures:
+        - "arm64"
+    slos:
+    - name: robotmotiontracker-message-processing
+      sloType:
+        apiVersion: slo.k8s.rainbow-h2020.eu/v1
+        kind: MessageProcessingSloMapping
+      elasticityStrategy:
+        apiVersion: elasticity.polaris-slo-cloud.github.io/v1
+        kind: HorizontalElasticityStrategy
+      sloConfig:
+        messageQueueNodeName: demo-rabbitmqbroker-us68w2bjix
+        messageQueues:
+        - name: generator_robot_rk
+          tolerance: 0
+        cpuUpperThreshold: 60
+        cpuLowerThreshold: 40
+  links:
+  - source: "demo-collisionpredictionavoidance-ub61xbpgf3"
+    target: "demo-redisserver-70ccnizi0k"
+    qosRequirements:
+      latency:
+        maxPacketDelayMsec: 500
+        maxPacketDelayVariance: 200 # Jitter
+      packetLoss:
+        # The maximum packet loss in basis points (1 bp = 0.01%).
+        maxPacketLossBp: 100
+  - source: "demo-collisionpredictionavoidance-ub61xbpgf3"
+    target: "demo-rabbitmqbroker-us68w2bjix"
+    qosRequirements:
+      latency:
+        maxPacketDelayMsec: 500
+        maxPacketDelayVariance: 200 # Jitter
+      packetLoss:
+        # The maximum packet loss in basis points (1 bp = 0.01%).
+        maxPacketLossBp: 100
+      elasticityStrategy:
+        elasticityStrategy:
+          apiVersion: elasticity.k8s.rainbow-h2020.eu/v1
+          kind: HaltSystemElasticityStrategy
+        staticElasticityStrategyConfig:
+          messageQueueNodeName: demo-rabbitmqbroker-us68w2bjix
+          messageQueues:
+          - generator_robot_rk
+  - source: "demo-personnellocationmotioncapturing-vae4v0baqd"
+    target: "demo-redisserver-70ccnizi0k"
+    qosRequirements:
+      latency:
+        maxPacketDelayMsec: 500
+        maxPacketDelayVariance: 200 # Jitter
+      packetLoss:
+        # The maximum packet loss in basis points (1 bp = 0.01%).
+        maxPacketLossBp: 100
+      elasticityStrategy:
+        elasticityStrategy:
+          apiVersion: elasticity.k8s.rainbow-h2020.eu/v1
+          kind: HaltSystemElasticityStrategy
+        staticElasticityStrategyConfig:
+          messageQueueNodeName: demo-rabbitmqbroker-us68w2bjix
+          messageQueues:
+          - generator_robot_rk
+  - source: "demo-personnellocationmotioncapturing-vae4v0baqd"
+    target: "demo-rabbitmqbroker-us68w2bjix"
+    qosRequirements:
+      latency:
+        maxPacketDelayMsec: 500
+        maxPacketDelayVariance: 200 # Jitter
+      packetLoss:
+        # The maximum packet loss in basis points (1 bp = 0.01%).
+        maxPacketLossBp: 100
+      elasticityStrategy:
+        elasticityStrategy:
+          apiVersion: elasticity.k8s.rainbow-h2020.eu/v1
+          kind: HaltSystemElasticityStrategy
+        staticElasticityStrategyConfig:
+          messageQueueNodeName: demo-rabbitmqbroker-us68w2bjix
+          messageQueues:
+          - generator_robot_rk
+  - source: "demo-robotmotiontracker-egh3maz8he"
+    target: "demo-redisserver-70ccnizi0k"
+    qosRequirements:
+      latency:
+        maxPacketDelayMsec: 500
+        maxPacketDelayVariance: 200 # Jitter
+      packetLoss:
+        # The maximum packet loss in basis points (1 bp = 0.01%).
+        maxPacketLossBp: 100
+      elasticityStrategy:
+        elasticityStrategy:
+          apiVersion: elasticity.k8s.rainbow-h2020.eu/v1
+          kind: HaltSystemElasticityStrategy
+        staticElasticityStrategyConfig:
+          messageQueueNodeName: demo-rabbitmqbroker-us68w2bjix
+          messageQueues:
+          - generator_robot_rk
+  - source: "demo-robotmotiontracker-egh3maz8he"
+    target: "demo-rabbitmqbroker-us68w2bjix"
+    qosRequirements:
+      latency:
+        maxPacketDelayMsec: 500
+        maxPacketDelayVariance: 200 # Jitter
+      packetLoss:
+        # The maximum packet loss in basis points (1 bp = 0.01%).
+        maxPacketLossBp: 100
+      elasticityStrategy:
+        elasticityStrategy:
+          apiVersion: elasticity.k8s.rainbow-h2020.eu/v1
+          kind: HaltSystemElasticityStrategy
+        staticElasticityStrategyConfig:
+          messageQueueNodeName: demo-rabbitmqbroker-us68w2bjix
+          messageQueues:
+          - generator_robot_rk
+  dnsConfig:
+    dnsPolicy: "None"
+    nameservers:
+    - "fc07:d4dc:d430:2029:9c30:43ba:fd96:b345"
