@@ -10,7 +10,8 @@
                 "outDir": "crds",
                 "polarisTypes": [
                     "ImageThroughputSloMapping",
-                    "CustomStreamSightSloMapping"
+                    "CustomStreamSightSloMapping",
+                    "MigrationElasticityStrategy"
                 ]
             }
         },
