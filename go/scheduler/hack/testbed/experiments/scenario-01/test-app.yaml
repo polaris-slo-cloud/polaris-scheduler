@@ -1,0 +1,198 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: traffic-analysis
+---
+apiVersion: fogapps.k8s.rainbow-h2020.eu/v1
+kind: ServiceGraph
+
+metadata:
+  name: traffic-analyzer
+  namespace: traffic-analysis # All resources are created in this namespace
+
+spec:
+  # List of ServiceGraphNodes
+  nodes:
+    # Traffic Tracker Service
+    - name: traffic-tracker
+      containers:
+        - name: main
+          image: gcr.io/google-containers/pause:3.2
+      replicas:
+        max: 100
+
+    # Aggregator Service
+    - name: aggregator
+      containers:
+        - name: main
+          image: gcr.io/google-containers/pause:3.2
+      replicas:
+        max: 10
+
+    # Accident Detector Service
+    - name: accident-detector
+      containers:
+        - name: main
+          image: gcr.io/google-containers/pause:3.2
+      replicas:
+        max: 10
+
+    # Traffic Analyzer Service
+    - name: traffic-analyzer
+      containers:
+        - name: main
+          image: gcr.io/google-containers/pause:3.2
+      replicas:
+        max: 4
+
+  # List of directed ServiceLinks that connect the above nodes.
+  links:
+    - source: traffic-tracker
+      target: aggregator
+      qosRequirements:
+        throughput:
+          minBandwidthKbps: 5000
+        latency:
+          maxPacketDelayMsec: 10
+    - source: aggregator
+      target: accident-detector
+      qosRequirements:
+        throughput:
+          minBandwidthKbps: 10000
+        latency:
+          maxPacketDelayMsec: 10
+    - source: aggregator
+      target: traffic-analyzer
+      qosRequirements:
+        throughput:
+          minBandwidthKbps: 10000
+        latency:
+          maxPacketDelayMsec: 100
+---
+# Traffic Tracker Service
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    component: traffic-tracker
+    rainbow-h2020.eu/service-graph: traffic-analyzer
+    rainbow-h2020.eu/service-graph-node: traffic-tracker
+  name: traffic-tracker
+  namespace: traffic-analysis
+spec:
+  selector:
+    matchLabels:
+      component: traffic-tracker
+      rainbow-h2020.eu/service-graph: traffic-analyzer
+      rainbow-h2020.eu/service-graph-node: traffic-tracker
+  replicas: 2
+  template:
+    metadata:
+      labels:
+        component: traffic-tracker
+        rainbow-h2020.eu/service-graph: traffic-analyzer
+        rainbow-h2020.eu/service-graph-node: traffic-tracker
+    spec:
+      containers:
+      - name: main
+        image: gcr.io/google-containers/pause:3.2
+        resources:
+          limits:
+            rainbow-h2020.eu/fake-cpu: 1000m
+            rainbow-h2020.eu/fake-memory: 512Mi
+---
+# Aggregator Service
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    component: aggregator
+    rainbow-h2020.eu/service-graph: traffic-analyzer
+    rainbow-h2020.eu/service-graph-node: aggregator
+  name: aggregator
+  namespace: traffic-analysis
+spec:
+  selector:
+    matchLabels:
+      component: aggregator
+      rainbow-h2020.eu/service-graph: traffic-analyzer
+      rainbow-h2020.eu/service-graph-node: aggregator
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        component: aggregator
+        rainbow-h2020.eu/service-graph: traffic-analyzer
+        rainbow-h2020.eu/service-graph-node: aggregator
+    spec:
+      containers:
+      - name: main
+        image: gcr.io/google-containers/pause:3.2
+        resources:
+          limits:
+            rainbow-h2020.eu/fake-cpu: 2000m
+            rainbow-h2020.eu/fake-memory: 2Gi
+---
+# Accident Detector Service
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    component: accident-detector
+    rainbow-h2020.eu/service-graph: traffic-analyzer
+    rainbow-h2020.eu/service-graph-node: accident-detector
+  name: accident-detector
+  namespace: traffic-analysis
+spec:
+  selector:
+    matchLabels:
+      component: accident-detector
+      rainbow-h2020.eu/service-graph: traffic-analyzer
+      rainbow-h2020.eu/service-graph-node: accident-detector
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        component: accident-detector
+        rainbow-h2020.eu/service-graph: traffic-analyzer
+        rainbow-h2020.eu/service-graph-node: accident-detector
+    spec:
+      containers:
+      - name: main
+        image: gcr.io/google-containers/pause:3.2
+        resources:
+          limits:
+            rainbow-h2020.eu/fake-cpu: 1000m
+            rainbow-h2020.eu/fake-memory: 1Gi
+---
+# Traffic Analyzer Service
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    component: traffic-analyzer
+    rainbow-h2020.eu/service-graph: traffic-analyzer
+    rainbow-h2020.eu/service-graph-node: traffic-analyzer
+  name: traffic-analyzer
+  namespace: traffic-analysis
+spec:
+  selector:
+    matchLabels:
+      component: traffic-analyzer
+      rainbow-h2020.eu/service-graph: traffic-analyzer
+      rainbow-h2020.eu/service-graph-node: traffic-analyzer
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        component: traffic-analyzer
+        rainbow-h2020.eu/service-graph: traffic-analyzer
+        rainbow-h2020.eu/service-graph-node: traffic-analyzer
+    spec:
+      containers:
+      - name: main
+        image: gcr.io/google-containers/pause:3.2
+        resources:
+          limits:
+            rainbow-h2020.eu/fake-cpu: 4000m
+            rainbow-h2020.eu/fake-memory: 8Gi
