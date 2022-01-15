@@ -493,7 +493,9 @@ func (me *serviceGraphProcessor) updateNodeStatusWithDeployment(node *fogappsCRD
 	}
 
 	nodeStatus.InitialReplicas = svcGraphUtil.GetInitialReplicas(node)
-	nodeStatus.ConfiguredReplicas = *deployment.Spec.Replicas
+	if replicas := deployment.Spec.Replicas; replicas != nil {
+		nodeStatus.ConfiguredReplicas = *replicas
+	}
 	nodeStatus.ReadyReplicas = deployment.Status.ReadyReplicas
 }
 
@@ -507,7 +509,9 @@ func (me *serviceGraphProcessor) updateNodeStatusWithStatefulSet(node *fogappsCR
 	}
 
 	nodeStatus.InitialReplicas = svcGraphUtil.GetInitialReplicas(node)
-	nodeStatus.ConfiguredReplicas = *statefulSet.Spec.Replicas
+	if replicas := statefulSet.Spec.Replicas; replicas != nil {
+		nodeStatus.ConfiguredReplicas = *replicas
+	}
 	nodeStatus.ReadyReplicas = statefulSet.Status.ReadyReplicas
 }
 

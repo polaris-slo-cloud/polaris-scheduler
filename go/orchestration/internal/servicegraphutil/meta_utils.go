@@ -35,7 +35,10 @@ func getPodLabels(node *fogappsCRDs.ServiceGraphNode, graph *fogappsCRDs.Service
 
 // Gets the annotations for a pod generated from a ServiceGraphNode.
 func getPodAnnotations(node *fogappsCRDs.ServiceGraphNode, graph *fogappsCRDs.ServiceGraph) map[string]string {
-	annotations := make(map[string]string, 1)
-	annotations[kubeutil.AnnotationLastUpdatedByServiceGraphVersion] = graph.GetResourceVersion()
+	annotations := make(map[string]string, 0)
+	// This seems to cause an update loop.
+	// This is probably because each status update (e.g., when a deployment becomes ready) of the service graph creates a new version,
+	// which causes the version in the pods to no longer match, causing an update of the respective deployment, which restarts the loop.
+	// annotations[kubeutil.AnnotationLastUpdatedByServiceGraphVersion] = graph.GetResourceVersion()
 	return annotations
 }
