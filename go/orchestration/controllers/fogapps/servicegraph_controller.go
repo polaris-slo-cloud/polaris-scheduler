@@ -114,11 +114,15 @@ func (me *ServiceGraphReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 		return ctrl.Result{}, err
 	}
 
-	log.Info("Applying changes.", "count", changes.Size())
-	if err := changes.Apply(ctx, me.Client); err != nil {
-		return ctrl.Result{}, err
+	if changesCount := changes.Size(); changesCount > 0 {
+		log.Info("Applying changes.", "count", changesCount)
+		if err := changes.Apply(ctx, me.Client); err != nil {
+			return ctrl.Result{}, err
+		}
+		log.Info("Successfully applied all changes.")
+	} else {
+		log.Info("No changes needed.")
 	}
-	log.Info("Successfully applied all changes.")
 
 	if newStatus != nil && !reflect.DeepEqual(serviceGraph.Status, newStatus) {
 		serviceGraph.Status = *newStatus
@@ -132,6 +136,8 @@ func (me *ServiceGraphReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 
 // SetupWithManager sets up the controller with the Manager.
 func (me *ServiceGraphReconciler) SetupWithManager(mgr ctrl.Manager) error {
+	mgr.GetLogger().Info("Normal log test")
+	mgr.GetLogger().V(1).Info("Verbose log test")
 	var indexerFn client.IndexerFunc = func(rawObj client.Object) []string {
 		owner := meta.GetControllerOf(rawObj)
 		if owner == nil {

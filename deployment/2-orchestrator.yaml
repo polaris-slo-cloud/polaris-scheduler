@@ -7723,7 +7723,7 @@ spec:
         - --leader-elect
         command:
         - /manager
-        image: registry.gitlab.com/rainbow-project1/rainbow-integration/rainbow-orchestrator:0.7.1
+        image: registry.gitlab.com/rainbow-project1/rainbow-integration/rainbow-orchestrator:0.7.3
         livenessProbe:
           httpGet:
             path: /healthz
