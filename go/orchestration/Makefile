@@ -1,6 +1,6 @@
 
 # The version of the orchestrator
-VERSION ?= 0.7.3
+VERSION ?= 0.7.4
 # Image URL to use all building/pushing image targets
 IMG ?= registry.gitlab.com/rainbow-project1/rainbow-integration/rainbow-orchestrator:${VERSION}
 # CRD generation config
