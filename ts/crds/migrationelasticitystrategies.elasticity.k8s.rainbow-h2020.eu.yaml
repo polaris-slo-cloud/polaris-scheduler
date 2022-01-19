@@ -169,7 +169,7 @@ spec:
                 staticConfig:
                   type: object
                   properties:
-                    baseNodeAffinity:
+                    baseAffinity:
                       type: object
                       properties:
                         nodeAffinity:
@@ -408,7 +408,7 @@ spec:
                               items:
                                 type: object
                                 additionalProperties: true
-                    alternativeNodeAffinity:
+                    alternativeAffinity:
                       type: object
                       properties:
                         nodeAffinity:
@@ -647,9 +647,6 @@ spec:
                               items:
                                 type: object
                                 additionalProperties: true
-                  required:
-                    - baseNodeAffinity
-                    - alternativeNodeAffinity
                   description: >-
                     Configuration options for  {@link 
                     MigrationElasticityStrategy } .
@@ -664,11 +661,11 @@ spec:
 
                     The node type selection is handled through affinities:
 
-                    - `baseNodeAffinity` is applied when the SLO Compliance is
-                    below `100 - tolerance`.
+                    - `baseAffinity` is applied when the SLO Compliance is below
+                    `100 - tolerance`.
 
-                    - `alternativeNodeAffinity` is applied when the SLO
-                    Compliance is above `100 + tolerance`.
+                    - `alternativeAffinity` is applied when the SLO Compliance
+                    is above `100 + tolerance`.
 
 
                     If the SLO Compliance is between `100 - tolerance` and `100

@@ -1,26 +1,25 @@
+import { ApiObjectMetadata, ElasticityStrategy, ElasticityStrategyExecutionError, Logger, ObjectKind, SloCompliance } from '@polaris-sloc/core';
+import { PodTemplateContainer } from '@polaris-sloc/core';
 import {
     DefaultStabilizationWindowTracker,
     OrchestratorClient,
+    PodSpec,
     PolarisRuntime,
     SloComplianceElasticityStrategyControllerBase,
     SloTarget,
     StabilizationWindowTracker,
 } from '@polaris-sloc/core';
-import { MigrationElasticityStrategyConfig, MigrationElasticityStrategy } from '@rainbow-h2020/common-mappings';
+import { MigrationElasticityStrategyConfig, MigrationElasticityStrategy, K8sAffinityConfiguration } from '@rainbow-h2020/common-mappings';
 
 /** Tracked executions eviction interval of 20 minutes. */
 const EVICTION_INTERVAL_MSEC = 20 * 60 * 1000;
 
+class K8sPodSpec extends PodSpec {
+    affinity?: K8sAffinityConfiguration;
+}
+
 /**
  * Controller for the MigrationElasticityStrategy.
- *
- * ToDo:
- *  1. If you want to restrict the type of workloads that this elasticity strategy can be applied to,
- *     change the first generic parameter from `SloTarget` to the appropriate type.
- *  2. If your elasticity strategy input is not of type `SloCompliance`, change the definition of the controller class
- *     to extend `ElasticityStrategyController` instead of `SloComplianceElasticityStrategyControllerBase`.
- *  3. Implement the `execute()` method.
- *  4. Adapt `manifests/1-rbac.yaml` to include get and update permissions on all resources that you update in the orchestrator during `execute()`.
  */
 export class MigrationElasticityStrategyController extends SloComplianceElasticityStrategyControllerBase<SloTarget, MigrationElasticityStrategyConfig> {
     /** The client for accessing orchestrator resources. */
@@ -39,7 +38,33 @@ export class MigrationElasticityStrategyController extends SloComplianceElastici
     }
 
     async execute(elasticityStrategy: MigrationElasticityStrategy): Promise<void> {
-        // ToDo: Implement this method
+        Logger.log('Executing elasticity strategy:', elasticityStrategy);
+        const target = await this.loadTarget(elasticityStrategy);
+        const podSpec = target.spec.template.spec as K8sPodSpec;
+        let isOutsideStabilizationWindow: boolean;
+
+        // At or below 100 we use the baseNodeAffinity,
+        // above 100 we use the alternativeNodeAffinity.
+        // We don't need to check the tolerance, because this has already been done by the superclass.
+        if (elasticityStrategy.spec.sloOutputParams.currSloCompliancePercentage <= 100) {
+            podSpec.affinity = elasticityStrategy.spec.staticConfig?.baseAffinity;
+            isOutsideStabilizationWindow = this.stabilizationWindowTracker.isOutsideStabilizationWindowForScaleDown(elasticityStrategy)
+        } else {
+            podSpec.affinity = elasticityStrategy.spec.staticConfig?.alternativeAffinity;
+            isOutsideStabilizationWindow = this.stabilizationWindowTracker.isOutsideStabilizationWindowForScaleUp(elasticityStrategy);
+        }
+
+        if (!isOutsideStabilizationWindow) {
+            Logger.log(
+                'Skipping scaling, because stabilization window has not yet passed for: ',
+                elasticityStrategy,
+            );
+            return;
+        }
+
+        await this.orchClient.update(target);
+        this.stabilizationWindowTracker.trackExecution(elasticityStrategy);
+        Logger.log('Successfully scaled.', elasticityStrategy, JSON.stringify(podSpec.affinity, null, '  '));
     }
 
     onDestroy(): void {
@@ -48,5 +73,26 @@ export class MigrationElasticityStrategyController extends SloComplianceElastici
 
     onElasticityStrategyDeleted(elasticityStrategy: MigrationElasticityStrategy): void {
         this.stabilizationWindowTracker.removeElasticityStrategy(elasticityStrategy);
+    }
+
+    private async loadTarget(elasticityStrategy: ElasticityStrategy<SloCompliance, SloTarget, MigrationElasticityStrategyConfig>): Promise<PodTemplateContainer> {
+        const targetRef = elasticityStrategy.spec.targetRef;
+        const queryApiObj = new PodTemplateContainer({
+            objectKind: new ObjectKind({
+                group: targetRef.group,
+                version: targetRef.version,
+                kind: targetRef.kind,
+            }),
+            metadata: new ApiObjectMetadata({
+                namespace: elasticityStrategy.metadata.namespace,
+                name: targetRef.name,
+            }),
+        });
+
+        const ret = await this.orchClient.read(queryApiObj);
+        if (!ret.spec?.template) {
+            throw new ElasticityStrategyExecutionError('The SloTarget does not contain a pod template (spec.template field).', elasticityStrategy);
+        }
+        return ret;
     }
 }

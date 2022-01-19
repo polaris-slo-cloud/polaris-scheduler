@@ -231,7 +231,7 @@
                     "executor": "@nrwl/workspace:run-commands",
                     "options": {
                         "commands": [
-                            "docker build -f ./apps/migration-estrat-controller/Dockerfile --build-arg POLARIS_APP_TYPE=slo --build-arg POLARIS_APP_NAME=migration-estrat-controller -t polarissloc/migration-estrat-controller:latest ."
+                            "docker build -f ./apps/migration-estrat-controller/Dockerfile --build-arg POLARIS_APP_TYPE=slo --build-arg POLARIS_APP_NAME=migration-estrat-controller -t registry.gitlab.com/rainbow-project1/rainbow-integration/migration-estrat-controller:latest ."
                         ],
                         "parallel": false
                     }
