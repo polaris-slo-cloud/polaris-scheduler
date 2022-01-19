@@ -2,7 +2,7 @@ kind: CustomResourceDefinition
 apiVersion: apiextensions.k8s.io/v1
 metadata:
   annotations:
-    polaris-slo-cloud.github.io/schema-gen-version: 0.2.0-beta.22
+    polaris-slo-cloud.github.io/schema-gen-version: 0.2.0-beta.24
   name: customstreamsightslomappings.slo.k8s.rainbow-h2020.eu
 spec:
   group: slo.k8s.rainbow-h2020.eu
@@ -183,7 +183,7 @@ spec:
                                         The insight, for which the state is
                                         defined.
                                     targetValue:
-                                      type: number
+                                      type: integer
                                       description: >-
                                         The desired target value for the
                                         insight.
@@ -206,9 +206,11 @@ spec:
                                         This behavior can be inverted by setting
                                         the `higherIsBetter` property to `true`.
                                       minimum: 1
+                                      format: int64
                                     tolerance:
-                                      type: number
+                                      type: integer
                                       description: A tolerance around the target value.
+                                      format: int64
                                     higherIsBetter:
                                       type: boolean
                                       description: >-
@@ -230,7 +232,7 @@ spec:
                             required:
                               - disjuncts
                             description: >-
-                              Defines a set of  {@link  InsightTargetState }
+                              Defines a set of  {@link  InsightTargetState } 
                               objects, which are combined with an OR operator.
                           description: >-
                             The disjunction clauses, which are evaluated and
@@ -276,8 +278,29 @@ spec:
                     StreamSight queries.
                 staticElasticityStrategyConfig:
                   type: object
-                  description: Convenience type for a map object with string keys.
                   additionalProperties: true
+                  description: >-
+                    Any static configuration parameters, which are unknown to
+                    the SLO, but which may be required to configure the chosen
+                    kind of elasticity strategy should be specified here. They
+                    will be copied over into the spec of the elasticity
+                    strategy.
+
+
+                    For example, suppose the SLO knows only about the parameters
+                    in `SloCompliance`, but you want to use an elasticity
+                    strategy that requires an additional parameter, e.g.,
+                    `maxReplicas`. This can be configured when instantiating the
+                    SloMapping:
+
+
+                    ``` new MySloMapping({      elasticityStrategy: new
+                    ElasticityStrategyKind({          kind:
+                    'my-special-elasticity-strategy-kind',          ...     
+                    }),      ...,      staticElasticityStrategyConfig:
+                    {          // Anything in here will be copied over to the
+                    `staticConfig` property of the elasticity strategy
+                    spec.          maxReplicas: 100,      }, }); ```
             apiVersion:
               type: string
               description: >-

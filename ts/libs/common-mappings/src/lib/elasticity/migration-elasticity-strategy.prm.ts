@@ -1,4 +1,5 @@
 import { ElasticityStrategy, ElasticityStrategyKind, SloCompliance, SloTarget, initSelf } from '@polaris-sloc/core';
+import { K8sAffinityConfiguration } from '../common';
 
 /**
  * Configuration options for {@link MigrationElasticityStrategy}.
@@ -16,7 +17,11 @@ import { ElasticityStrategy, ElasticityStrategyKind, SloCompliance, SloTarget, i
  */
 export interface MigrationElasticityStrategyConfig {
 
+    /** This is applied when the SLO Compliance is below `100 - tolerance`. */
+    baseNodeAffinity: K8sAffinityConfiguration;
 
+    /** This is applied when the SLO Compliance is above `100 + tolerance`. */
+    alternativeNodeAffinity: K8sAffinityConfiguration;
 
 }
 
@@ -28,7 +33,7 @@ export interface MigrationElasticityStrategyConfig {
 export class MigrationElasticityStrategyKind extends ElasticityStrategyKind<SloCompliance, SloTarget> {
     constructor() {
         super({
-            group: 'elasticity.polaris-slo-cloud.github.io',
+            group: 'elasticity.k8s.rainbow-h2020.eu',
             version: 'v1',
             kind: 'MigrationElasticityStrategy',
         });
