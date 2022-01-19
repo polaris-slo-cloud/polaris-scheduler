@@ -1,0 +1,79 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+    name: polaris
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+    name: migration-estrat-controller
+    namespace: polaris
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+    # ClusterRoles are not namespaced
+    name: migration-estrat-controller
+rules:
+    # Allow reading all Elasticity Strategy types
+    # - apiGroups:
+    #   - elasticity.k8s.rainbow-h2020.eu
+    #   resources:
+    #   - "*"
+    #   verbs:
+    #   - get
+    #   - watch
+    #   - list
+
+    # Allow reading supported Elasticity Strategy types
+    - apiGroups:
+          - elasticity.k8s.rainbow-h2020.eu
+      resources:
+          - migrationelasticitystrategies
+      verbs:
+          - get
+          - watch
+          - list
+    - apiGroups:
+          - elasticity.k8s.rainbow-h2020.eu
+      resources:
+          - migrationelasticitystrategies/status
+      verbs:
+          - get
+
+    # Allow reading and updating all Scale subresources
+    - apiGroups:
+          - '*'
+      resources:
+          - '*/scale'
+      verbs:
+          - get
+          - update
+
+# Allow reading and updating all Deployments, StatefulSets, ReplicaSets, and DaemonSets
+# - apiGroups:
+#   - 'apps'
+#   resources:
+#   - deployments
+#   - statefulsets
+#   - replicasets
+#   - daemonsets
+#   verbs:
+#   - get
+#   - list
+#   - update
+#   - watch
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+# Optionally, we could create a RoleBinding and to scope the permissions to a specific namespace
+metadata:
+    name: control-migrationelasticitystrategies
+subjects:
+    - kind: ServiceAccount
+      name: migration-estrat-controller
+      namespace: polaris
+roleRef:
+    apiGroup: rbac.authorization.k8s.io
+    kind: ClusterRole
+    name: migration-estrat-controller

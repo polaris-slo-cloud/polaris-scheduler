@@ -8,11 +8,7 @@
             "crds": {
                 "tsConfig": "tsconfig.base.json",
                 "outDir": "crds",
-                "polarisTypes": [
-                    "ImageThroughputSloMapping",
-                    "CustomStreamSightSloMapping",
-                    "MigrationElasticityStrategy"
-                ]
+                "polarisTypes": ["ImageThroughputSloMapping", "CustomStreamSightSloMapping", "MigrationElasticityStrategy"]
             }
         },
         "image-throughput-slo-controller": {
@@ -32,6 +28,10 @@
         "custom-stream-sight-slo-controller": {
             "projectType": "slo-controller",
             "tsEntryPoint": "apps/custom-stream-sight-slo-controller/src/main.ts"
+        },
+        "migration-estrat-controller": {
+            "projectType": "elasticity-strategy-controller",
+            "tsEntryPoint": "apps/migration-estrat-controller/src/main.ts"
         }
     }
 }
