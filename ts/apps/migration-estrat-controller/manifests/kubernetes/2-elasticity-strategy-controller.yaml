@@ -35,7 +35,7 @@ spec:
                   operator: Exists
                   effect: NoSchedule
             containers:
-                - image: polarissloc/migration-estrat-controller:latest
+                - image: polarissloc/migration-estrat-controller:0.0.1
                   name: elasticity-controller
                   resources:
                       limits:

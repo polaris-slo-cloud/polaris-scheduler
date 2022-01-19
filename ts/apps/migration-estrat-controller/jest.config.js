@@ -12,4 +12,13 @@ module.exports = {
     },
     moduleFileExtensions: ['ts', 'js', 'html'],
     coverageDirectory: '../../coverage/apps/migration-estrat-controller',
+    reporters: [
+        "default",
+        [
+            "jest-junit", {
+                outputDirectory: "./junit-reports",
+                outputName: "migration-estrat-controller.xml"
+            },
+        ]
+    ],
 };

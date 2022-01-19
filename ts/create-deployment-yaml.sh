@@ -12,11 +12,16 @@ rm -rf "$OUTPUT"
 INPUT_YAML_FILES=(
     # common-mappings
     "crds/customstreamsightslomappings.slo.k8s.rainbow-h2020.eu.yaml"
+    "crds/migrationelasticitystrategies.elasticity.k8s.rainbow-h2020.eu.yaml"
     # "crds/imagethroughputslomappings.slo.k8s.rainbow-h2020.eu.yaml"
 
     # custom-stream-sight-slo-controller
     "apps/custom-stream-sight-slo-controller/manifests/kubernetes/1-rbac.yaml"
     "apps/custom-stream-sight-slo-controller/manifests/kubernetes/2-slo-controller.yaml"
+
+    # migration-estrat-controller
+    "apps/migration-estrat-controller/manifests/kubernetes/1-rbac.yaml"
+    "apps/migration-estrat-controller/manifests/kubernetes/2-elasticity-strategy-controller.yaml"
 
     # image-throughput-slo-controller
     # "apps/image-throughput-slo-controller/manifests/kubernetes/1-rbac.yaml"
