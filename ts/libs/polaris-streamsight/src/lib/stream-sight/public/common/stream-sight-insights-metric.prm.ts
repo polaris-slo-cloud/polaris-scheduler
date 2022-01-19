@@ -1,11 +1,11 @@
-import { ComposedMetricParams, ComposedMetricType, IndexByKey, POLARIS_API } from '@polaris-sloc/core';
+import { ComposedMetricParams, ComposedMetricType, POLARIS_API } from '@polaris-sloc/core';
 
 /**
  * Represents the value of the {@link StreamSightInsightsMetric} - a map of insight values.
  *
  * Each key is the name of an insight and its value is the latest value of the insight.
  */
-export type StreamSightInsights = IndexByKey<number>;
+export type StreamSightInsights = Record<string, number>;
 
 /**
  * The parameters for retrieving the StreamSightInsights metric.
@@ -17,14 +17,14 @@ export interface StreamSightInsightsParams extends ComposedMetricParams {
      *
      * Each key in this object defines the name of the stream and its value is the definition of the stream.
      */
-    streams: IndexByKey<string>;
+    streams: Record<string, string>;
 
     /**
      * Defines the insights that should be calculated.
      *
      * Each key in this object defines the name of an insight and its value specifies the query for it.
      */
-    insights: IndexByKey<string>
+    insights: Record<string, string>
 
 }
 
