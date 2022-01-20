@@ -647,8 +647,9 @@ spec:
                               items:
                                 type: object
                                 additionalProperties: true
+                  x-kubernetes-preserve-unknown-fields: true
                   description: >-
-                    Configuration options for  {@link 
+                    Configuration options for  {@link
                     MigrationElasticityStrategy } .
 
 
