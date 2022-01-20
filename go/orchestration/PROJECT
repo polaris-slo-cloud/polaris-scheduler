@@ -22,12 +22,4 @@ resources:
   kind: ServiceGraph
   path: k8s.rainbow-h2020.eu/rainbow/orchestration/apis/fogapps/v1
   version: v1
-- api:
-    crdVersion: v1
-    namespaced: true
-  domain: k8s.rainbow-h2020.eu
-  group: slo
-  kind: ImageThroughputSloMapping
-  path: k8s.rainbow-h2020.eu/rainbow/orchestration/apis/slo/v1
-  version: v1
 version: "3"
