@@ -242,12 +242,12 @@ func (me *ServiceGraphPlugin) Unreserve(ctx context.Context, cycleState *framewo
 // waiting. Note that if the plugin returns "wait", the framework will wait only
 // after running the remaining plugins given that no other plugin rejects the pod.
 func (me *ServiceGraphPlugin) Permit(ctx context.Context, cycleState *framework.CycleState, pod *core.Pod, nodeName string) (*framework.Status, time.Duration) {
+	me.readStopwatch(cycleState, pod)
 	status, duration := me.atomicDeployment.Permit(ctx, cycleState, pod, nodeName)
 	if status == nil || status.IsSuccess() {
 		if svcGraphState, err := util.GetServiceGraphFromCycleState(cycleState); err == nil {
 			me.releaseServiceGraphState(ctx, cycleState, pod, svcGraphState)
 		}
-		me.readStopwatch(cycleState, pod)
 	}
 	return status, duration
 }
@@ -290,8 +290,10 @@ func (me *ServiceGraphPlugin) getCommonServiceGraphState(podA *framework.QueuedP
 func (me *ServiceGraphPlugin) readStopwatch(cycleState *framework.CycleState, pod *core.Pod) {
 	if stateData, err := cycleState.Read(util.StopwatchStateKey); err == nil {
 		stopwatch := stateData.(*util.Stopwatch)
-		stopwatch.Stop()
-		durationMs := float64(stopwatch.Duration().Microseconds()) / 1000
-		klog.Infof("Scheduling pod %s.%s took %f ms", pod.Namespace, pod.Name, durationMs)
+		if !stopwatch.IsStopped() {
+			stopwatch.Stop()
+			durationMs := float64(stopwatch.Duration().Microseconds()) / 1000
+			klog.Infof("Scheduling pod %s.%s took %f ms", pod.Namespace, pod.Name, durationMs)
+		}
 	}
 }

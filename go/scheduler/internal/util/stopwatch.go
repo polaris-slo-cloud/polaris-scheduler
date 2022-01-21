@@ -18,8 +18,10 @@ const (
 
 // Stopwatch can be used to measure the time between two instants.
 type Stopwatch struct {
-	start time.Time
-	stop  time.Time
+	start     time.Time
+	stop      time.Time
+	isStarted bool
+	isStopped bool
 }
 
 // NewStopwatch creates a new Stopwatch.
@@ -29,12 +31,19 @@ func NewStopwatch() *Stopwatch {
 
 // Start sets the current time as the start time of the Stopwatch.
 func (me *Stopwatch) Start() {
+	me.isStarted = true
 	me.start = time.Now()
 }
 
 // Stop sets the current time as the stop time of the Stopwatch.
 func (me *Stopwatch) Stop() {
 	me.stop = time.Now()
+	me.isStopped = true
+}
+
+// IsStopped returns true if the stopwatch has already been stopped.
+func (me *Stopwatch) IsStopped() bool {
+	return me.isStopped
 }
 
 // Duration returns the duration of the time that was measured by this Stopwatch.
@@ -45,7 +54,9 @@ func (me *Stopwatch) Duration() time.Duration {
 // Clone creates a shallow copy of this object.
 func (me *Stopwatch) Clone() framework.StateData {
 	return &Stopwatch{
-		start: me.start,
-		stop:  me.stop,
+		start:     me.start,
+		stop:      me.stop,
+		isStarted: me.isStarted,
+		isStopped: me.isStopped,
 	}
 }
