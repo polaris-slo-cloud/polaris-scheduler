@@ -1602,10 +1602,6 @@ spec:
                     exposedPorts:
                       description: "Configures if ports should be exposed from this ServiceGraphNode. \n The exposed ports are available at the DNS name \"<ServiceGraphNode.Name>.<ServiceGraphNamespace>.svc\" For example, if a ServiceGraph is deployed the namespace \"fog\" and the ServiceGraphNode's name is \"db\", the DNS name would be \"db.fog.svc\". For other services within the same ServiceGraph \"<ServiceGraphNode.Name>\" is enough (e.g., \"db\")."
                       properties:
-                        hostNetwork:
-                          default: false
-                          description: If true, a pod created from this ServiceGraphNode, will use host host node's network namespace.
-                          type: boolean
                         ports:
                           description: Configures the ports that should be exposed.
                           items:
@@ -1653,6 +1649,10 @@ spec:
                     geoLocation:
                       description: Used to constrain the geographical locations where this service may be deployed.
                       type: object
+                    hostNetwork:
+                      default: false
+                      description: If true, a pod created from this ServiceGraphNode, will use host node's network namespace.
+                      type: boolean
                     imagePullSecrets:
                       description: References to secrets for pulling container images from private registries.
                       items:
@@ -5305,10 +5305,6 @@ spec:
                     exposedPorts:
                       description: "Configures if ports should be exposed from this ServiceGraphNode. \n The exposed ports are available at the DNS name \"<ServiceGraphNode.Name>.<ServiceGraphNamespace>.svc\" For example, if a ServiceGraph is deployed the namespace \"fog\" and the ServiceGraphNode's name is \"db\", the DNS name would be \"db.fog.svc\". For other services within the same ServiceGraph \"<ServiceGraphNode.Name>\" is enough (e.g., \"db\")."
                       properties:
-                        hostNetwork:
-                          default: false
-                          description: If true, a pod created from this ServiceGraphNode, will use host host node's network namespace.
-                          type: boolean
                         ports:
                           description: Configures the ports that should be exposed.
                           items:
@@ -5356,6 +5352,10 @@ spec:
                     geoLocation:
                       description: Used to constrain the geographical locations where this service may be deployed.
                       type: object
+                    hostNetwork:
+                      default: false
+                      description: If true, a pod created from this ServiceGraphNode, will use host node's network namespace.
+                      type: boolean
                     imagePullSecrets:
                       description: References to secrets for pulling container images from private registries.
                       items:
@@ -7723,7 +7723,7 @@ spec:
         - --leader-elect
         command:
         - /manager
-        image: registry.gitlab.com/rainbow-project1/rainbow-integration/rainbow-orchestrator:0.7.4
+        image: registry.gitlab.com/rainbow-project1/rainbow-integration/rainbow-orchestrator:0.8.0
         livenessProbe:
           httpGet:
             path: /healthz

@@ -46,6 +46,11 @@ spec:
           env:
             - name: NODE_TYPE
               value: CLOUD_NODE
+          # Exposed ports must be configured individually for each container AND
+          # ADDITIONALLY, all ports exposed by the pod must be configured in the exposedPorts object
+          # on the ServiceGraphNode (see below).
+          ports:
+            - containerPort: 8080
           volumeMounts:
             # Not needed by taxi-cloud, but to have a more complete example.
             - mountPath: /cache
@@ -69,8 +74,8 @@ spec:
         ports:
           - name: main
             port: 8080
-        # Optionally, use the host node's network namespace
-        hostNetwork: true
+      # Optionally, use the host node's network namespace
+      hostNetwork: true
       nodeHardware:
         # Configures the hardware requirements that the node must fulfill.
         # Note that this does not reserve the hardware for exclusive usage, it only assures that the node has this hardware.
@@ -116,6 +121,7 @@ spec:
       replicas:
         min: 2
         max: 10
+      hostNetwork: true
       nodeHardware:
         cpuInfo:
           architectures:

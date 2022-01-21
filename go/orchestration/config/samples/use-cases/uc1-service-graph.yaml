@@ -29,7 +29,7 @@ spec:
       ports:
       - name: "cparedis"
         port: 6379
-      hostNetwork: false
+    hostNetwork: false
     nodeHardware:
       cpuInfo:
         architectures:
@@ -132,7 +132,7 @@ spec:
         port: 5672
       - name: "plmcredisserver"
         port: 6379
-      hostNetwork: false
+    hostNetwork: false
     nodeHardware:
       cpuInfo:
         architectures:
@@ -242,7 +242,7 @@ spec:
         port: 5672
       - name: "rabbitmqbrokermanagement"
         port: 15672
-      hostNetwork: false
+    hostNetwork: false
     nodeHardware:
       cpuInfo:
         architectures:
@@ -271,7 +271,7 @@ spec:
       ports:
       - name: "redisserverstorage"
         port: 6379
-      hostNetwork: false
+    hostNetwork: false
     nodeHardware:
       cpuInfo:
         architectures:
@@ -302,7 +302,7 @@ spec:
         port: 5672
       - name: "rmtredisserver"
         port: 6379
-      hostNetwork: false
+    hostNetwork: false
     nodeHardware:
       cpuInfo:
         architectures:
