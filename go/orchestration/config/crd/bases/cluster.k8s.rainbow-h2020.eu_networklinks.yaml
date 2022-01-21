@@ -83,9 +83,33 @@ spec:
                 description: The advertised quality class of this network link
                 enum:
                 - QC1Mbps
+                - QC2Mbps
+                - QC3Mbps
+                - QC4Mbps
+                - QC5Mbps
+                - QC6Mbps
+                - QC7Mbps
+                - QC8Mbps
+                - QC9Mbps
                 - QC10Mbps
+                - QC20Mbps
+                - QC30Mbps
+                - QC40Mbps
+                - QC50Mbps
+                - QC60Mbps
+                - QC70Mbps
+                - QC80Mbps
+                - QC90Mbps
                 - QC100Mbps
                 - QC1Gbps
+                - QC2Gbps
+                - QC3Gbps
+                - QC4Gbps
+                - QC5Gbps
+                - QC6Gbps
+                - QC7Gbps
+                - QC8Gbps
+                - QC9Gbps
                 - QC10Gbps
                 type: string
               throughput:
