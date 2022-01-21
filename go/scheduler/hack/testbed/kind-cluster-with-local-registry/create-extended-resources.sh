@@ -35,6 +35,7 @@ baseUrl=$1
 # For an example config file see: extended-resources.config.sh
 source "$2"
 
+# Set CPUs, memory, and node cost.
 for i in $(seq 0 $(($NODES_COUNT - 1)) ); do
     getNodeName $i
     nodeName=${RET}
@@ -49,4 +50,18 @@ for i in $(seq 0 $(($NODES_COUNT - 1)) ); do
         "http://${baseUrl}/api/v1/nodes/${nodeName}/status"
 
     kubectl label --context $CONTEXT node ${nodeName} ${nodeName}="${nodeCost}"
+done
+
+# Set custom extended resources.
+for compoundKey in "${!customResources[@]}"; do
+    readarray -d : -t keyComponents <<< "$compoundKey"
+    nodeName="${keyComponents[0]}"
+    resourceName=$(echo "${keyComponents[1]}" | tr -d "\n")
+    resourceValue="${customResources[$compoundKey]}"
+    echo "node: $node, resource: $resourceName = $resourceValue"
+
+    curl --header "Content-Type: application/json-patch+json" \
+        --request PATCH \
+        --data "[{\"op\": \"add\", \"path\": \"/status/capacity/${resourceName}\", \"value\": \"${resourceValue}\"}]" \
+        "http://${baseUrl}/api/v1/nodes/${nodeName}/status"
 done
