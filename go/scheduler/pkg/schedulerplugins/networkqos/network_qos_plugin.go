@@ -122,7 +122,7 @@ func (me *NetworkQosPlugin) Filter(ctx context.Context, cycleState *framework.Cy
 	if !me.checkNodeMeetsMinRequirements(region, candidateK8sNode, qosState.minNetworkRequirements) {
 		return framework.NewStatus(
 			framework.Unschedulable,
-			fmt.Sprintf("None of node %s's network links not meets the minimum NetworkQoS requirements.", candidateK8sNode.Label()),
+			fmt.Sprintf("None of node %s's network links meets the minimum NetworkQoS requirements.", candidateK8sNode.Label()),
 		)
 	}
 
