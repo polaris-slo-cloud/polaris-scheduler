@@ -34,7 +34,6 @@ The following image shows the configuration of the cluster nodes and the configu
 1. Run `./start-kind-with-local-registry.sh`
 1. In a second terminal run `kubectl proxy`
 1. Run `./create-extended-resources.sh localhost:8001`
-1. Run `kubectl apply -f ./cluster-topology.yaml`
 1. `cd ..` to get back to the scenario's main folder
 1. Run `kubectl get pods --all-namespaces` to find the pod names of the schedulers.
 1. Open [run-all-experiments.sh](./run-all-experiments.sh) and set the variables at the top to the corresponding schedulers' pod names to enable retrieval of scheduler logs and configure the number of iterations.

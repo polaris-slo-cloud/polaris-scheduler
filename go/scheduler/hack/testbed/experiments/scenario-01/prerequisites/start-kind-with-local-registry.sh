@@ -13,6 +13,12 @@ APP_IMAGE="gcr.io/google-containers/pause:3.2"
 docker pull $APP_IMAGE
 kind load docker-image $APP_IMAGE
 
+# Deploy the CRDs and the cluster topology.
+kubectl apply -f "${SCRIPT_DIR}/../../prerequisites"
+kubectl apply -f "${SCRIPT_DIR}/cluster-topology.yaml"
+# Undeploy the rainbow-orchestrator, which is not needed for scheduler testing.
+kubectl delete deployment -n rainbow-system rainbow-orchestrator-controller-manager
+
 # Deploy our schedulers
 # kubectl apply -f ./scheduler-deployments/comparison-scheduler.yaml
 # kubectl apply -f ./scheduler-deployments/rainbow-scheduler.yaml
