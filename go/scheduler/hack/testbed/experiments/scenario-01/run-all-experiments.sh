@@ -1,6 +1,8 @@
 #!/bin/bash
 
 # IMPORTANT: Configure the names of the scheduler pods here.
+# Use the following syntax: "<namespace>:<pod-name"
+# E.g., ["rainbow-scheduler"]="rainbow-system:rainbow-scheduler-xyz"
 declare -A schedulerPods=(
     ["greedy-first-fit-scheduler"]=""
     ["round-robin-scheduler"]=""
@@ -37,12 +39,14 @@ for scheduler in "${!schedulerPods[@]}"; do
 
             ./run-single-experiment.sh "${experimentFile}" "${scheduler}" "${instanceCount}" "${iterationsCount}"
 
+            readarray -d : -t podId <<< "${schedulerPods[$scheduler]}"
+            podNamespace="${podId[0]}"
+            podName=$(echo "${podId[1]}" | tr -d "\n")
             logFile="./logs/${scheduler}-${instanceCount}instances-$(date +%s).log"
-            podName="${schedulerPods[$scheduler]}"
 
             if [ "$podName" != "" ]; then
                 echo "$startInfo" > "$logFile"
-                kubectl logs -n kube-system "$podName" >> "$logFile"
+                kubectl logs -n "$podNamespace" "$podName" >> "$logFile"
             fi
         done
     done
