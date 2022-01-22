@@ -101,6 +101,7 @@ spec:
           limits:
             rainbow-h2020.eu/fake-cpu: 1000m
             rainbow-h2020.eu/fake-memory: 1Gi
+            rainbow-h2020.eu/camera: "1"
 ---
 # AlertValidator Service
 apiVersion: apps/v1
