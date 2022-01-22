@@ -18,15 +18,16 @@ metadata:
 spec:
   nodeA: kind-control-plane
   nodeB: kind-worker
-  qualityClass: QC1Gbps
-  throughput:
-    bandwidthKbps: 1000000
-    bandwidthVariance: 0
-  latency:
-    packetDelayMsec: 2
-    packetDelayVariance: 0
-  packetLoss:
-    packetLossBp: 0
+  qos:
+    qualityClass: QC1Gbps
+    throughput:
+      bandwidthKbps: 1000000
+      bandwidthVariance: 0
+    latency:
+      packetDelayMsec: 2
+      packetDelayVariance: 0
+    packetLoss:
+      packetLossBp: 0
 ---
 apiVersion: cluster.k8s.rainbow-h2020.eu/v1
 kind: NetworkLink
@@ -35,15 +36,16 @@ metadata:
 spec:
   nodeA: kind-control-plane
   nodeB: kind-worker2
-  qualityClass: QC1Mbps
-  throughput:
-    bandwidthKbps: 1000
-    bandwidthVariance: 0
-  latency:
-    packetDelayMsec: 10
-    packetDelayVariance: 0
-  packetLoss:
-    packetLossBp: 10
+  qos:
+    qualityClass: QC1Mbps
+    throughput:
+      bandwidthKbps: 1000
+      bandwidthVariance: 0
+    latency:
+      packetDelayMsec: 10
+      packetDelayVariance: 0
+    packetLoss:
+      packetLossBp: 10
 ---
 apiVersion: cluster.k8s.rainbow-h2020.eu/v1
 kind: NetworkLink
@@ -52,15 +54,16 @@ metadata:
 spec:
   nodeA: kind-worker1
   nodeB: kind-worker3
-  qualityClass: QC10Mbps
-  throughput:
-    bandwidthKbps: 10000
-    bandwidthVariance: 0
-  latency:
-    packetDelayMsec: 20
-    packetDelayVariance: 0
-  packetLoss:
-    packetLossBp: 0
+  qos:
+    qualityClass: QC10Mbps
+    throughput:
+      bandwidthKbps: 10000
+      bandwidthVariance: 0
+    latency:
+      packetDelayMsec: 20
+      packetDelayVariance: 0
+    packetLoss:
+      packetLossBp: 0
 ---
 apiVersion: cluster.k8s.rainbow-h2020.eu/v1
 kind: NetworkLink
@@ -69,12 +72,13 @@ metadata:
 spec:
   nodeA: kind-worker2
   nodeB: kind-worker3
-  qualityClass: QC10Mbps
-  throughput:
-    bandwidthKbps: 10000
-    bandwidthVariance: 0
-  latency:
-    packetDelayMsec: 10
-    packetDelayVariance: 0
-  packetLoss:
-    packetLossBp: 0
+  qos:
+    qualityClass: QC10Mbps
+    throughput:
+      bandwidthKbps: 10000
+      bandwidthVariance: 0
+    latency:
+      packetDelayMsec: 10
+      packetDelayVariance: 0
+    packetLoss:
+      packetLossBp: 0

@@ -7,15 +7,16 @@ metadata:
 spec:
   nodeA: kind-control-plane
   nodeB: kind-worker4
-  qualityClass: QC20Mbps
-  throughput:
-    bandwidthKbps: 20000
-    bandwidthVariance: 0
-  latency:
-    packetDelayMsec: 25
-    packetDelayVariance: 0
-  packetLoss:
-    packetLossBp: 0
+  qos:
+    qualityClass: QC20Mbps
+    throughput:
+      bandwidthKbps: 20000
+      bandwidthVariance: 0
+    latency:
+      packetDelayMsec: 25
+      packetDelayVariance: 0
+    packetLoss:
+      packetLossBp: 0
 ---
 apiVersion: cluster.k8s.rainbow-h2020.eu/v1
 kind: NetworkLink
@@ -24,15 +25,16 @@ metadata:
 spec:
   nodeA: kind-control-plane
   nodeB: kind-worker5
-  qualityClass: QC40Mbps
-  throughput:
-    bandwidthKbps: 40000
-    bandwidthVariance: 0
-  latency:
-    packetDelayMsec: 40
-    packetDelayVariance: 0
-  packetLoss:
-    packetLossBp: 0
+  qos:
+    qualityClass: QC40Mbps
+    throughput:
+      bandwidthKbps: 40000
+      bandwidthVariance: 0
+    latency:
+      packetDelayMsec: 40
+      packetDelayVariance: 0
+    packetLoss:
+      packetLossBp: 0
 ---
 apiVersion: cluster.k8s.rainbow-h2020.eu/v1
 kind: NetworkLink
@@ -41,15 +43,16 @@ metadata:
 spec:
   nodeA: kind-worker
   nodeB: kind-worker4
-  qualityClass: QC5Mbps
-  throughput:
-    bandwidthKbps: 5000
-    bandwidthVariance: 0
-  latency:
-    packetDelayMsec: 20
-    packetDelayVariance: 0
-  packetLoss:
-    packetLossBp: 0
+  qos:
+    qualityClass: QC5Mbps
+    throughput:
+      bandwidthKbps: 5000
+      bandwidthVariance: 0
+    latency:
+      packetDelayMsec: 20
+      packetDelayVariance: 0
+    packetLoss:
+      packetLossBp: 0
 ---
 apiVersion: cluster.k8s.rainbow-h2020.eu/v1
 kind: NetworkLink
@@ -58,15 +61,16 @@ metadata:
 spec:
   nodeA: kind-worker2
   nodeB: kind-worker5
-  qualityClass: QC10Mbps
-  throughput:
-    bandwidthKbps: 10000
-    bandwidthVariance: 17000000
-  latency:
-    packetDelayMsec: 5
-    packetDelayVariance: 0
-  packetLoss:
-    packetLossBp: 0
+  qos:
+    qualityClass: QC10Mbps
+    throughput:
+      bandwidthKbps: 10000
+      bandwidthVariance: 17000000
+    latency:
+      packetDelayMsec: 5
+      packetDelayVariance: 0
+    packetLoss:
+      packetLossBp: 0
 ---
 apiVersion: cluster.k8s.rainbow-h2020.eu/v1
 kind: NetworkLink
@@ -75,15 +79,16 @@ metadata:
 spec:
   nodeA: kind-worker2
   nodeB: kind-worker6
-  qualityClass: QC10Mbps
-  throughput:
-    bandwidthKbps: 10000
-    bandwidthVariance: 64000
-  latency:
-    packetDelayMsec: 10
-    packetDelayVariance: 0
-  packetLoss:
-    packetLossBp: 0
+  qos:
+    qualityClass: QC10Mbps
+    throughput:
+      bandwidthKbps: 10000
+      bandwidthVariance: 64000
+    latency:
+      packetDelayMsec: 10
+      packetDelayVariance: 0
+    packetLoss:
+      packetLossBp: 0
 ---
 apiVersion: cluster.k8s.rainbow-h2020.eu/v1
 kind: NetworkLink
@@ -92,15 +97,16 @@ metadata:
 spec:
   nodeA: kind-worker3
   nodeB: kind-worker6
-  qualityClass: QC10Mbps
-  throughput:
-    bandwidthKbps: 10000
-    bandwidthVariance: 0
-  latency:
-    packetDelayMsec: 10
-    packetDelayVariance: 0
-  packetLoss:
-    packetLossBp: 0
+  qos:
+    qualityClass: QC10Mbps
+    throughput:
+      bandwidthKbps: 10000
+      bandwidthVariance: 0
+    latency:
+      packetDelayMsec: 10
+      packetDelayVariance: 0
+    packetLoss:
+      packetLossBp: 0
 ---
 apiVersion: cluster.k8s.rainbow-h2020.eu/v1
 kind: NetworkLink
@@ -109,15 +115,16 @@ metadata:
 spec:
   nodeA: kind-worker4
   nodeB: kind-worker5
-  qualityClass: QC20Mbps
-  throughput:
-    bandwidthKbps: 20000
-    bandwidthVariance: 0
-  latency:
-    packetDelayMsec: 10
-    packetDelayVariance: 0
-  packetLoss:
-    packetLossBp: 0
+  qos:
+    qualityClass: QC20Mbps
+    throughput:
+      bandwidthKbps: 20000
+      bandwidthVariance: 0
+    latency:
+      packetDelayMsec: 10
+      packetDelayVariance: 0
+    packetLoss:
+      packetLossBp: 0
 ---
 apiVersion: cluster.k8s.rainbow-h2020.eu/v1
 kind: NetworkLink
@@ -126,12 +133,13 @@ metadata:
 spec:
   nodeA: kind-worker5
   nodeB: kind-worker6
-  qualityClass: QC40Mbps
-  throughput:
-    bandwidthKbps: 40000
-    bandwidthVariance: 0
-  latency:
-    packetDelayMsec: 10
-    packetDelayVariance: 0
-  packetLoss:
-    packetLossBp: 0
+  qos:
+    qualityClass: QC40Mbps
+    throughput:
+      bandwidthKbps: 40000
+      bandwidthVariance: 0
+    latency:
+      packetDelayMsec: 10
+      packetDelayVariance: 0
+    packetLoss:
+      packetLossBp: 0
