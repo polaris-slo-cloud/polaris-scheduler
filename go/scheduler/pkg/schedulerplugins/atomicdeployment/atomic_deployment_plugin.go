@@ -15,7 +15,7 @@ const (
 	// PluginName is the name of this scheduler plugin.
 	PluginName = "AtomicDeployment"
 
-	waitMsec = "500ms"
+	waitMsec = "5000ms"
 )
 
 var (
