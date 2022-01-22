@@ -198,6 +198,8 @@ func (me *ServiceGraphPlugin) Reserve(ctx context.Context, cycleState *framework
 		return newList
 	})
 
+	klog.Infof("Reserve success: pod %s on node %s", pod.Name, nodeName)
+
 	return framework.NewStatus(framework.Success)
 }
 
