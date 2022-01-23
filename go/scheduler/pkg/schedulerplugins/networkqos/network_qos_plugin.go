@@ -75,19 +75,17 @@ func (me *NetworkQosPlugin) PreFilter(ctx context.Context, cycleState *framework
 	}
 	minNetworkQosReqs := me.getMinNetworkRequirements(svcGraphState, podSvcNode, incomingLinks)
 
-	if len(incomingLinks) > 0 {
-		qosState := networkQosStateData{
-			svcGraphState:          svcGraphState,
-			regionGraph:            region,
-			podSvcNode:             podSvcNode,
-			incomingLinks:          incomingLinks,
-			minNetworkRequirements: minNetworkQosReqs,
-			k8sNodeScores:          sync.Map{},
-		}
-		cycleState.Lock()
-		cycleState.Write(networkQosStateKey, &qosState)
-		cycleState.Unlock()
+	qosState := networkQosStateData{
+		svcGraphState:          svcGraphState,
+		regionGraph:            region,
+		podSvcNode:             podSvcNode,
+		incomingLinks:          incomingLinks,
+		minNetworkRequirements: minNetworkQosReqs,
+		k8sNodeScores:          sync.Map{},
 	}
+	cycleState.Lock()
+	cycleState.Write(networkQosStateKey, &qosState)
+	cycleState.Unlock()
 
 	return framework.NewStatus(framework.Success)
 }
