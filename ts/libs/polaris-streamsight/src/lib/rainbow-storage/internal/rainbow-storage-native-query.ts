@@ -8,9 +8,9 @@ import { AnalyticsMetric, GetAnalyticsRequest, GetAnalyticsResponse, RestRequest
 const ANALYTICS_QUERY_PATH = '/analytics/get';
 
 /**
- * A TimeSeriesQuery that contacts the RAINBOW Distributed Storage.
+ * A TimeSeriesQuery that reads analytics from the RAINBOW Distributed Storage.
  */
-export class RainbowStorageNativeQuery implements TimeSeriesQuery<any> {
+export class RainbowStorageNativeQuery implements TimeSeriesQuery<TimeSeries<Record<string, number>>> {
 
     private client: RestClient;
     private baseUrl: string;
@@ -33,8 +33,10 @@ export class RainbowStorageNativeQuery implements TimeSeriesQuery<any> {
         this.baseUrl = getRainbowStorageBaseUrl(config);
     }
 
-    async execute(): Promise<PolarisQueryResult<TimeSeries<any>>> {
+    async execute(): Promise<PolarisQueryResult<TimeSeries<Record<string, number>>>> {
         const url = this.baseUrl + ANALYTICS_QUERY_PATH;
+        // Send an empty object to get all currently stored analytics.
+        const request = {};
         const httpOptions: Record<string, string> = {
             // eslint-disable-next-line @typescript-eslint/naming-convention
             'Content-Type': 'application/json',
@@ -45,19 +47,19 @@ export class RainbowStorageNativeQuery implements TimeSeriesQuery<any> {
 
         let response: IRestResponse<GetAnalyticsResponse>;
         try {
-            response = await this.client.create<GetAnalyticsResponse>(url, this.query, httpOptions);
+            response = await this.client.create<GetAnalyticsResponse>(url, request, httpOptions);
         } catch (err) {
-            const restError = new RestRequestError({ url, request: this.query, httpOptions, cause: err });
+            const restError = new RestRequestError({ url, request, httpOptions, cause: err });
             throw new QueryError('Error executing RAINBOW Storage request.', this, restError);
         }
 
         if (response.statusCode !== 200 && response.statusCode !== 201) {
-            const restError = new RestRequestError({ url, request: this.query, httpOptions, response });
+            const restError = new RestRequestError({ url, request, httpOptions, response });
             throw new QueryError('RAINBOW Storage returned an error.', this, restError);
         }
 
         const queryLog = {
-            query: this.query,
+            request,
             url,
             httpOptions,
             response,
@@ -66,23 +68,26 @@ export class RainbowStorageNativeQuery implements TimeSeriesQuery<any> {
         return this.transformQueryResponse(response.result);
     }
 
-    toObservable(): Observable<PolarisQueryResult<any>> {
+    toObservable(): Observable<PolarisQueryResult<TimeSeries<Record<string, number>>>> {
         return observableFrom(this.execute());
     }
 
-    private transformQueryResponse(response: GetAnalyticsResponse): PolarisQueryResult<TimeSeries<number>> {
+    private transformQueryResponse(response: GetAnalyticsResponse): PolarisQueryResult<TimeSeries<Record<string, number>>> {
         const timeSeries = this.createTimeSeries();
-        if (response?.analytics) {
-            timeSeries.samples = response.analytics.map(sample => this.transformSample(sample));
+        if (response?.analytics?.length > 0) {
+            const sample = this.transformAnalyticsList(response.analytics);
+            timeSeries.samples = [ sample ];
+            timeSeries.start = sample.timestamp;
+            timeSeries.end = sample.timestamp;
         } else {
             timeSeries.samples = [];
         }
         return { results: [ timeSeries ] };
     }
 
-    private createTimeSeries(): TimeSeries<number> {
+    private createTimeSeries(): TimeSeries<Record<string, number>> {
         return {
-            dataType: DataType.Float,
+            dataType: DataType.Object,
             metricName: this.metricName,
             labels: {},
             samples: null,
@@ -91,11 +96,20 @@ export class RainbowStorageNativeQuery implements TimeSeriesQuery<any> {
         };
     }
 
-    private transformSample(sample: AnalyticsMetric): Sample<number> {
-        return {
-            timestamp: sample.timestamp,
-            value: sample.val,
+    private transformAnalyticsList(analytics: AnalyticsMetric[]): Sample<Record<string, number>> {
+        const sample: Sample<Record<string, number>> = {
+            timestamp: 0,
+            value: {},
         };
+
+        analytics.forEach(metric => {
+            sample.value[metric.key] = metric.val;
+            if (metric.timestamp > sample.timestamp) {
+                sample.timestamp = metric.timestamp;
+            }
+        });
+
+        return sample;
     }
 
 }

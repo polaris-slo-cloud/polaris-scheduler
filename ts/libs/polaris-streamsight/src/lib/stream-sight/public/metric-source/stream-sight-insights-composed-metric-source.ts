@@ -28,7 +28,7 @@ const CHECK_INSIGHT_TOPOLOGY_INTERVAL = 100;
 export class StreamSightInsightsComposedMetricSource extends ComposedMetricSourceBase<StreamSightInsights> {
 
     /** The query that fetches the insights from the RAINBOW storage. */
-    protected query: TimeInstantQuery<StreamSightInsights>;
+    protected query: TimeInstantQuery<Record<string, number>>;
 
     protected metricType = StreamSightInsightsMetric.instance;
 
@@ -74,12 +74,12 @@ export class StreamSightInsightsComposedMetricSource extends ComposedMetricSourc
         return observableOf(undefined);
     }
 
-    private createQuery(timeSeriesSource: TimeSeriesSource): TimeInstantQuery<StreamSightInsights> {
+    private createQuery(timeSeriesSource: TimeSeriesSource): TimeInstantQuery<Record<string, number>> {
         const metricName = this.insightTopologyManager.getInsightTopologyName(this.metricParams);
-        return timeSeriesSource.select('', metricName);
+        return timeSeriesSource.select<Record<string, number>>('', metricName);
     }
 
-    private assembleComposedMetric(results: TimeSeriesInstant<StreamSightInsights>[]): TimeSeriesInstant<StreamSightInsights> {
+    private assembleComposedMetric(results: TimeSeriesInstant<Record<string, number>>[]): TimeSeriesInstant<StreamSightInsights> {
         if (results?.length === 0) {
             return undefined;
         }
