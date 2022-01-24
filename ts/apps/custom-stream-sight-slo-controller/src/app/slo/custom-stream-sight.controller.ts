@@ -64,7 +64,7 @@ export class CustomStreamSightSlo implements ServiceLevelObjective<CustomStreamS
             .then(sloCompliance => ({
                 sloMapping: this.sloMapping,
                 elasticityStrategyParams: {
-                    currSloCompliancePercentage: sloCompliance,
+                    currSloCompliancePercentage: Math.round(sloCompliance),
                     tolerance: this.sloMapping.spec.sloConfig.elasticityStrategyTolerance,
                 },
             }));

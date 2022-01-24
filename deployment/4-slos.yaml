@@ -1136,7 +1136,7 @@ spec:
           operator: Exists
           effect: NoSchedule
       containers:
-        - image: registry.gitlab.com/rainbow-project1/rainbow-integration/custom-stream-sight-slo-controller:0.0.1
+        - image: registry.gitlab.com/rainbow-project1/rainbow-integration/custom-stream-sight-slo-controller:0.0.2
           name: slo-controller
           resources:
             limits:
