@@ -67,7 +67,11 @@ export class CustomStreamSightSlo implements ServiceLevelObjective<CustomStreamS
                     currSloCompliancePercentage: Math.round(sloCompliance),
                     tolerance: this.sloMapping.spec.sloConfig.elasticityStrategyTolerance,
                 },
-            }));
+            }))
+            .catch(err => {
+                const stringifiedErr = JSON.stringify(err, null, '  ');
+                throw new Error(stringifiedErr);
+            });
     }
 
     private async calculateSloCompliance(): Promise<number> {
