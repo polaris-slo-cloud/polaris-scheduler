@@ -3,6 +3,9 @@ import { PolarisStreamSightConfig, getStreamSightBaseUrl } from '../../config';
 import { CreateInsightTopologyRequest, CreateInsightTopologyResponse, STREAM_SIGHT_INSIGHTS_API_PATH, StreamSightError } from '../../model';
 import { StreamSightInsightsParams } from '../public/common';
 
+const POD_NAMESPACE_PLACEHOLDER = '${namespace}';
+const POD_NAME_PLACEHOLDER = '${podName}';
+
 /**
  * Creates and updates StreamSight insight topologies.
  */
@@ -59,17 +62,27 @@ export class InsightTopologyManager {
 
         let i = 0;
         streamKeys.forEach(key => {
-            const query = `${key}: ${metricParams.streams[key]}`;
+            const streamQuery = this.replacePlaceholders(metricParams.streams[key], metricParams);
+            const query = `${key}: ${streamQuery}`;
             queries[i] = query;
             ++i;
         });
         insightKeys.forEach(key => {
-            const query = `${key} = ${metricParams.insights[key]}`;
+            const insightQuery = this.replacePlaceholders(metricParams.insights[key], metricParams);
+            const query = `${key} = ${insightQuery}`;
             queries[i] = query;
             ++i;
         });
 
         return queries;
+    }
+
+    private replacePlaceholders(query: string, metricParams: StreamSightInsightsParams): string {
+        const namespace = metricParams.namespace;
+        const podName = `${metricParams.sloTarget.name}-%`;
+        let processedQuery = query.replace(POD_NAMESPACE_PLACEHOLDER, namespace);
+        processedQuery = query.replace(POD_NAME_PLACEHOLDER, podName);
+        return processedQuery;
     }
 
 }
