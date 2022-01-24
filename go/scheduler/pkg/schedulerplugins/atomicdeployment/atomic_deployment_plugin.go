@@ -8,6 +8,8 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	framework "k8s.io/kubernetes/pkg/scheduler/framework"
 
+	"k8s.rainbow-h2020.eu/rainbow/orchestration/pkg/kubeutil"
+	"k8s.rainbow-h2020.eu/rainbow/orchestration/pkg/services/servicegraphmanager"
 	"k8s.rainbow-h2020.eu/rainbow/scheduler/internal/util"
 )
 
@@ -15,7 +17,7 @@ const (
 	// PluginName is the name of this scheduler plugin.
 	PluginName = "AtomicDeployment"
 
-	waitMsec = "5000ms"
+	waitMsec = "60000ms"
 )
 
 var (
@@ -28,6 +30,9 @@ var (
 // AtomicDeploymentPlugin is a Permit plugin that ensures that all of an application's pods are permitted at the same time or not at all.
 type AtomicDeploymentPlugin struct {
 	waitDuration time.Duration
+
+	// The Scheduling framework handle.
+	frameworkHandle framework.Handle
 }
 
 // New creates a new AtomicDeploymentPlugin instance.
@@ -37,7 +42,8 @@ func New(obj runtime.Object, handle framework.Handle) (framework.Plugin, error) 
 		return nil, err
 	}
 	return &AtomicDeploymentPlugin{
-		waitDuration: waitDuration,
+		waitDuration:    waitDuration,
+		frameworkHandle: handle,
 	}, nil
 }
 
@@ -76,5 +82,23 @@ func (me *AtomicDeploymentPlugin) Permit(ctx context.Context, cycleState *framew
 		}
 	}
 
+	// The last pod of a ServiceGraph needs to approve all pods that have been placed in the waiting state.
+	me.frameworkHandle.IterateOverWaitingPods(func(wp framework.WaitingPod) {
+		if me.isSameServiceGraph(wp, svcGraphState) {
+			wp.Allow(PluginName)
+		}
+	})
+
 	return framework.NewStatus(framework.Success), 0
+}
+
+func (me *AtomicDeploymentPlugin) isSameServiceGraph(wp framework.WaitingPod, currPodSvcGraphState servicegraphmanager.ServiceGraphState) bool {
+	wpPod := wp.GetPod()
+	wpSvcGraph, ok := kubeutil.GetLabel(wpPod, kubeutil.LabelRefServiceGraph)
+	if !ok {
+		return false
+	}
+
+	currPodSvcGraphCRD := currPodSvcGraphState.ServiceGraphCRD()
+	return wpPod.Namespace == currPodSvcGraphCRD.Namespace && wpSvcGraph == currPodSvcGraphCRD.Name
 }

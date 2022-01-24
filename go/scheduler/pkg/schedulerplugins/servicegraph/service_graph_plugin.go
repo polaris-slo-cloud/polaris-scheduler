@@ -14,7 +14,6 @@ import (
 	"k8s.rainbow-h2020.eu/rainbow/orchestration/pkg/kubeutil"
 	"k8s.rainbow-h2020.eu/rainbow/orchestration/pkg/services/servicegraphmanager"
 	"k8s.rainbow-h2020.eu/rainbow/scheduler/internal/util"
-	"k8s.rainbow-h2020.eu/rainbow/scheduler/pkg/schedulerplugins/atomicdeployment"
 )
 
 const (
@@ -40,17 +39,15 @@ var (
 // - PreFilter: Store the ServiceGraphState in the CycleState.
 // - PostFilter: Release the ServiceGraphState if no suitable K8s node was found.
 // - Reserve: Record the selected K8s node in the ServiceGraphState.
-// - Permit: Wrap AtomicDeploymentPlugin and release the ServiceGraphState when the AtomicDeploymentPlugin gives its "thumbs-up".
-//   Note that the ServiceGraphPlugin should be configured as the last Permit plugin in the scheduler configuration.
+// - Permit: Release the ServiceGraphState.
+//   Important: Note that the ServiceGraphPlugin should be configured as the last Permit plugin in the scheduler configuration,
+//   because it will release the ServiceGraphState.
 type ServiceGraphPlugin struct {
 	// The original kube-scheduler sorting plugin, which we use after our ServiceGraph node sorting.
 	origQueueSort *kubequeuesort.PrioritySort
 
 	// The ServiceGraphManager used for creating the ServiceGraphState.
 	svcGraphManager servicegraphmanager.ServiceGraphManager
-
-	// The AtomicDeploymentPlugin, to which we delegate the decision whether the pod may enter the bind phase.
-	atomicDeployment *atomicdeployment.AtomicDeploymentPlugin
 }
 
 // New creates a new ServiceGraphPlugin instance.
@@ -60,15 +57,9 @@ func New(obj runtime.Object, handle framework.Handle) (framework.Plugin, error) 
 		return nil, err
 	}
 
-	atomicDeployment, err := atomicdeployment.New(obj, handle)
-	if err != nil {
-		return nil, err
-	}
-
 	return &ServiceGraphPlugin{
-		origQueueSort:    origQueueSort.(*kubequeuesort.PrioritySort),
-		svcGraphManager:  servicegraphmanager.GetServiceGraphManager(),
-		atomicDeployment: atomicDeployment.(*atomicdeployment.AtomicDeploymentPlugin),
+		origQueueSort:   origQueueSort.(*kubequeuesort.PrioritySort),
+		svcGraphManager: servicegraphmanager.GetServiceGraphManager(),
 	}, nil
 }
 
@@ -142,7 +133,7 @@ func (me *ServiceGraphPlugin) PreFilter(ctx context.Context, cycleState *framewo
 	if !ok || svcGraphState.ServiceGraph().NodeByLabel(svcGraphNodeName) == nil {
 		// If there is a ServiceGraph, but no valid reference to a node within that ServiceGraph, we signal an error about this pod.
 		svcGraphState.Release(pod)
-		return framework.AsStatus(fmt.Errorf("The pod %s is not associated with a node within its ServiceGraph", pod.Name))
+		return framework.AsStatus(fmt.Errorf("the pod %s is not associated with a node within its ServiceGraph", pod.Name))
 	}
 
 	util.WriteServiceGraphToCycleState(cycleState, svcGraphState)
@@ -216,6 +207,7 @@ func (me *ServiceGraphPlugin) Unreserve(ctx context.Context, cycleState *framewo
 	// ToDo: Change PlacementMap to track number of pods placed on a K8s node.
 	// Otherwise, we might remove the node from the list, even though an existing pod is running on it.
 	//
+	// klog.Infof("ServiceGraph.Unreserve(%s) on  node %s", pod.Name, nodeName)
 	// placementMap, err := svcGraphState.PlacementMap()
 	// if err != nil {
 	// 	return
@@ -234,8 +226,12 @@ func (me *ServiceGraphPlugin) Unreserve(ctx context.Context, cycleState *framewo
 	// })
 }
 
-// Permit calls atomicDeployment.Permit() and releases the ServiceGraphState if
-// atomicDeployment permits the pod.
+// Permit releases the ServiceGraphState. It is important that the ServiceGraph plugin
+// is the last Permit plugin, because it will release the ServiceGraphState.
+//
+// If the AtomicDeployment plugin decides that the pod needs to wait, we still need
+// to remove the ServiceGraphState, because Permit() will not be called again. Instead the
+// waiting pod must be approved by the Permit() stage of another pod.
 //
 // Permit is called before binding a pod (and before prebind plugins). Permit
 // plugins are used to prevent or delay the binding of a Pod. A permit plugin
@@ -244,14 +240,13 @@ func (me *ServiceGraphPlugin) Unreserve(ctx context.Context, cycleState *framewo
 // waiting. Note that if the plugin returns "wait", the framework will wait only
 // after running the remaining plugins given that no other plugin rejects the pod.
 func (me *ServiceGraphPlugin) Permit(ctx context.Context, cycleState *framework.CycleState, pod *core.Pod, nodeName string) (*framework.Status, time.Duration) {
-	me.readStopwatch(cycleState, pod)
-	status, duration := me.atomicDeployment.Permit(ctx, cycleState, pod, nodeName)
-	if status == nil || status.IsSuccess() {
-		if svcGraphState, err := util.GetServiceGraphFromCycleState(cycleState); err == nil {
-			me.releaseServiceGraphState(ctx, cycleState, pod, svcGraphState)
-		}
+	if svcGraphState, err := util.GetServiceGraphFromCycleState(cycleState); err == nil {
+		me.releaseServiceGraphState(ctx, cycleState, pod, svcGraphState)
 	}
-	return status, duration
+
+	me.readStopwatch(cycleState, pod)
+
+	return framework.NewStatus(framework.Success), 0
 }
 
 func (me *ServiceGraphPlugin) releaseServiceGraphState(ctx context.Context, cycleState *framework.CycleState, pod *core.Pod, svcGraphState servicegraphmanager.ServiceGraphState) {
