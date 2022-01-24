@@ -1,7 +1,6 @@
 apiVersion: fogapps.k8s.rainbow-h2020.eu/v1
 kind: ServiceGraph
 metadata:
-  generation: 1
   name: appevalhrc-inst1-jijqqbzv0a
   namespace: appevalhrc-inst1-jijqqbzv0a
 spec:
@@ -286,7 +285,7 @@ spec:
           # Average CPU usage across all pods.
           avg_pod_cpu: 'compute (max("cpu_ptc" FROM (pod_cpu), 10s)) EVERY 10 SECONDS;'
           # MQ delay rate = mq_publish / mq_delivery, i.e., a value of 100 is perfect, above 100 we are accumulating messages and need to scale out, below 100 we are faster than required and may scale in.
-          mq_delay_rate: 'compute (100.0 * max("generator_personnel_rk_pub_rate" FROM (mq_publish), 10s) / max("rmt_robot_rk_deliver_rate" FROM (mq_delivery), 10s)), 10 SECONDS) EVERY 10 SECONDS;'
+          mq_delay_rate: 'compute (100.0 * max("generator_personnel_rk_pub_rate" FROM (mq_publish), 10s) / max("rmt_robot_rk_deliver_rate" FROM (mq_delivery), 10s), 10 SECONDS) EVERY 10 SECONDS;'
 
         # Defines the target state for the `insights`, i.e., the state in which the SLO should keep them, in Conjunctive Normal Form (CNF).
         targetState:
