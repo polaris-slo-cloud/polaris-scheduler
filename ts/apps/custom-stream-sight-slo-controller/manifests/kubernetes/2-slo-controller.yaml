@@ -36,7 +36,7 @@ spec:
           effect: NoSchedule
       hostNetwork: true
       containers:
-        - image: registry.gitlab.com/rainbow-project1/rainbow-integration/custom-stream-sight-slo-controller:0.0.8
+        - image: registry.gitlab.com/rainbow-project1/rainbow-integration/custom-stream-sight-slo-controller:0.0.9
           name: slo-controller
           resources:
             limits:

@@ -30,29 +30,29 @@ export class InsightTopologyManager {
             // eslint-disable-next-line @typescript-eslint/naming-convention
             Queries: this.assembleStreamSightQueries(metricParams),
         };
+        const httpOptions: Record<string, string> = {
+            // eslint-disable-next-line @typescript-eslint/naming-convention
+            'Content-Type': 'application/json',
+        };
+        if (this.config.streamSightAuthToken) {
+            httpOptions['Authorization'] = this.config.streamSightAuthToken;
+        }
 
         let response: IRestResponse<CreateInsightTopologyResponse>;
         try {
-            const reqOptions: Record<string, string> = {
-                // eslint-disable-next-line @typescript-eslint/naming-convention
-                'Content-Type': 'application/json',
-            };
-            if (this.config.streamSightAuthToken) {
-                reqOptions['Authorization'] = this.config.streamSightAuthToken;
-            }
-            Logger.log(`Create StreamSight Topology: url: ${url},\n reg: ${JSON.stringify(req, null, '  ')},\n HTTP options: ${JSON.stringify(reqOptions, null, '')}`)
-            response = await this.client.create<CreateInsightTopologyResponse>(url, req, reqOptions);
+            response = await this.client.create<CreateInsightTopologyResponse>(url, req, httpOptions);
         } catch (err) {
-            throw new StreamSightError(undefined, req, err);
+            throw new StreamSightError({ url, request: req, httpOptions, cause: err });
         }
 
         if (response.statusCode !== 200 && response.statusCode !== 201) {
-            throw new StreamSightError(response, req);
+            throw new StreamSightError({ url, request: req, httpOptions, response });
         }
         if (response.result.status !== 'success') {
-            throw new StreamSightError(response, req);
+            throw new StreamSightError({ url, request: req, httpOptions, response });
         }
 
+        Logger.log('Successfully created/updated insight:', url, JSON.stringify(req, undefined, '  '));
         return insightName;
     }
 

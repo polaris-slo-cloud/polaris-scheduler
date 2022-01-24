@@ -1,4 +1,4 @@
-import { DataType, Sample } from '@polaris-sloc/core';
+import { DataType, Logger, Sample } from '@polaris-sloc/core';
 import { PolarisQueryResult, QueryError, TimeSeries, TimeSeriesQuery, TimeSeriesQueryResultType } from '@polaris-sloc/core';
 import { Observable, from as observableFrom } from 'rxjs';
 import { IRestResponse, RestClient } from 'typed-rest-client/RestClient';
@@ -35,24 +35,28 @@ export class RainbowStorageNativeQuery implements TimeSeriesQuery<any> {
 
     async execute(): Promise<PolarisQueryResult<TimeSeries<any>>> {
         const url = this.baseUrl + ANALYTICS_QUERY_PATH;
+        const httpOptions: Record<string, string> = {
+            // eslint-disable-next-line @typescript-eslint/naming-convention
+            'Content-Type': 'application/json',
+        };
+        if (this.config.rainbowStorageAuthToken) {
+            httpOptions['Authorization'] = this.config.rainbowStorageAuthToken;
+        }
+
         let response: IRestResponse<GetAnalyticsResponse>;
         try {
-            const reqOptions: Record<string, string> = {
-                // eslint-disable-next-line @typescript-eslint/naming-convention
-                'Content-Type': 'application/json',
-            };
-            if (this.config.rainbowStorageAuthToken) {
-                reqOptions['Authorization'] = this.config.rainbowStorageAuthToken;
-            }
-            response = await this.client.create<GetAnalyticsResponse>(url, this.query, reqOptions);
+            response = await this.client.create<GetAnalyticsResponse>(url, this.query, httpOptions);
         } catch (err) {
-            throw new QueryError('Error executing RAINBOW Storage request.', this, err);
+            const restError = new RestRequestError({ url, request: this.query, httpOptions, cause: err });
+            throw new QueryError('Error executing RAINBOW Storage request.', this, restError);
         }
 
         if (response.statusCode !== 200 && response.statusCode !== 201) {
-            throw new QueryError('RAINBOW Storage returned an error.', this, new RestRequestError(response));
+            const restError = new RestRequestError({ url, request: this.query, httpOptions, response });
+            throw new QueryError('RAINBOW Storage returned an error.', this, restError);
         }
 
+        Logger.log('Received RAINBOW Storage response:', JSON.stringify(response.result, undefined, '  '));
         return this.transformQueryResponse(response.result);
     }
 

@@ -1,3 +1,4 @@
+import { initSelf } from '@polaris-sloc/core';
 import { IRestResponse } from 'typed-rest-client';
 
 /**
@@ -5,8 +6,19 @@ import { IRestResponse } from 'typed-rest-client';
  */
 export class RestRequestError extends Error {
 
-    constructor(public response: IRestResponse<any>, public request?: any, public cause?: any) {
-        super('Error executing REST request.');
+    url: string;
+    response: IRestResponse<any>;
+    request: any;
+    httpOptions: any;
+    cause: any;
+
+    constructor(errorInfo: Partial<RestRequestError>, message?: string) {
+        super(message || 'Error executing REST request.');
+        initSelf(this, errorInfo);
+    }
+
+    toString(): string {
+        return JSON.stringify(this, undefined, '  ');
     }
 
 }
@@ -14,10 +26,10 @@ export class RestRequestError extends Error {
 /**
  * Stores information about an error caused by a StreamSight request.
  */
-export class StreamSightError extends Error {
+export class StreamSightError extends RestRequestError {
 
-    constructor(public response: IRestResponse<any>, public request?: any, public cause?: any) {
-        super('Error executing StreamSight request.');
+    constructor(errorInfo: Partial<StreamSightError>) {
+        super(errorInfo, 'Error executing StreamSight request.');
     }
 
 }
