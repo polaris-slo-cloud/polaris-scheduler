@@ -276,17 +276,17 @@ spec:
         # - `${namespace}`: The namespace, where the SloMapping is deployed.
         # - `${podName}`: A wildcard expression with the prefix of the pod names.
         streams:
-          pod_cpu: 'stream from storageLayer(periodicity=1000, metricID="cpu", entityType="POD", namespace="${namespace}", name="${podName}" );'
+          pod_cpu: 'stream from storageLayer(periodicity=1000, metricID="cpu_ptc", namespace="${namespace}", name="${podName}" );'
           mq_publish: 'stream from storageLayer(periodicity=1000, metricID="generator_personnel_rk_pub_rate");'
-          mq_delivery: 'stream from storageLayer(periodicity=1000, metricID="generator_personnel_rk_deliver_rate");'
+          mq_delivery: 'stream from storageLayer(periodicity=1000, metricID="rmt_robot_rk_deliver_rate");'
 
         # Defines the insights that can be used in the `targetState` below.
         # Each key in this object defines the name of an insight and its value specifies the query for it.
         insights:
           # Average CPU usage across all pods.
-          avg_pod_cpu: 'COMPUTE avg("cpu" FROM (pod_cpu), 10s) EVERY 10s;'
+          avg_pod_cpu: 'compute (max("cpu_ptc" FROM (pod_cpu), 10s)) EVERY 10 SECONDS;'
           # MQ delay rate = mq_publish / mq_delivery, i.e., a value of 100 is perfect, above 100 we are accumulating messages and need to scale out, below 100 we are faster than required and may scale in.
-          mq_delay_rate: 'COMPUTE (max("generator_personnel_rk_pub_rate" FROM (mq_publish), 10s) / max("generator_personnel_rk_deliver_rate" FROM (mq_delivery), 10s)) * 100 EVERY 10s;'
+          mq_delay_rate: 'compute (100.0 * max("generator_personnel_rk_pub_rate" FROM (mq_publish), 10s) / max("rmt_robot_rk_deliver_rate" FROM (mq_delivery), 10s)), 10 SECONDS) EVERY 10 SECONDS;'
 
         # Defines the target state for the `insights`, i.e., the state in which the SLO should keep them, in Conjunctive Normal Form (CNF).
         targetState:
