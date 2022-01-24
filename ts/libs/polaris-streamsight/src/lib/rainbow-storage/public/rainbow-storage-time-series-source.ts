@@ -2,6 +2,9 @@ import { NativeQueryBuilderFactoryFn, TimeSeriesSourceBase } from '@polaris-sloc
 import { PolarisStreamSightConfig } from '../../config';
 import { RainbowStorageNativeQueryBuilder } from '../internal';
 
+/**
+ * The `TimeSeriesSource` for querying the RAINBOW Distributed Storage.
+ */
 export class RainbowStorageTimeSeriesSource extends TimeSeriesSourceBase {
 
     static readonly fullName = 'polaris-sloc.time-series-sources.RainbowStorage';

@@ -64,6 +64,12 @@ type ServiceGraphNode struct {
 	// Configures how multiple instances of this node are created.
 	Replicas ReplicasConfig `json:"replicas"`
 
+	// If true, a pod created from this ServiceGraphNode, will use host node's network namespace.
+	//
+	// +kubebuilder:default=false
+	// +optional
+	HostNetwork bool `json:"hostNetwork,omitempty"`
+
 	// Configures if ports should be exposed from this ServiceGraphNode.
 	//
 	// The exposed ports are available at the DNS name "<ServiceGraphNode.Name>.<ServiceGraphNamespace>.svc"

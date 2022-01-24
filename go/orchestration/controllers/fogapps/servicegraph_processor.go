@@ -35,6 +35,7 @@ type serviceGraphProcessor struct {
 	newChildObjects serviceGraphChildObjectMaps
 
 	log        logr.Logger
+	verboseLog logr.Logger
 	setOwnerFn controllerutil.SetOwnerReferenceFn
 	changes    *controllerutil.ResourceChangesList
 	status     *fogappsCRDs.ServiceGraphStatus
@@ -122,6 +123,7 @@ func newServiceGraphProcessor(
 		existingChildObjects: newServiceGraphChildObjectMaps(childObjects),
 		newChildObjects:      newServiceGraphChildObjectMaps(nil),
 		log:                  log,
+		verboseLog:           log.V(1),
 		setOwnerFn:           setOwnerFn,
 		changes:              controllerutil.NewResourceChangesList(),
 		status:               newServiceGraphStatus(graph),
@@ -354,12 +356,14 @@ func (me *serviceGraphProcessor) assembleUpdatesForDeployments() error {
 
 			if !kubeutil.CheckSpecHashesAreEqual(existingDeployment, updatedDeployment) {
 				// Deployment was changed, we need to update it
+				me.verboseLog.Info("Queuing update for Deployment", "deployment", updatedDeployment.Name)
 				me.changes.AddChanges(controllerutil.NewResourceUpdate(updatedDeployment))
 			}
 
 			delete(me.newChildObjects.Deployments, updatedDeployment.Name)
 		} else {
 			// The corresponding ServiceGraphNode was deleted, so we delete the Deployment
+			me.verboseLog.Info("Queuing deletion of Deployment", "deployment", existingDeployment.Name)
 			me.changes.AddChanges(controllerutil.NewResourceDeletion(existingDeployment))
 		}
 	}
@@ -372,12 +376,14 @@ func (me *serviceGraphProcessor) assembleUpdatesForStatefulSets() error {
 
 			if !kubeutil.CheckSpecHashesAreEqual(existingStatefulSet, updatedStatefulSet) {
 				// StatefulSet was changed, we need to update it
+				me.verboseLog.Info("Queuing update for StatefulSet", "statefulSet", updatedStatefulSet.Name)
 				me.changes.AddChanges(controllerutil.NewResourceUpdate(updatedStatefulSet))
 			}
 
 			delete(me.newChildObjects.StatefulSets, updatedStatefulSet.Name)
 		} else {
 			// The corresponding ServiceGraphNode was deleted, so we delete the StatefulSet
+			me.verboseLog.Info("Queuing deletion of StatefulSet", "statefulSet", existingStatefulSet.Name)
 			me.changes.AddChanges(controllerutil.NewResourceDeletion(existingStatefulSet))
 		}
 	}
@@ -390,12 +396,14 @@ func (me *serviceGraphProcessor) assembleUpdatesForServices() error {
 
 			if !kubeutil.CheckSpecHashesAreEqual(existingService, updatedService) {
 				// Service was changed, we need to update it
+				me.verboseLog.Info("Queuing update for Service", "service", updatedService.Name)
 				me.changes.AddChanges(controllerutil.NewResourceUpdate(updatedService))
 			}
 
 			delete(me.newChildObjects.Services, updatedService.Name)
 		} else {
 			// The corresponding ServiceGraphNode was deleted, so we delete the Service
+			me.verboseLog.Info("Queuing deletion of Service", "service", existingService.Name)
 			me.changes.AddChanges(controllerutil.NewResourceDeletion(existingService))
 		}
 	}
@@ -408,12 +416,14 @@ func (me *serviceGraphProcessor) assembleUpdatesForIngresses() error {
 
 			if !kubeutil.CheckSpecHashesAreEqual(existingIngress, updatedIngress) {
 				// Ingress was changed, we need to update it
+				me.verboseLog.Info("Queuing update for Ingress", "ingress", updatedIngress.Name)
 				me.changes.AddChanges(controllerutil.NewResourceUpdate(updatedIngress))
 			}
 
 			delete(me.newChildObjects.Ingresses, updatedIngress.Name)
 		} else {
 			// The corresponding ServiceGraphNode was deleted, so we delete the Ingress
+			me.verboseLog.Info("Queuing deletion of Ingress", "ingress", existingIngress.Name)
 			me.changes.AddChanges(controllerutil.NewResourceDeletion(existingIngress))
 		}
 	}
@@ -426,12 +436,14 @@ func (me *serviceGraphProcessor) assembleUpdatesForSloMappings() error {
 
 			if !kubeutil.CheckSpecHashesAreEqual(existingSloMapping, updatedSloMapping) {
 				// SloMapping was changed, we need to update it
+				me.verboseLog.Info("Queuing update for SloMapping", "sloMapping", updatedSloMapping.GetName())
 				me.changes.AddChanges(controllerutil.NewResourceUpdate(&updatedSloMapping.Unstructured))
 			}
 
 			delete(me.newChildObjects.SloMappings, updatedSloMapping.GetName())
 		} else {
 			// The corresponding SLO or its ServiceGraphNode or ServiceGraphLink was deleted, so we delete the SloMapping
+			me.verboseLog.Info("Queuing deletion of SloMapping", "sloMapping", existingSloMapping.GetName())
 			me.changes.AddChanges(controllerutil.NewResourceDeletion(&existingSloMapping.Unstructured))
 		}
 	}
@@ -440,18 +452,23 @@ func (me *serviceGraphProcessor) assembleUpdatesForSloMappings() error {
 
 func (me *serviceGraphProcessor) assembleAdditions() error {
 	for _, value := range me.newChildObjects.Deployments {
+		me.verboseLog.Info("Queuing addition of Deployment", "deployment", value.Name)
 		me.changes.AddChanges(controllerutil.NewResourceAddition(value))
 	}
 	for _, value := range me.newChildObjects.StatefulSets {
+		me.verboseLog.Info("Queuing addition of StatefulSet", "statefulSet", value.Name)
 		me.changes.AddChanges(controllerutil.NewResourceAddition(value))
 	}
 	for _, value := range me.newChildObjects.Services {
+		me.verboseLog.Info("Queuing addition of Service", "service", value.Name)
 		me.changes.AddChanges(controllerutil.NewResourceAddition(value))
 	}
 	for _, value := range me.newChildObjects.Ingresses {
+		me.verboseLog.Info("Queuing addition of Ingress", "ingress", value.Name)
 		me.changes.AddChanges(controllerutil.NewResourceAddition(value))
 	}
 	for _, value := range me.newChildObjects.SloMappings {
+		me.verboseLog.Info("Queuing addition of SloMapping", "sloMapping", value.GetName())
 		me.changes.AddChanges(controllerutil.NewResourceAddition(&value.Unstructured))
 	}
 	return nil
@@ -476,7 +493,9 @@ func (me *serviceGraphProcessor) updateNodeStatusWithDeployment(node *fogappsCRD
 	}
 
 	nodeStatus.InitialReplicas = svcGraphUtil.GetInitialReplicas(node)
-	nodeStatus.ConfiguredReplicas = *deployment.Spec.Replicas
+	if replicas := deployment.Spec.Replicas; replicas != nil {
+		nodeStatus.ConfiguredReplicas = *replicas
+	}
 	nodeStatus.ReadyReplicas = deployment.Status.ReadyReplicas
 }
 
@@ -490,7 +509,9 @@ func (me *serviceGraphProcessor) updateNodeStatusWithStatefulSet(node *fogappsCR
 	}
 
 	nodeStatus.InitialReplicas = svcGraphUtil.GetInitialReplicas(node)
-	nodeStatus.ConfiguredReplicas = *statefulSet.Spec.Replicas
+	if replicas := statefulSet.Spec.Replicas; replicas != nil {
+		nodeStatus.ConfiguredReplicas = *replicas
+	}
 	nodeStatus.ReadyReplicas = statefulSet.Status.ReadyReplicas
 }
 

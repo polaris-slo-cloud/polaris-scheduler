@@ -41,6 +41,7 @@ import (
 	slov1 "k8s.rainbow-h2020.eu/rainbow/orchestration/apis/slo/v1"
 	fogappscontrollers "k8s.rainbow-h2020.eu/rainbow/orchestration/controllers/fogapps"
 	"k8s.rainbow-h2020.eu/rainbow/orchestration/pkg/services/configmanager"
+	"k8s.rainbow-h2020.eu/rainbow/orchestration/pkg/services/regionmanager"
 	//+kubebuilder:scaffold:imports
 )
 
@@ -88,8 +89,9 @@ func main() {
 		os.Exit(1)
 	}
 
-	// Initialize the ConfigManager
+	// Initialize the ConfigManager and the RegionManager.
 	configmanager.InitConfigManager(ctrl.GetConfigOrDie(), scheme)
+	regionmanager.InitRegionManager()
 
 	if err = (&fogappscontrollers.ServiceGraphReconciler{
 		Client: mgr.GetClient(),

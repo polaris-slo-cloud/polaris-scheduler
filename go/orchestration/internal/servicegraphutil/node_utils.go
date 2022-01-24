@@ -98,12 +98,7 @@ func updatePodTemplate(podTemplate *core.PodTemplateSpec, node *fogappsCRDs.Serv
 		podTemplate.Spec.ServiceAccountName = ""
 	}
 
-	if node.ExposedPorts != nil {
-		podTemplate.Spec.HostNetwork = node.ExposedPorts.HostNetwork
-	} else {
-		// Set to the default value.
-		podTemplate.Spec.HostNetwork = false
-	}
+	podTemplate.Spec.HostNetwork = node.HostNetwork
 
 	if graph.Spec.DNSConfig != nil {
 		podTemplate.Spec.DNSPolicy = graph.Spec.DNSConfig.DNSPolicy

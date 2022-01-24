@@ -42,12 +42,6 @@ type ExposedPorts struct {
 	// Configures the ports that should be exposed.
 	Ports []core.ServicePort `json:"ports"`
 
-	// If true, a pod created from this ServiceGraphNode, will use host host node's network namespace.
-	//
-	// +kubebuilder:default=false
-	// +optional
-	HostNetwork bool `json:"hostNetwork,omitempty"`
-
 	// ToDo:
 	// IngressConfig (we need to extract a subset of https://pkg.go.dev/k8s.io/api@v0.21.0/networking/v1#IngressSpec because the ServiceName
 	// should be set by the ServiceGraph controller)

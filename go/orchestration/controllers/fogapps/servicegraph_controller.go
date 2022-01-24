@@ -63,6 +63,10 @@ type serviceGraphChildObjects struct {
 //+kubebuilder:rbac:groups=fogapps.k8s.rainbow-h2020.eu,resources=servicegraphs/status,verbs=get;update;patch
 //+kubebuilder:rbac:groups=fogapps.k8s.rainbow-h2020.eu,resources=servicegraphs/finalizers,verbs=update
 
+//+kubebuilder:rbac:groups=cluster.k8s.rainbow-h2020.eu,resources=networklinks,verbs=get;list;watch;create;update;patch;delete
+//+kubebuilder:rbac:groups=cluster.k8s.rainbow-h2020.eu,resources=networklinks/status,verbs=get;update;patch
+//+kubebuilder:rbac:groups=cluster.k8s.rainbow-h2020.eu,resources=networklinks/finalizers,verbs=update
+
 // Permissions on Deployments and StatefulSets:
 //+kubebuilder:rbac:groups=apps,resources=deployments;statefulsets,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=apps,resources=deployments/status;statefulsets/status,verbs=get
@@ -87,9 +91,13 @@ func (me *ServiceGraphReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 
 	var serviceGraph fogappsCRDs.ServiceGraph
 	if err := me.Get(ctx, req.NamespacedName, &serviceGraph); err != nil {
-		// ToDo: Detect if ServiceGraph has been deleted to avoid reporting an error in this case.
-		log.Error(err, "Unable to fetch ServiceGraph")
-		return ctrl.Result{}, client.IgnoreNotFound(err)
+		err = client.IgnoreNotFound(err)
+		if err != nil {
+			log.Error(err, "Unable to fetch ServiceGraph")
+		} else {
+			log.Info("ServiceGraph has been deleted")
+		}
+		return ctrl.Result{}, err
 	}
 
 	children, err := me.fetchChildObjects(ctx, req, &serviceGraph)
@@ -110,11 +118,15 @@ func (me *ServiceGraphReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 		return ctrl.Result{}, err
 	}
 
-	log.Info("Applying changes.", "count", changes.Size())
-	if err := changes.Apply(ctx, me.Client); err != nil {
-		return ctrl.Result{}, err
+	if changesCount := changes.Size(); changesCount > 0 {
+		log.Info("Applying changes.", "count", changesCount)
+		if err := changes.Apply(ctx, me.Client); err != nil {
+			return ctrl.Result{}, err
+		}
+		log.Info("Successfully applied all changes.")
+	} else {
+		log.Info("No changes needed.")
 	}
-	log.Info("Successfully applied all changes.")
 
 	if newStatus != nil && !reflect.DeepEqual(serviceGraph.Status, newStatus) {
 		serviceGraph.Status = *newStatus
@@ -128,6 +140,8 @@ func (me *ServiceGraphReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 
 // SetupWithManager sets up the controller with the Manager.
 func (me *ServiceGraphReconciler) SetupWithManager(mgr ctrl.Manager) error {
+	mgr.GetLogger().Info("Normal log test")
+	mgr.GetLogger().V(1).Info("Verbose log test")
 	var indexerFn client.IndexerFunc = func(rawObj client.Object) []string {
 		owner := meta.GetControllerOf(rawObj)
 		if owner == nil {

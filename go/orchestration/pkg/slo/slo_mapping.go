@@ -1,6 +1,7 @@
 package slo
 
 import (
+	"encoding/json"
 	"fmt"
 
 	autoscaling "k8s.io/api/autoscaling/v1"
@@ -153,10 +154,13 @@ func (me *SloMappingSpec) toUnstructuredMap() map[string]interface{} {
 		}
 	}
 
-	staticElasticityStrategyConfig := map[string]interface{}{
-		"minReplicas": me.StaticElasticityStrategyConfig.MinReplicas,
-		"maxReplicas": me.StaticElasticityStrategyConfig.MaxReplicas,
+	staticElasticityStrategyConfig := make(map[string]interface{})
+	statisElasticityStrategyUserConfig := convertRawExtensionToMap(me.SloUserConfig.StaticElasticityStrategyConfig)
+	for key, value := range statisElasticityStrategyUserConfig {
+		staticElasticityStrategyConfig[key] = value
 	}
+	staticElasticityStrategyConfig["minReplicas"] = me.StaticElasticityStrategyConfig.MinReplicas
+	staticElasticityStrategyConfig["maxReplicas"] = me.StaticElasticityStrategyConfig.MaxReplicas
 
 	spec := map[string]interface{}{
 		"targetRef": map[string]interface{}{
@@ -173,6 +177,13 @@ func (me *SloMappingSpec) toUnstructuredMap() map[string]interface{} {
 		"staticElasticityStrategyConfig": staticElasticityStrategyConfig,
 	}
 	return spec
+}
+
+func convertRawExtensionToMap(raw *runtime.RawExtension) map[string]interface{} {
+	rawJson, _ := json.Marshal(raw)
+	ret := make(map[string]interface{})
+	json.Unmarshal(rawJson, &ret)
+	return ret
 }
 
 func getSloMappingName(targetName string, sloName string) string {

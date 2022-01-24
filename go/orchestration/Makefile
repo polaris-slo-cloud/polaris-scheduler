@@ -1,12 +1,14 @@
 
 # The version of the orchestrator
-VERSION ?= 0.6.0
+VERSION ?= 0.8.0
 # Image URL to use all building/pushing image targets
 IMG ?= registry.gitlab.com/rainbow-project1/rainbow-integration/rainbow-orchestrator:${VERSION}
 # CRD generation config
 CRD_OPTIONS ?= "crd"
 # ENVTEST_K8S_VERSION refers to the version of kubebuilder assets to be downloaded by envtest binary.
 ENVTEST_K8S_VERSION = 1.21
+# Single deployment YAML file path
+OUTPUT_DEPLOYMENT_YAML_FILE = "../../deployment/2-orchestrator.yaml"
 
 # Get the currently used golang install path (in GOPATH/bin, unless GOBIN is set)
 ifeq (,$(shell go env GOBIN))
@@ -118,6 +120,13 @@ deploy: manifests kustomize ## Deploy controller to the K8s cluster specified in
 .PHONY: undeploy
 undeploy: ## Undeploy controller from the K8s cluster specified in ~/.kube/config. Call with ignore-not-found=true to ignore resource not found errors during deletion.
 	$(KUSTOMIZE) build config/default | kubectl delete --ignore-not-found=$(ignore-not-found) -f -
+
+.PHONY: deployment-yaml
+deployment-yaml: manifests kustomize ## Write the CRDs and orchestrator deployment YAML to a single file.
+	$(KUSTOMIZE) build config/crd > $(OUTPUT_DEPLOYMENT_YAML_FILE)
+	echo -e "\n---\n" >> $(OUTPUT_DEPLOYMENT_YAML_FILE)
+	cd config/manager && $(KUSTOMIZE) edit set image controller=${IMG}
+	$(KUSTOMIZE) build config/default >> $(OUTPUT_DEPLOYMENT_YAML_FILE)
 
 CONTROLLER_GEN = $(shell pwd)/bin/controller-gen
 .PHONY: controller-gen

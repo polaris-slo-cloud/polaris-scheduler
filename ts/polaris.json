@@ -8,14 +8,30 @@
             "crds": {
                 "tsConfig": "tsconfig.base.json",
                 "outDir": "crds",
-                "polarisTypes": [
-                    "ImageThroughputSloMapping"
-                ]
+                "polarisTypes": ["ImageThroughputSloMapping", "CustomStreamSightSloMapping", "MigrationElasticityStrategy"]
             }
         },
         "image-throughput-slo-controller": {
             "projectType": "slo-controller",
             "tsEntryPoint": "apps/image-throughput-slo-controller/src/main.ts"
+        },
+        "polaris-streamsight": {
+            "projectType": "library",
+            "tsEntryPoint": "libs/polaris-streamsight/src/index.ts",
+            "importPath": "@rainbow-h2020/polaris-streamsight",
+            "crds": {
+                "tsConfig": "tsconfig.base.json",
+                "outDir": "libs/polaris-streamsight/crds",
+                "polarisTypes": []
+            }
+        },
+        "custom-stream-sight-slo-controller": {
+            "projectType": "slo-controller",
+            "tsEntryPoint": "apps/custom-stream-sight-slo-controller/src/main.ts"
+        },
+        "migration-estrat-controller": {
+            "projectType": "elasticity-strategy-controller",
+            "tsEntryPoint": "apps/migration-estrat-controller/src/main.ts"
         }
     }
 }
