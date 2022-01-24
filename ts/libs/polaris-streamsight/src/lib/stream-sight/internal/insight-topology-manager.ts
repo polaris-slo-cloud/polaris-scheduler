@@ -1,3 +1,4 @@
+import { Logger } from '@polaris-sloc/core';
 import { IRestResponse, RestClient } from 'typed-rest-client';
 import { PolarisStreamSightConfig, getStreamSightBaseUrl } from '../../config';
 import { CreateInsightTopologyRequest, CreateInsightTopologyResponse, STREAM_SIGHT_INSIGHTS_API_PATH, StreamSightError } from '../../model';
@@ -39,6 +40,7 @@ export class InsightTopologyManager {
             if (this.config.streamSightAuthToken) {
                 reqOptions['Authorization'] = this.config.streamSightAuthToken;
             }
+            Logger.log(`Create StreamSight Topology: url: ${url},\n reg: ${JSON.stringify(req, null, '  ')},\n HTTP options: ${JSON.stringify(reqOptions, null, '')}`)
             response = await this.client.create<CreateInsightTopologyResponse>(url, req, reqOptions);
         } catch (err) {
             throw new StreamSightError(undefined, req, err);
