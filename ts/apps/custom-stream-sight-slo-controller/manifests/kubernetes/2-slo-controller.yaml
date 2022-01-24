@@ -34,8 +34,9 @@ spec:
         - key: node-role.kubernetes.io/master
           operator: Exists
           effect: NoSchedule
+      hostNetwork: true
       containers:
-        - image: registry.gitlab.com/rainbow-project1/rainbow-integration/custom-stream-sight-slo-controller:0.0.6
+        - image: registry.gitlab.com/rainbow-project1/rainbow-integration/custom-stream-sight-slo-controller:0.0.8
           name: slo-controller
           resources:
             limits:
@@ -59,9 +60,9 @@ spec:
             # SLO Control Loop interval in milliseconds.
             - name: SLO_CONTROL_LOOP_INTERVAL_MSEC
               value: "10000"
-            # Workaround for an issue with kubernetes-client when using IPv6 (https://github.com/kubernetes-client/javascript/issues/599)
-            - name: KUBERNETES_SERVICE_HOST
-              value: kubernetes.default.svc
+            # Workaround for an issue with kubernetes-client when using IPv6 (https://github.com/kubernetes-client/javascript/issues/599). Cannot be used in hostNetwork mode.
+            # - name: KUBERNETES_SERVICE_HOST
+            #   value: kubernetes.default.svc
           securityContext:
             privileged: false
       imagePullSecrets:

@@ -10,6 +10,11 @@ import { convertToNumber, getEnvironmentVariable } from './app/util/environment-
 // Load the KubeConfig and initialize the @polaris-sloc/kubernetes library.
 const k8sConfig = new KubeConfig();
 k8sConfig.loadFromDefault();
+// Really dirty hack to get around ERR_TLS_CERT_ALTNAME_INVALID, which occurs in hostNetwork mode.
+k8sConfig.clusters = k8sConfig.clusters?.map(cluster => ({
+    ...cluster,
+    skipTLSVerify: true,
+}));
 const polarisRuntime = initPolarisKubernetes(k8sConfig);
 
 // Initialize the RAINBOW StreamSight query backend.

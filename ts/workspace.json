@@ -93,7 +93,7 @@
                     "executor": "@nrwl/workspace:run-commands",
                     "options": {
                         "commands": [
-                            "docker build -f ./apps/custom-stream-sight-slo-controller/Dockerfile --build-arg POLARIS_APP_TYPE=slo --build-arg POLARIS_APP_NAME=custom-stream-sight-slo-controller -t registry.gitlab.com/rainbow-project1/rainbow-integration/custom-stream-sight-slo-controller:0.0.6 ."
+                            "docker build -f ./apps/custom-stream-sight-slo-controller/Dockerfile --build-arg POLARIS_APP_TYPE=slo --build-arg POLARIS_APP_NAME=custom-stream-sight-slo-controller -t registry.gitlab.com/rainbow-project1/rainbow-integration/custom-stream-sight-slo-controller:0.0.8 ."
                         ],
                         "parallel": false
                     }
