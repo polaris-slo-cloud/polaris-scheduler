@@ -15,9 +15,22 @@ const polarisRuntime = initPolarisKubernetes(k8sConfig);
 // Initialize the RAINBOW StreamSight query backend.
 const streamSightHost = getEnvironmentVariable('STREAM_SIGHT_HOST') || 'localhost';
 const streamSightPort = getEnvironmentVariable('STREAM_SIGHT_PORT', convertToNumber);
+const streamSightAuthToken = getEnvironmentVariable('STREAM_SIGHT_AUTH_TOKEN');
 const rainbowStorageHost = getEnvironmentVariable('RAINBOW_STORAGE_HOST') || 'localhost';
 const rainbowStoragePort = getEnvironmentVariable('RAINBOW_STORAGE_PORT', convertToNumber);
-initStreamSightQueryBackend(polarisRuntime, { rainbowStorageHost, rainbowStoragePort, streamSightHost, streamSightPort }, true);
+const rainbowStorageAuthToken = getEnvironmentVariable('RAINBOW_STORAGE_AUTH_TOKEN');
+initStreamSightQueryBackend(
+    polarisRuntime,
+    {
+        rainbowStorageHost,
+        rainbowStoragePort,
+        rainbowStorageAuthToken,
+        streamSightHost,
+        streamSightPort,
+        streamSightAuthToken,
+    },
+    true,
+);
 
 // Initialize the used Polaris mapping libraries
 initSloMappingsLib(polarisRuntime);

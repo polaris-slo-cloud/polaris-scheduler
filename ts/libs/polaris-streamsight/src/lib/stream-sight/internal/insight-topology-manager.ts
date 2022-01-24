@@ -32,7 +32,14 @@ export class InsightTopologyManager {
 
         let response: IRestResponse<CreateInsightTopologyResponse>;
         try {
-            response = await this.client.create<CreateInsightTopologyResponse>(url, req);
+            const reqOptions: Record<string, string> = {
+                // eslint-disable-next-line @typescript-eslint/naming-convention
+                'Content-Type': 'application/json',
+            };
+            if (this.config.streamSightAuthToken) {
+                reqOptions['Authorization'] = this.config.streamSightAuthToken;
+            }
+            response = await this.client.create<CreateInsightTopologyResponse>(url, req, reqOptions);
         } catch (err) {
             throw new StreamSightError(undefined, req, err);
         }
@@ -81,7 +88,7 @@ export class InsightTopologyManager {
         const namespace = metricParams.namespace;
         const podName = `${metricParams.sloTarget.name}-%`;
         let processedQuery = query.replace(POD_NAMESPACE_PLACEHOLDER, namespace);
-        processedQuery = query.replace(POD_NAME_PLACEHOLDER, podName);
+        processedQuery = processedQuery.replace(POD_NAME_PLACEHOLDER, podName);
         return processedQuery;
     }
 

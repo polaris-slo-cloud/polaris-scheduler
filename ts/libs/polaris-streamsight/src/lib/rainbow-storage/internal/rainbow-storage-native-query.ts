@@ -37,7 +37,14 @@ export class RainbowStorageNativeQuery implements TimeSeriesQuery<any> {
         const url = this.baseUrl + ANALYTICS_QUERY_PATH;
         let response: IRestResponse<GetAnalyticsResponse>;
         try {
-            response = await this.client.create<GetAnalyticsResponse>(url, this.query);
+            const reqOptions: Record<string, string> = {
+                // eslint-disable-next-line @typescript-eslint/naming-convention
+                'Content-Type': 'application/json',
+            };
+            if (this.config.rainbowStorageAuthToken) {
+                reqOptions['Authorization'] = this.config.rainbowStorageAuthToken;
+            }
+            response = await this.client.create<GetAnalyticsResponse>(url, this.query, reqOptions);
         } catch (err) {
             throw new QueryError('Error executing RAINBOW Storage request.', this, err);
         }

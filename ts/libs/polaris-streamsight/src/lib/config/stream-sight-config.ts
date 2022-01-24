@@ -27,6 +27,11 @@ export interface PolarisStreamSightConfig {
     rainbowStoragePort?: number;
 
     /**
+     * The token used to authenticate to the RAINBOW Distributed Storage.
+     */
+    rainbowStorageAuthToken?: string;
+
+    /**
      * The host, where the StreamSight analytics service can be reached.
      */
     streamSightHost: string;
@@ -35,6 +40,11 @@ export interface PolarisStreamSightConfig {
      * The port, where the StreamSight analytics service is listening.
      */
     streamSightPort?: number;
+
+    /**
+     * The token used to authenticate to StreamSight.
+     */
+    streamSightAuthToken?: string;
 
     /**
      * Number of milliseconds before a request goes into timeout.
