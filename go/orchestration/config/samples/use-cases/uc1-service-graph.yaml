@@ -1,39 +1,85 @@
-apiVersion: "fogapps.k8s.rainbow-h2020.eu/v1"
-kind: "ServiceGraph"
+apiVersion: fogapps.k8s.rainbow-h2020.eu/v1
+kind: ServiceGraph
 metadata:
-  name: "hrc-1-demo-65e2rzba0i"
-  namespace: "hrc-1-demo-65e2rzba0i"
+  generation: 1
+  name: appevalhrc-inst1-jijqqbzv0a
+  namespace: appevalhrc-inst1-jijqqbzv0a
 spec:
+  dnsConfig:
+    dnsPolicy: None
+    nameservers:
+    - fc8a:194b:8329:2583:7271:ffcd:eb8e:dd49
+  links:
+  - source: inst1-hrcmetricmonitor355-tcjjy342ut
+    target: inst1-rabbitmq311-zreg6dju5r
+  - source: inst1-hrcmetricmonitor355-tcjjy342ut
+    target: inst1-redis333-5vbuk3r039
+  - source: inst1-robotmotiontracker436-rngjm8r99g
+    target: inst1-rabbitmq311-zreg6dju5r
+  - source: inst1-robotmotiontracker436-rngjm8r99g
+    target: inst1-redis333-5vbuk3r039
+  - source: inst1-collisionpredictionavoidance344-cihbqq65k6
+    target: inst1-rabbitmq311-zreg6dju5r
+  - source: inst1-collisionpredictionavoidance344-cihbqq65k6
+    target: inst1-redis333-5vbuk3r039
+  - source: inst1-personnellocationmotioncapturing322-n89zmiudce
+    target: inst1-rabbitmq311-zreg6dju5r
+  - source: inst1-personnellocationmotioncapturing322-n89zmiudce
+    target: inst1-redis333-5vbuk3r039
   nodes:
-  - name: "demo-collisionpredictionavoidance-ub61xbpgf3"
-    labels:
-      app.kubernetes.io/name: "demo-65e2rzba0i"
-      app.kubernetes.io/version: "0.0.1"
-      app.kubernetes.io/instance: "demo-collisionpredictionavoidance-ub61xbpgf3"
-      app.kubernetes.io/component: "demo-collisionpredictionavoidance-ub61xbpgf3"
-    containers:
-    - name: "demo-collisionpredictionavoidance-ub61xbpgf3"
-      image: "virtualorigami/pyrobomotra"
+  - containers:
+    - env:
+      - name: RABBITMQ
+        value: inst1-rabbitmq311-zreg6dju5r.appevalhrc-inst1-jijqqbzv0a.svc.cluster.local
+      - name: REDIS_PASSWORD
+        value: rabbit
+      - name: RABBITMQ_PASSWORD
+        value: rabbit
+      - name: RABBITMQ_USERNAME
+        value: admin
+      - name: REDIS
+        value: inst1-redis333-5vbuk3r039.appevalhrc-inst1-jijqqbzv0a.svc.cluster.local
+      image: virtualorigami/pycollisionavoidance:stateless
+      name: inst1-collisionpredictionavoidance344-cihbqq65k6
+      ports:
+      - containerPort: 6379
+        name: cparedis1450
+        protocol: TCP
+      - containerPort: 5672
+        name: cparabbitm1451
+        protocol: TCP
       resources:
         limits:
-          memory: "2048Mi"
-          cpu: "1000m"
+          cpu: 1000m
+          memory: 2048Mi
       securityContext:
         privileged: false
-    imagePullSecrets: []
-    replicas:
-      min: 1
-      max: 1
     exposedPorts:
-      type: "ClusterInternal"
+      hostNetwork: true
       ports:
-      - name: "cparedis"
+      - name: cparedis1450
         port: 6379
-    hostNetwork: false
+        protocol: TCP
+      - name: cparabbitm1451
+        port: 5672
+        protocol: TCP
+      type: ClusterInternal
+    imagePullSecrets: []
+    labels:
+      app.kubernetes.io/component: inst1-collisionpredictionavoidance344-cihbqq65k6
+      app.kubernetes.io/instance: inst1-collisionpredictionavoidance344-cihbqq65k6
+      app.kubernetes.io/name: inst1-jijqqbzv0a
+      app.kubernetes.io/version: 0.0.1
+    name: inst1-collisionpredictionavoidance344-cihbqq65k6
     nodeHardware:
       cpuInfo:
         architectures:
-        - "arm64"
+        - arm64
+    nodeType: ServiceNode
+    replicas:
+      max: 1
+      min: 1
+      setType: Simple
     slos:
     - name: collisionpredictionavoidance-message-processing
       sloType:
@@ -106,37 +152,114 @@ spec:
         scaleUpSeconds: 10
         scaleDownSeconds: 60
 
-  - name: "demo-personnellocationmotioncapturing-vae4v0baqd"
-    labels:
-      app.kubernetes.io/name: "demo-65e2rzba0i"
-      app.kubernetes.io/version: "0.0.1"
-      app.kubernetes.io/instance: "demo-personnellocationmotioncapturing-vae4v0baqd"
-      app.kubernetes.io/component: "demo-personnellocationmotioncapturing-vae4v0baqd"
-    containers:
-    - name: "demo-personnellocationmotioncapturing-vae4v0baqd"
-      image: "virtualorigami/pypersonnelloc"
+  - containers:
+    - env:
+      - name: RABBITMQ
+        value: inst1-rabbitmq311-zreg6dju5r.appevalhrc-inst1-jijqqbzv0a.svc.cluster.local
+      - name: REDIS_PASSWORD
+        value: rabbit
+      - name: RABBITMQ_PASSWORD
+        value: rabbit
+      - name: RAINBOW_AGENT_HOST
+        value: 192.168.83.13
+      - name: RABBITMQ_USERNAME
+        value: admin
+      - name: REDIS
+        value: inst1-redis333-5vbuk3r039.appevalhrc-inst1-jijqqbzv0a.svc.cluster.local
+      image: virtualorigami/rabbit-redis-monitoring:stateless
+      name: inst1-hrcmetricmonitor355-tcjjy342ut
+      ports:
+      - containerPort: 6379
+        name: redismetri1448
+        protocol: TCP
+      - containerPort: 15672
+        name: rabbitmqbr1449
+        protocol: TCP
       resources:
         limits:
-          memory: "2048Mi"
-          cpu: "1000m"
+          cpu: 1000m
+          memory: 2048Mi
       securityContext:
         privileged: false
-    imagePullSecrets: []
-    replicas:
-      min: 1
-      max: 1
     exposedPorts:
-      type: "ClusterInternal"
+      hostNetwork: true
       ports:
-      - name: "plmcrabbitmqbroker"
-        port: 5672
-      - name: "plmcredisserver"
+      - name: redismetri1448
         port: 6379
-    hostNetwork: false
+        protocol: TCP
+      - name: rabbitmqbr1449
+        port: 15672
+        protocol: TCP
+      type: ClusterInternal
+    imagePullSecrets: []
+    labels:
+      app.kubernetes.io/component: inst1-hrcmetricmonitor355-tcjjy342ut
+      app.kubernetes.io/instance: inst1-hrcmetricmonitor355-tcjjy342ut
+      app.kubernetes.io/name: inst1-jijqqbzv0a
+      app.kubernetes.io/version: 0.0.1
+    name: inst1-hrcmetricmonitor355-tcjjy342ut
     nodeHardware:
       cpuInfo:
         architectures:
-        - "arm64"
+        - arm64
+    nodeType: ServiceNode
+    replicas:
+      max: 1
+      min: 1
+      setType: Simple
+  - containers:
+    - env:
+      - name: RABBITMQ
+        value: inst1-rabbitmq311-zreg6dju5r.appevalhrc-inst1-jijqqbzv0a.svc.cluster.local
+      - name: REDIS_PASSWORD
+        value: rabbit
+      - name: RABBITMQ_PASSWORD
+        value: rabbit
+      - name: RABBITMQ_USERNAME
+        value: admin
+      - name: REDIS
+        value: inst1-redis333-5vbuk3r039.appevalhrc-inst1-jijqqbzv0a.svc.cluster.local
+      image: virtualorigami/pypersonnelloc:stateless
+      name: inst1-personnellocationmotioncapturing322-n89zmiudce
+      ports:
+      - containerPort: 5672
+        name: plmcrabbit1452
+        protocol: TCP
+      - containerPort: 6379
+        name: plmcrediss1453
+        protocol: TCP
+      resources:
+        limits:
+          cpu: 1000m
+          memory: 2048Mi
+      securityContext:
+        privileged: false
+    exposedPorts:
+      hostNetwork: true
+      ports:
+      - name: plmcrabbit1452
+        port: 5672
+        protocol: TCP
+      - name: plmcrediss1453
+        port: 6379
+        protocol: TCP
+      type: ClusterInternal
+    imagePullSecrets: []
+    labels:
+      app.kubernetes.io/component: inst1-personnellocationmotioncapturing322-n89zmiudce
+      app.kubernetes.io/instance: inst1-personnellocationmotioncapturing322-n89zmiudce
+      app.kubernetes.io/name: inst1-jijqqbzv0a
+      app.kubernetes.io/version: 0.0.1
+    name: inst1-personnellocationmotioncapturing322-n89zmiudce
+    nodeHardware:
+      cpuInfo:
+        architectures:
+        - arm64
+    nodeType: ServiceNode
+    replicas:
+      max: 1
+      min: 1
+      setType: Simple
     slos:
     - name: personnellocationmotioncapturing-message-processing
       sloType:
@@ -209,104 +332,59 @@ spec:
         scaleUpSeconds: 10
         scaleDownSeconds: 60
 
-  - name: "demo-rabbitmqbroker-us68w2bjix"
-    labels:
-      app.kubernetes.io/name: "demo-65e2rzba0i"
-      app.kubernetes.io/version: "0.0.1"
-      app.kubernetes.io/instance: "demo-rabbitmqbroker-us68w2bjix"
-      app.kubernetes.io/component: "demo-rabbitmqbroker-us68w2bjix"
-    containers:
-    - name: "demo-rabbitmqbroker-us68w2bjix"
-      image: "arm64v8/rabbitmq:3.9-management"
+  - containers:
+    - env:
+      - name: RABBITMQ
+        value: inst1-rabbitmq311-zreg6dju5r.appevalhrc-inst1-jijqqbzv0a.svc.cluster.local
+      - name: REDIS_PASSWORD
+        value: rabbit
+      - name: RABBITMQ_PASSWORD
+        value: rabbit
+      - name: RABBITMQ_USERNAME
+        value: admin
+      - name: REDIS
+        value: inst1-redis333-5vbuk3r039.appevalhrc-inst1-jijqqbzv0a.svc.cluster.local
+      image: virtualorigami/pyrobomotra:stateless
+      name: inst1-robotmotiontracker436-rngjm8r99g
+      ports:
+      - containerPort: 5672
+        name: rabbitmqrm1446
+        protocol: TCP
+      - containerPort: 6379
+        name: redisrmt1447
+        protocol: TCP
       resources:
         limits:
-          memory: "2048Mi"
-          cpu: "1000m"
-      env:
-      - name: "RABBITMQ_DEFAULT_USER"
-        value: "admin"
-      - name: "RABBITMQ_NODENAME"
-        value: "Rabbit_Node_1"
-      - name: "RABBITMQ_DEFAULT_PASS"
-        value: "rabbit"
+          cpu: 1000m
+          memory: 2048Mi
       securityContext:
         privileged: false
-    imagePullSecrets: []
-    replicas:
-      min: 1
-      max: 1
     exposedPorts:
-      type: "ClusterInternal"
+      hostNetwork: true
       ports:
-      - name: "rabbitmqbrokermessaging"
+      - name: rabbitmqrm1446
         port: 5672
-      - name: "rabbitmqbrokermanagement"
-        port: 15672
-    hostNetwork: false
-    nodeHardware:
-      cpuInfo:
-        architectures:
-        - "arm64"
-  - name: "demo-redisserver-70ccnizi0k"
-    labels:
-      app.kubernetes.io/name: "demo-65e2rzba0i"
-      app.kubernetes.io/version: "0.0.1"
-      app.kubernetes.io/instance: "demo-redisserver-70ccnizi0k"
-      app.kubernetes.io/component: "demo-redisserver-70ccnizi0k"
-    containers:
-    - name: "demo-redisserver-70ccnizi0k"
-      image: "arm64v8/redis"
-      resources:
-        limits:
-          memory: "1096Mi"
-          cpu: "1000m"
-      securityContext:
-        privileged: false
-    imagePullSecrets: []
-    replicas:
-      min: 1
-      max: 1
-    exposedPorts:
-      type: "ClusterInternal"
-      ports:
-      - name: "redisserverstorage"
+        protocol: TCP
+      - name: redisrmt1447
         port: 6379
-    hostNetwork: false
-    nodeHardware:
-      cpuInfo:
-        architectures:
-        - "arm64"
-  - name: "demo-robotmotiontracker-egh3maz8he"
-    labels:
-      app.kubernetes.io/name: "demo-65e2rzba0i"
-      app.kubernetes.io/version: "0.0.1"
-      app.kubernetes.io/instance: "demo-robotmotiontracker-egh3maz8he"
-      app.kubernetes.io/component: "demo-robotmotiontracker-egh3maz8he"
-    containers:
-    - name: "demo-robotmotiontracker-egh3maz8he"
-      image: "virtualorigami/pyrobomotra"
-      resources:
-        limits:
-          memory: "2048Mi"
-          cpu: "2000m"
-      securityContext:
-        privileged: false
+        protocol: TCP
+      type: ClusterInternal
     imagePullSecrets: []
-    replicas:
-      min: 1
-      max: 1
-    exposedPorts:
-      type: "ClusterInternal"
-      ports:
-      - name: "rmtrabbitmqbroker"
-        port: 5672
-      - name: "rmtredisserver"
-        port: 6379
-    hostNetwork: false
+    labels:
+      app.kubernetes.io/component: inst1-robotmotiontracker436-rngjm8r99g
+      app.kubernetes.io/instance: inst1-robotmotiontracker436-rngjm8r99g
+      app.kubernetes.io/name: inst1-jijqqbzv0a
+      app.kubernetes.io/version: 0.0.1
+    name: inst1-robotmotiontracker436-rngjm8r99g
     nodeHardware:
       cpuInfo:
         architectures:
-        - "arm64"
+        - arm64
+    nodeType: ServiceNode
+    replicas:
+      max: 1
+      min: 1
+      setType: Simple
     slos:
     - name: robotmotiontracker-message-processing
       sloType:
@@ -379,102 +457,92 @@ spec:
         scaleUpSeconds: 10
         scaleDownSeconds: 60
 
-  links:
-  - source: "demo-collisionpredictionavoidance-ub61xbpgf3"
-    target: "demo-redisserver-70ccnizi0k"
-    qosRequirements:
-      latency:
-        maxPacketDelayMsec: 500
-        maxPacketDelayVariance: 200 # Jitter
-      packetLoss:
-        # The maximum packet loss in basis points (1 bp = 0.01%).
-        maxPacketLossBp: 100
-  - source: "demo-collisionpredictionavoidance-ub61xbpgf3"
-    target: "demo-rabbitmqbroker-us68w2bjix"
-    qosRequirements:
-      latency:
-        maxPacketDelayMsec: 500
-        maxPacketDelayVariance: 200 # Jitter
-      packetLoss:
-        # The maximum packet loss in basis points (1 bp = 0.01%).
-        maxPacketLossBp: 100
-      elasticityStrategy:
-        elasticityStrategy:
-          apiVersion: elasticity.k8s.rainbow-h2020.eu/v1
-          kind: HaltSystemElasticityStrategy
-        staticElasticityStrategyConfig:
-          messageQueueNodeName: demo-rabbitmqbroker-us68w2bjix
-          messageQueues:
-          - generator_robot_rk
-  - source: "demo-personnellocationmotioncapturing-vae4v0baqd"
-    target: "demo-redisserver-70ccnizi0k"
-    qosRequirements:
-      latency:
-        maxPacketDelayMsec: 500
-        maxPacketDelayVariance: 200 # Jitter
-      packetLoss:
-        # The maximum packet loss in basis points (1 bp = 0.01%).
-        maxPacketLossBp: 100
-      elasticityStrategy:
-        elasticityStrategy:
-          apiVersion: elasticity.k8s.rainbow-h2020.eu/v1
-          kind: HaltSystemElasticityStrategy
-        staticElasticityStrategyConfig:
-          messageQueueNodeName: demo-rabbitmqbroker-us68w2bjix
-          messageQueues:
-          - generator_robot_rk
-  - source: "demo-personnellocationmotioncapturing-vae4v0baqd"
-    target: "demo-rabbitmqbroker-us68w2bjix"
-    qosRequirements:
-      latency:
-        maxPacketDelayMsec: 500
-        maxPacketDelayVariance: 200 # Jitter
-      packetLoss:
-        # The maximum packet loss in basis points (1 bp = 0.01%).
-        maxPacketLossBp: 100
-      elasticityStrategy:
-        elasticityStrategy:
-          apiVersion: elasticity.k8s.rainbow-h2020.eu/v1
-          kind: HaltSystemElasticityStrategy
-        staticElasticityStrategyConfig:
-          messageQueueNodeName: demo-rabbitmqbroker-us68w2bjix
-          messageQueues:
-          - generator_robot_rk
-  - source: "demo-robotmotiontracker-egh3maz8he"
-    target: "demo-redisserver-70ccnizi0k"
-    qosRequirements:
-      latency:
-        maxPacketDelayMsec: 500
-        maxPacketDelayVariance: 200 # Jitter
-      packetLoss:
-        # The maximum packet loss in basis points (1 bp = 0.01%).
-        maxPacketLossBp: 100
-      elasticityStrategy:
-        elasticityStrategy:
-          apiVersion: elasticity.k8s.rainbow-h2020.eu/v1
-          kind: HaltSystemElasticityStrategy
-        staticElasticityStrategyConfig:
-          messageQueueNodeName: demo-rabbitmqbroker-us68w2bjix
-          messageQueues:
-          - generator_robot_rk
-  - source: "demo-robotmotiontracker-egh3maz8he"
-    target: "demo-rabbitmqbroker-us68w2bjix"
-    qosRequirements:
-      latency:
-        maxPacketDelayMsec: 500
-        maxPacketDelayVariance: 200 # Jitter
-      packetLoss:
-        # The maximum packet loss in basis points (1 bp = 0.01%).
-        maxPacketLossBp: 100
-      elasticityStrategy:
-        elasticityStrategy:
-          apiVersion: elasticity.k8s.rainbow-h2020.eu/v1
-          kind: HaltSystemElasticityStrategy
-        staticElasticityStrategyConfig:
-          messageQueueNodeName: demo-rabbitmqbroker-us68w2bjix
-          messageQueues:
-          - generator_robot_rk
-  dnsConfig:
-    dnsPolicy: "None"
-    nameservers:
-    - "fc07:d4dc:d430:2029:9c30:43ba:fd96:b345"
+  - containers:
+    - env:
+      - name: RABBITMQ_DEFAULT_USER
+        value: admin
+      - name: RABBITMQ_NODENAME
+        value: rabbit@localhost
+      - name: RABBITMQ_DEFAULT_PASS
+        value: rabbit
+      image: virtualorigami/rabbitmq:0.9.0
+      name: inst1-rabbitmq311-zreg6dju5r
+      ports:
+      - containerPort: 15672
+        name: rabbitmqbr1455
+        protocol: TCP
+      - containerPort: 5672
+        name: rabbitmqbr1456
+        protocol: TCP
+      resources:
+        limits:
+          cpu: 1000m
+          memory: 2048Mi
+      securityContext:
+        privileged: false
+    exposedPorts:
+      hostNetwork: true
+      ports:
+      - name: rabbitmqbr1455
+        port: 15672
+        protocol: TCP
+      - name: rabbitmqbr1456
+        port: 5672
+        protocol: TCP
+      type: ClusterInternal
+    imagePullSecrets: []
+    labels:
+      app.kubernetes.io/component: inst1-rabbitmq311-zreg6dju5r
+      app.kubernetes.io/instance: inst1-rabbitmq311-zreg6dju5r
+      app.kubernetes.io/name: inst1-jijqqbzv0a
+      app.kubernetes.io/version: 0.0.1
+    name: inst1-rabbitmq311-zreg6dju5r
+    nodeHardware:
+      cpuInfo:
+        architectures:
+        - arm64
+    nodeType: ServiceNode
+    replicas:
+      max: 1
+      min: 1
+      setType: Simple
+  - containers:
+    - env:
+      - name: REDIS_PASSWORD
+        value: rabbit
+      image: registry.gitlab.com/rainbow-project1/rainbow-integration/arm64v8/redis:6.2.2-alpine
+      name: inst1-redis333-5vbuk3r039
+      ports:
+      - containerPort: 6379
+        name: redisserve1454
+        protocol: TCP
+      resources:
+        limits:
+          cpu: 1000m
+          memory: 1096Mi
+      securityContext:
+        privileged: false
+    exposedPorts:
+      hostNetwork: true
+      ports:
+      - name: redisserve1454
+        port: 6379
+        protocol: TCP
+      type: ClusterInternal
+    imagePullSecrets:
+    - name: inst1-redis333-5vbuk3r039-secret
+    labels:
+      app.kubernetes.io/component: inst1-redis333-5vbuk3r039
+      app.kubernetes.io/instance: inst1-redis333-5vbuk3r039
+      app.kubernetes.io/name: inst1-jijqqbzv0a
+      app.kubernetes.io/version: 0.0.1
+    name: inst1-redis333-5vbuk3r039
+    nodeHardware:
+      cpuInfo:
+        architectures:
+        - arm64
+    nodeType: ServiceNode
+    replicas:
+      max: 1
+      min: 1
+      setType: Simple
