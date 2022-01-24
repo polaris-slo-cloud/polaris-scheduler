@@ -1,6 +1,6 @@
+import * as util from 'util';
 import {
     ComposedMetricSource,
-    Logger,
     MetricsSource,
     ObservableOrPromise,
     OrchestratorGateway,
@@ -70,8 +70,7 @@ export class CustomStreamSightSlo implements ServiceLevelObjective<CustomStreamS
                 },
             }))
             .catch(err => {
-                Logger.error('SLO.evaluate() error:', JSON.stringify(err, null, '  '))
-                throw err;
+                throw new Error(util.inspect(err));
             });
     }
 

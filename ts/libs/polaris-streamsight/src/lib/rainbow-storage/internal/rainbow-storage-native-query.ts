@@ -56,7 +56,13 @@ export class RainbowStorageNativeQuery implements TimeSeriesQuery<any> {
             throw new QueryError('RAINBOW Storage returned an error.', this, restError);
         }
 
-        Logger.log('Received RAINBOW Storage response:', JSON.stringify(response.result, undefined, '  '));
+        const queryLog = {
+            query: this.query,
+            url,
+            httpOptions,
+            response,
+        };
+        Logger.log('RAINBOW Storage query successful:', JSON.stringify(queryLog, undefined, '  '));
         return this.transformQueryResponse(response.result);
     }
 
