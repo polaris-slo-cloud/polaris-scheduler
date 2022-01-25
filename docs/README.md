@@ -1,13 +1,12 @@
-# RAINBOW Orchestration Documentation
+# Polaris Scheduler Documentation
 
-## Orchestration Components
+## Components
 
 The RAINBOW orchestration stack consists of the following components:
 
-* **rainbow-scheduler**: fog-aware Kubernetes scheduler.
+* **polaris-scheduler**: fog-aware Kubernetes scheduler.
 * **Service Graph**: a Kubernetes CRD to allow modelling a RAINBOW application with all its dependencies and configuration.
 * **Node Topology Graph**: a Kubernetes CRD to model the RAINBOW cluster and the network link qualities among the nodes.
-* **rainbow-orchestrator**: Kubernetes controller to handle the deployment and management of Service Graphs
 
 
 ## Service Graph
