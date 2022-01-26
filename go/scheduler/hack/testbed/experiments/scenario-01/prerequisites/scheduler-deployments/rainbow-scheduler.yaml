@@ -11,6 +11,74 @@ metadata:
   namespace: rainbow-system
 ---
 apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: networklink-viewer-role
+rules:
+- apiGroups:
+  - cluster.k8s.rainbow-h2020.eu
+  resources:
+  - networklinks
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - cluster.k8s.rainbow-h2020.eu
+  resources:
+  - networklinks/status
+  verbs:
+  - get
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: servicegraph-viewer-role
+rules:
+- apiGroups:
+  - fogapps.k8s.rainbow-h2020.eu
+  resources:
+  - servicegraphs
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - fogapps.k8s.rainbow-h2020.eu
+  resources:
+  - servicegraphs/status
+  verbs:
+  - get
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: rainbow-scheduler-networklinks-reader
+  namespace: rainbow-system
+subjects:
+- kind: ServiceAccount
+  name: rainbow-scheduler
+  namespace: rainbow-system
+roleRef:
+  kind: ClusterRole
+  name: networklink-viewer-role
+  apiGroup: rbac.authorization.k8s.io
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: rainbow-scheduler-servicegraph-reader
+  namespace: rainbow-system
+subjects:
+- kind: ServiceAccount
+  name: rainbow-scheduler
+  namespace: rainbow-system
+roleRef:
+  kind: ClusterRole
+  name: servicegraph-viewer-role
+  apiGroup: rbac.authorization.k8s.io
+---
+apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
   name: rainbow-scheduler-as-kube-scheduler
