@@ -54,6 +54,10 @@ type networkQosStateData struct {
 	// The incoming ServiceGraph links to the podSvcNode.
 	incomingLinks []*incomingServiceLink
 
+	// The minimum network QoS requirements that the region graph node must fulfill, based on the
+	// ServiceGraph node's outgoing links.
+	minNetworkRequirements *fogappsCRDs.LinkQosRequirements
+
 	// Stores the score (int64) for each K8s node that passes the Filter phase.
 	// The node name is used as the key.
 	k8sNodeScores sync.Map

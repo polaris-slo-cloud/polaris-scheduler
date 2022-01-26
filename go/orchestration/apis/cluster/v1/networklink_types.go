@@ -41,7 +41,7 @@ type NetworkLinkSpec struct {
 	NodeB string `json:"nodeB"`
 
 	// The quality of service information about this network link.
-	QoS NetworkLinkQoS `json:",inline"`
+	QoS NetworkLinkQoS `json:"qos"`
 }
 
 // NetworkLinkStatus defines the observed state of NetworkLink

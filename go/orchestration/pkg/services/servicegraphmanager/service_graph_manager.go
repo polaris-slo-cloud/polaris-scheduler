@@ -16,7 +16,7 @@ var (
 type ServiceGraphManager interface {
 	// Gets the ServiceGraphState for the application that the specified pod is part of.
 	// If the pod has no ServiceGraph associated, the ServiceGraphState AND the error will be nil.
-	// Note that this method only checks the pod's reference to the ServiceGraph, but the reference
+	// Note that this method only checks the pod's reference to the ServiceGraph, but not the reference
 	// to a node within that ServiceGraph.
 	//
 	// The requesting pod is added to reference count of the ServiceGraphState. When the pod's scheduling cycle ends,

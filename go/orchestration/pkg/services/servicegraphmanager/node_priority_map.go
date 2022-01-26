@@ -57,7 +57,7 @@ func (me *nodePriorityMapImpl) build(svcGraph servicegraph.ServiceGraph) {
 
 	var startNode servicegraph.Node = nil
 	userNodes := svcGraph.UserNodes()
-	if len(userNodes) == 0 {
+	if len(userNodes) > 0 {
 		startNode = userNodes[0]
 	} else {
 		allNodes := svcGraph.CRDInstance().Spec.Nodes

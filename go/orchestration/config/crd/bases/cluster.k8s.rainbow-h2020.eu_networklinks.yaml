@@ -38,24 +38,6 @@ spec:
               \n ToDo: Find a way to autogenerate a NetworkLink name from the node
               names (maybe in an admission webhook)."
             properties:
-              latency:
-                description: The latency of the the network link.
-                properties:
-                  packetDelayMsec:
-                    description: The end-to-end network delay (i.e., latency) of a
-                      packet sent between the two nodes, connected by this NetworkLink.
-                    format: int32
-                    minimum: 0
-                    type: integer
-                  packetDelayVariance:
-                    default: 0
-                    description: The variance of PacketDelayMsec (i.e., jitter).
-                    format: int32
-                    minimum: 0
-                    type: integer
-                required:
-                - packetDelayMsec
-                type: object
               nodeA:
                 description: The name of the first node connected by this network
                   link.
@@ -64,79 +46,106 @@ spec:
                 description: The name of the second node connected by this network
                   link.
                 type: string
-              packetLoss:
-                description: The average packet loss of this network link.
+              qos:
+                description: The quality of service information about this network
+                  link.
                 properties:
-                  packetLossBp:
-                    description: "The packet loss in basis points (bp). 1 bp = 0.01%
-                      \n The reason for not using percent for this is that the Kubernetes
-                      API does not support floating point numbers and people may need
-                      more precise packet loss information than whole percents."
-                    format: int32
-                    maximum: 10000
-                    minimum: 0
-                    type: integer
+                  latency:
+                    description: The latency of the the network link.
+                    properties:
+                      packetDelayMsec:
+                        description: The end-to-end network delay (i.e., latency)
+                          of a packet sent between the two nodes, connected by this
+                          NetworkLink.
+                        format: int32
+                        minimum: 0
+                        type: integer
+                      packetDelayVariance:
+                        default: 0
+                        description: The variance of PacketDelayMsec (i.e., jitter).
+                        format: int32
+                        minimum: 0
+                        type: integer
+                    required:
+                    - packetDelayMsec
+                    type: object
+                  packetLoss:
+                    description: The average packet loss of this network link.
+                    properties:
+                      packetLossBp:
+                        description: "The packet loss in basis points (bp). 1 bp =
+                          0.01% \n The reason for not using percent for this is that
+                          the Kubernetes API does not support floating point numbers
+                          and people may need more precise packet loss information
+                          than whole percents."
+                        format: int32
+                        maximum: 10000
+                        minimum: 0
+                        type: integer
+                    required:
+                    - packetLossBp
+                    type: object
+                  qualityClass:
+                    description: The advertised quality class of this network link
+                    enum:
+                    - QC1Mbps
+                    - QC2Mbps
+                    - QC3Mbps
+                    - QC4Mbps
+                    - QC5Mbps
+                    - QC6Mbps
+                    - QC7Mbps
+                    - QC8Mbps
+                    - QC9Mbps
+                    - QC10Mbps
+                    - QC20Mbps
+                    - QC30Mbps
+                    - QC40Mbps
+                    - QC50Mbps
+                    - QC60Mbps
+                    - QC70Mbps
+                    - QC80Mbps
+                    - QC90Mbps
+                    - QC100Mbps
+                    - QC1Gbps
+                    - QC2Gbps
+                    - QC3Gbps
+                    - QC4Gbps
+                    - QC5Gbps
+                    - QC6Gbps
+                    - QC7Gbps
+                    - QC8Gbps
+                    - QC9Gbps
+                    - QC10Gbps
+                    type: string
+                  throughput:
+                    description: The throughput of the network link.
+                    properties:
+                      bandwidthKbps:
+                        description: Describes the last known bandwidth of the network
+                          link in kilobits per second.
+                        format: int64
+                        minimum: 0
+                        type: integer
+                      bandwidthVariance:
+                        default: 0
+                        description: The variance of BandwidthKbps.
+                        format: int64
+                        minimum: 0
+                        type: integer
+                    required:
+                    - bandwidthKbps
+                    type: object
                 required:
-                - packetLossBp
-                type: object
-              qualityClass:
-                description: The advertised quality class of this network link
-                enum:
-                - QC1Mbps
-                - QC2Mbps
-                - QC3Mbps
-                - QC4Mbps
-                - QC5Mbps
-                - QC6Mbps
-                - QC7Mbps
-                - QC8Mbps
-                - QC9Mbps
-                - QC10Mbps
-                - QC20Mbps
-                - QC30Mbps
-                - QC40Mbps
-                - QC50Mbps
-                - QC60Mbps
-                - QC70Mbps
-                - QC80Mbps
-                - QC90Mbps
-                - QC100Mbps
-                - QC1Gbps
-                - QC2Gbps
-                - QC3Gbps
-                - QC4Gbps
-                - QC5Gbps
-                - QC6Gbps
-                - QC7Gbps
-                - QC8Gbps
-                - QC9Gbps
-                - QC10Gbps
-                type: string
-              throughput:
-                description: The throughput of the network link.
-                properties:
-                  bandwidthKbps:
-                    description: Describes the last known bandwidth of the network
-                      link in kilobits per second.
-                    format: int64
-                    minimum: 0
-                    type: integer
-                  bandwidthVariance:
-                    default: 0
-                    description: The variance of BandwidthKbps.
-                    format: int64
-                    minimum: 0
-                    type: integer
-                required:
-                - bandwidthKbps
+                - latency
+                - packetLoss
+                - qualityClass
+                - throughput
                 type: object
             required:
-            - latency
             - nodeA
             - nodeB
-            - packetLoss
-            - qualityClass
-            - throughput
+            - qos
             type: object
           status:
             description: NetworkLinkStatus defines the observed state of NetworkLink

@@ -1,0 +1,170 @@
+# This use case is a modified version of UC2 of the RAINBOW project.
+# See the original use case on page 30 of https://rainbow-h2020.eu/wp-content/uploads/2021/02/RAINBOW_D1.3-Use-Cases-Descriptions-Version-1.0.pdf
+#
+# This file requires 2 template parameters to be set:
+# 1. {{ .Namespace }}
+# 2. {{ .SchedulerName }}
+
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: "{{ .Namespace }}"
+---
+apiVersion: fogapps.k8s.rainbow-h2020.eu/v1
+kind: ServiceGraph
+
+metadata:
+  name: hazard-watch
+  namespace: "{{ .Namespace }}"
+
+spec:
+  # List of ServiceGraphNodes
+  nodes:
+    # HazardDetector Service:
+    # - Watches the street and detects if there is a hazard on the road (e.g., an animal or a broken down car).
+    # - Runs on a node that has a camera attached.
+    # - If a hazard is detected, the Hazard Detector sends this information and the segment of the video to the AlertValidator.
+    - name: hazard-detector
+      containers:
+        - name: main
+          image: gcr.io/google-containers/pause:3.2
+      replicas:
+        max: 100
+
+    # AlertValidator Service:
+    # - Runs on a more powerful node than the HazardDetector.
+    # - Validates that there is a hazard using a more complex detection model and, if hazard is real, broadcasts this information immediately to all vehicles in its range via 5G.
+    # - Forwards the hazard info to the AlertManager.
+    - name: alert-validator
+      containers:
+        - name: main
+          image: gcr.io/google-containers/pause:3.2
+      replicas:
+        max: 10
+
+    # AlertManager Service:
+    # - Collects alerts from multiple sources.
+    # - Decides which vehicles in the greater vicinity need to be informed and informs them via AMQP.
+    - name: alert-manager
+      containers:
+        - name: main
+          image: gcr.io/google-containers/pause:3.2
+      replicas:
+        max: 2
+
+  # List of directed ServiceLinks that connect the above nodes.
+  links:
+    - source: hazard-detector
+      target: alert-validator
+      qosRequirements:
+        throughput:
+          minBandwidthKbps: 5000
+        latency:
+          maxPacketDelayMsec: 10
+    - source: alert-validator
+      target: alert-manager
+      qosRequirements:
+        throughput:
+          minBandwidthKbps: 10000
+        latency:
+          maxPacketDelayMsec: 50
+---
+# HazardDetector Service
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    component: hazard-detector
+    rainbow-h2020.eu/service-graph: hazard-watch
+    rainbow-h2020.eu/service-graph-node: hazard-detector
+  name: hazard-detector
+  namespace: "{{ .Namespace }}"
+spec:
+  selector:
+    matchLabels:
+      component: hazard-detector
+      rainbow-h2020.eu/service-graph: hazard-watch
+      rainbow-h2020.eu/service-graph-node: hazard-detector
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        component: hazard-detector
+        rainbow-h2020.eu/service-graph: hazard-watch
+        rainbow-h2020.eu/service-graph-node: hazard-detector
+    spec:
+      schedulerName: "{{ .SchedulerName }}"
+      containers:
+      - name: main
+        image: gcr.io/google-containers/pause:3.2
+        resources:
+          limits:
+            rainbow-h2020.eu/fake-cpu: 1000m
+            rainbow-h2020.eu/fake-memory: 1Gi
+            rainbow-h2020.eu/camera: "1"
+---
+# AlertValidator Service
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    component: alert-validator
+    rainbow-h2020.eu/service-graph: hazard-watch
+    rainbow-h2020.eu/service-graph-node: alert-validator
+  name: alert-validator
+  namespace: "{{ .Namespace }}"
+spec:
+  selector:
+    matchLabels:
+      component: alert-validator
+      rainbow-h2020.eu/service-graph: hazard-watch
+      rainbow-h2020.eu/service-graph-node: alert-validator
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        component: alert-validator
+        rainbow-h2020.eu/service-graph: hazard-watch
+        rainbow-h2020.eu/service-graph-node: alert-validator
+    spec:
+      schedulerName: "{{ .SchedulerName }}"
+      containers:
+      - name: main
+        image: gcr.io/google-containers/pause:3.2
+        resources:
+          limits:
+            rainbow-h2020.eu/fake-cpu: 2000m
+            rainbow-h2020.eu/fake-memory: 2Gi
+---
+# AlertManager Service
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    component: alert-manager
+    rainbow-h2020.eu/service-graph: hazard-watch
+    rainbow-h2020.eu/service-graph-node: alert-manager
+  name: alert-manager
+  namespace: "{{ .Namespace }}"
+spec:
+  selector:
+    matchLabels:
+      component: alert-manager
+      rainbow-h2020.eu/service-graph: hazard-watch
+      rainbow-h2020.eu/service-graph-node: alert-manager
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        component: alert-manager
+        rainbow-h2020.eu/service-graph: hazard-watch
+        rainbow-h2020.eu/service-graph-node: alert-manager
+    spec:
+      schedulerName: "{{ .SchedulerName }}"
+      containers:
+      - name: main
+        image: gcr.io/google-containers/pause:3.2
+        resources:
+          limits:
+            rainbow-h2020.eu/fake-cpu: 4000m
+            rainbow-h2020.eu/fake-memory: 4Gi
