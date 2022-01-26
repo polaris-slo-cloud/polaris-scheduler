@@ -19,6 +19,9 @@ import (
 const (
 	// PluginName is the name of this scheduler plugin.
 	PluginName = "ServiceGraph"
+
+	// The timeout before releasing a ServiceGraphState.
+	releaseTimeoutStr = "10s"
 )
 
 var (
@@ -48,6 +51,9 @@ type ServiceGraphPlugin struct {
 
 	// The ServiceGraphManager used for creating the ServiceGraphState.
 	svcGraphManager servicegraphmanager.ServiceGraphManager
+
+	// The timeout before releasing a ServiceGraphState.
+	releaseTimeout time.Duration
 }
 
 // New creates a new ServiceGraphPlugin instance.
@@ -57,9 +63,15 @@ func New(obj runtime.Object, handle framework.Handle) (framework.Plugin, error) 
 		return nil, err
 	}
 
+	releaseTimeout, err := time.ParseDuration(releaseTimeoutStr)
+	if err != nil {
+		return nil, err
+	}
+
 	return &ServiceGraphPlugin{
 		origQueueSort:   origQueueSort.(*kubequeuesort.PrioritySort),
 		svcGraphManager: servicegraphmanager.GetServiceGraphManager(),
+		releaseTimeout:  releaseTimeout,
 	}, nil
 }
 
@@ -251,7 +263,22 @@ func (me *ServiceGraphPlugin) Permit(ctx context.Context, cycleState *framework.
 
 func (me *ServiceGraphPlugin) releaseServiceGraphState(ctx context.Context, cycleState *framework.CycleState, pod *core.Pod, svcGraphState servicegraphmanager.ServiceGraphState) {
 	util.DeleteServiceGraphFromCycleState(cycleState)
-	svcGraphState.Release(pod)
+
+	// If this is the initial placement of of this service graph, we need to wait a while
+	// before releasing the ServiceGraphState to help avoid a race condition with other pods of the same service graph.
+	// In our tests we often saw that the first pod of a new service graph went through the entire scheduling cycle
+	// and released its ServiceGraphState s1, before the second pod was able to acquire the ServiceGraphState, resulting in the deletion of s1.
+	// Thus, the second pod created a new ServiceGraphState s2, which did not have the placement info about the first pod, resulting in
+	// none of the pods being admitted by the AtomicDeployment plugin.
+	// I know that sleeping is not a synchronization primitive, but it is an acceptable solution for now.
+	placementMap, _ := svcGraphState.PlacementMap()
+	if placementMap.IsInitialPlacement() {
+		time.AfterFunc(me.releaseTimeout, func() {
+			svcGraphState.Release(pod)
+		})
+	} else {
+		svcGraphState.Release(pod)
+	}
 }
 
 // Gets the ServiceGraphState for the two pods, if both are associated with the same ServiceGraph and both have a ServiceGraphNode reference, otherwise it returns nil.
