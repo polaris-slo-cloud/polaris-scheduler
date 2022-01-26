@@ -16,7 +16,7 @@
 COMMONENVVAR=GOOS=$(shell uname -s | tr A-Z a-z) GOARCH=$(subst x86_64,amd64,$(patsubst i%86,386,$(shell uname -m)))
 BUILDENVVAR=CGO_ENABLED=0
 
-PROJECT_VERSION=0.0.14
+PROJECT_VERSION=0.1.0
 
 LOCAL_REGISTRY=localhost:5000/rainbow
 LOCAL_IMAGE=rainbow-scheduler:latest
