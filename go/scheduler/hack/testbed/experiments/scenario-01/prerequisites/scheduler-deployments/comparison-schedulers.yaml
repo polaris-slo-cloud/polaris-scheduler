@@ -1,0 +1,265 @@
+# Adapted from https://kubernetes.io/docs/tasks/extend-kubernetes/configure-multiple-schedulers/#define-a-kubernetes-deployment-for-the-scheduler
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: comparison-scheduler
+  namespace: kube-system
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: comparison-scheduler-as-kube-scheduler
+subjects:
+- kind: ServiceAccount
+  name: comparison-scheduler
+  namespace: kube-system
+roleRef:
+  kind: ClusterRole
+  name: system:kube-scheduler
+  apiGroup: rbac.authorization.k8s.io
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: comparison-scheduler-as-volume-scheduler
+subjects:
+- kind: ServiceAccount
+  name: comparison-scheduler
+  namespace: kube-system
+roleRef:
+  kind: ClusterRole
+  name: system:volume-scheduler
+  apiGroup: rbac.authorization.k8s.io
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: comparison-scheduler-authentication-reader
+  namespace: kube-system
+subjects:
+- kind: ServiceAccount
+  name: comparison-scheduler
+  namespace: kube-system
+roleRef:
+  kind: Role
+  name: extension-apiserver-authentication-reader
+  apiGroup: rbac.authorization.k8s.io
+---
+# timed-kube-scheduler
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    component: scheduler
+    tier: control-plane
+    app: timed-kube-scheduler
+  name: timed-kube-scheduler
+  namespace: kube-system
+spec:
+  selector:
+    matchLabels:
+      component: scheduler
+      tier: control-plane
+      app: timed-kube-scheduler
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        component: scheduler
+        tier: control-plane
+        app: timed-kube-scheduler
+        version: second
+    spec:
+      serviceAccountName: comparison-scheduler
+      nodeSelector:
+        node-role.kubernetes.io/control-plane: ""
+      priorityClassName: system-node-critical
+      tolerations:
+      - key: node-role.kubernetes.io/master
+        operator: Exists
+        effect: NoSchedule
+      containers:
+      - command:
+        - /bin/comparison-scheduler
+        - --config=/etc/comparison-scheduler/timed-kube-scheduler-config.yaml
+        - --authentication-kubeconfig=/etc/kubernetes/scheduler.conf
+        - --authorization-kubeconfig=/etc/kubernetes/scheduler.conf
+        - --bind-address=0.0.0.0
+        # - --scheduler-name=comparison-scheduler
+        image: rainbowh2020/comparison-scheduler:202201261254-v0.1.0
+        env:
+          # We need at least one GO environment variable to allow the Google Cloud Code VS Code extension to detect that it is a Go program.
+          - name: GOTRACEBACK
+            value: all
+        livenessProbe:
+          httpGet:
+            path: /healthz
+            port: 10251
+          initialDelaySeconds: 15
+        name: kube-comparison-scheduler
+        readinessProbe:
+          httpGet:
+            path: /healthz
+            port: 10251
+        resources:
+          requests:
+            cpu: '0.1'
+        securityContext:
+          privileged: false
+        volumeMounts:
+          - mountPath: /etc/kubernetes
+            name: etc-kubernetes
+            readOnly: true
+      hostNetwork: false
+      hostPID: false
+      volumes:
+        - name: etc-kubernetes
+          hostPath:
+            path: /etc/kubernetes
+            type: Directory
+---
+# greedy-first-fit-scheduler
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    component: scheduler
+    tier: control-plane
+    app: greedy-first-fit-scheduler
+  name: greedy-first-fit-scheduler
+  namespace: kube-system
+spec:
+  selector:
+    matchLabels:
+      component: scheduler
+      tier: control-plane
+      app: greedy-first-fit-scheduler
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        component: scheduler
+        tier: control-plane
+        app: greedy-first-fit-scheduler
+        version: second
+    spec:
+      serviceAccountName: comparison-scheduler
+      nodeSelector:
+        node-role.kubernetes.io/control-plane: ""
+      priorityClassName: system-node-critical
+      tolerations:
+      - key: node-role.kubernetes.io/master
+        operator: Exists
+        effect: NoSchedule
+      containers:
+      - command:
+        - /bin/comparison-scheduler
+        - --config=/etc/comparison-scheduler/greedy-first-fit-scheduler-config.yaml
+        - --authentication-kubeconfig=/etc/kubernetes/scheduler.conf
+        - --authorization-kubeconfig=/etc/kubernetes/scheduler.conf
+        - --bind-address=0.0.0.0
+        # - --scheduler-name=comparison-scheduler
+        image: rainbowh2020/comparison-scheduler:202201261254-v0.1.0
+        env:
+          # We need at least one GO environment variable to allow the Google Cloud Code VS Code extension to detect that it is a Go program.
+          - name: GOTRACEBACK
+            value: all
+        livenessProbe:
+          httpGet:
+            path: /healthz
+            port: 10251
+          initialDelaySeconds: 15
+        name: kube-comparison-scheduler
+        readinessProbe:
+          httpGet:
+            path: /healthz
+            port: 10251
+        resources:
+          requests:
+            cpu: '0.1'
+        securityContext:
+          privileged: false
+        volumeMounts:
+          - mountPath: /etc/kubernetes
+            name: etc-kubernetes
+            readOnly: true
+      hostNetwork: false
+      hostPID: false
+      volumes:
+        - name: etc-kubernetes
+          hostPath:
+            path: /etc/kubernetes
+            type: Directory
+---
+# round-robin-scheduler (ToDo)
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    component: scheduler
+    tier: control-plane
+    app: round-robin-scheduler
+  name: round-robin-scheduler
+  namespace: kube-system
+spec:
+  selector:
+    matchLabels:
+      component: scheduler
+      tier: control-plane
+      app: round-robin-scheduler
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        component: scheduler
+        tier: control-plane
+        app: round-robin-scheduler
+        version: second
+    spec:
+      serviceAccountName: comparison-scheduler
+      nodeSelector:
+        node-role.kubernetes.io/control-plane: ""
+      priorityClassName: system-node-critical
+      tolerations:
+      - key: node-role.kubernetes.io/master
+        operator: Exists
+        effect: NoSchedule
+      containers:
+      - command:
+        - /bin/comparison-scheduler
+        - --config=/etc/comparison-scheduler/round-robin-scheduler-config.yaml
+        - --authentication-kubeconfig=/etc/kubernetes/scheduler.conf
+        - --authorization-kubeconfig=/etc/kubernetes/scheduler.conf
+        - --bind-address=0.0.0.0
+        # - --scheduler-name=comparison-scheduler
+        image: rainbowh2020/comparison-scheduler:202201261254-v0.1.0
+        env:
+          # We need at least one GO environment variable to allow the Google Cloud Code VS Code extension to detect that it is a Go program.
+          - name: GOTRACEBACK
+            value: all
+        livenessProbe:
+          httpGet:
+            path: /healthz
+            port: 10251
+          initialDelaySeconds: 15
+        name: kube-comparison-scheduler
+        readinessProbe:
+          httpGet:
+            path: /healthz
+            port: 10251
+        resources:
+          requests:
+            cpu: '0.1'
+        securityContext:
+          privileged: false
+        volumeMounts:
+          - mountPath: /etc/kubernetes
+            name: etc-kubernetes
+            readOnly: true
+      hostNetwork: false
+      hostPID: false
+      volumes:
+        - name: etc-kubernetes
+          hostPath:
+            path: /etc/kubernetes
+            type: Directory

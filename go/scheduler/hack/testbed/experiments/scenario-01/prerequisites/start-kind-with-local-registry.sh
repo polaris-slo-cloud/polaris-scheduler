@@ -19,8 +19,7 @@ kubectl apply -f "${SCRIPT_DIR}/cluster-topology.yaml"
 # Undeploy the rainbow-orchestrator, which is not needed for scheduler testing.
 kubectl delete deployment -n rainbow-system rainbow-orchestrator-controller-manager
 
-# Deploy our schedulers
-# kubectl apply -f ./scheduler-deployments/comparison-scheduler.yaml
-# kubectl apply -f ./scheduler-deployments/rainbow-scheduler.yaml
-
-echo "Please run ./create-extended-resources.sh with kubectl proxy"
+echo "Please run the following:"
+echo "1. kubectl proxy (in a second terminal)"
+echo "2. ./create-extended-resources.sh <addr-and-port-from-kubectl-proxy> (afterwards you can stop 'kubectl proxy')"
+echo "3. kubectl apply -f ./scheduler-deployments"
