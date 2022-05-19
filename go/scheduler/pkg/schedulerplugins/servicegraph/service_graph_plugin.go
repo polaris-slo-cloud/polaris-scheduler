@@ -149,9 +149,7 @@ func (me *ServiceGraphPlugin) PreFilter(ctx context.Context, cycleState *framewo
 	}
 
 	util.WriteServiceGraphToCycleState(cycleState, svcGraphState)
-	cycleState.Lock()
 	cycleState.Write(util.StopwatchStateKey, stopwatch)
-	cycleState.Unlock()
 	return framework.NewStatus(framework.Success)
 }
 

@@ -76,9 +76,7 @@ func (me *PodsPerNodePlugin) PreScore(ctx context.Context, cycleState *framework
 		}
 	}
 
-	cycleState.Lock()
 	cycleState.Write(preScoreStateKey, &preScoreState{requiredResources: requiredResources, eligibleFogNodesCount: fogNodes})
-	cycleState.Unlock()
 	return framework.NewStatus(framework.Success)
 }
 
@@ -179,9 +177,7 @@ func minValue(values map[string]int64) int64 {
 }
 
 func getPreScoreState(cycleState *framework.CycleState) (*preScoreState, error) {
-	cycleState.RLock()
 	requiredResourcesInfo, err := cycleState.Read(preScoreStateKey)
-	cycleState.RUnlock()
 	if err != nil {
 		return nil, err
 	}

@@ -97,9 +97,7 @@ func (me *networkQosStateData) Clone() framework.StateData {
 // Gets the networkQosStateData from the CycleState or returns a framework.Success state if the current pod is not associated with a ServiceGraph
 // and, thus, does not have any networkQosStateData.
 func getNetworkQosStateDataOrStatus(cycleState *framework.CycleState) (*networkQosStateData, *framework.Status) {
-	cycleState.RLock()
 	stateData, err := cycleState.Read(networkQosStateKey)
-	cycleState.RUnlock()
 	if err == nil {
 		return stateData.(*networkQosStateData), nil
 	}
