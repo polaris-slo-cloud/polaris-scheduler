@@ -3,6 +3,8 @@
 # This YAML is based on https://github.com/wzshiming/fake-kubelet/blob/4017683b1071364f8d9aebfe3b42529da2fcf1d2/deploy.yaml
 # The names and number of nodes can be adjusted using the GENERATE_NODE_NAME and GENERATE_REPLICAS environment variables of the fake-kubelet deployment.
 #
+# If multiple node types are needed, additional versions of the ConfigMap and the Deployment can be created using different names an labels.
+#
 # A pod that should be schedulable on one of these nodes needs to have the following annotation toleration:
 # tolerations: # A taints was added to an automatically created Node. You can remove taints of Node or add this tolerations
 #   - key: "fake-kubelet/provider"
