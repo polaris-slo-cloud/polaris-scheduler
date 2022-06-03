@@ -1,6 +1,12 @@
 # This YAML files in this folder are based on https://github.com/wzshiming/fake-kubelet/blob/a2f3ebfe711245a243906f021a24297f62f4b0aa/deploy.yaml
-# The file 1-fake-kubelet.base.yaml creates the RBAC objects needed for deploying fake-kubelet.
-# The file 2-fake-kubelet-nodes.yaml creates the ConfigMaps and deployments for the actual nodes.
+# The file fake-kubelet-base.yaml creates the RBAC objects needed for deploying fake-kubelet.
+# The file fake-kubelet-nodes-template.yaml provides a template for creating the ConfigMap and deployment for the actual nodes.
+#
+# A pod that should be schedulable on one of the fake nodes needs to have the following annotation toleration:
+# tolerations:
+#   - key: "fake-kubelet/provider"
+#     operator: "Exists"
+#     effect: "NoSchedule"
 ---
 apiVersion: v1
 kind: ServiceAccount

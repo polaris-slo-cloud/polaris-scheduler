@@ -3,15 +3,15 @@
 set -o errexit
 
 # This script starts a single node kind cluster and deploys fake-kubelet (https://github.com/wzshiming/fake-kubelet) to create simulated nodes.
+# A pod that should be schedulable on one of the fake nodes needs to have the following annotation toleration:
+# tolerations:
+#   - key: "fake-kubelet/provider"
+#     operator: "Exists"
+#     effect: "NoSchedule"
 
 ###############################################################################
 # Global variables
 ###############################################################################
-
-# kind Kubernetes node image
-kindImage="kindest/node:v1.22.9@sha256:ad5b8404c4052781365a4e70bb7d17c5331e4177bd4a7cd214339316cd6193b6"
-
-declare -i nodesCount=1
 
 SCRIPT_DIR=$(dirname "${BASH_SOURCE}")
 source "${SCRIPT_DIR}/common.sh"
@@ -23,9 +23,27 @@ source "${SCRIPT_DIR}/common.sh"
 
 function printUsage() {
     echo "Usage:"
-    echo "./start-kind-with-fake-kubelet.sh [nodesCount]"
-    echo "Example with 10 nodes:"
-    echo "./start-kind-with-fake-kubelet.sh 10"
+    echo "./start-kind-with-fake-kubelet.sh <path-to-config-file>"
+    echo "Example:"
+    echo "./start-kind-with-fake-kubelet.sh cluster.config.sh"
+}
+
+# Prints an error and exits if the configuration is not valid.
+function validateConfig() {
+    if [ "${kindImage}" == "" ]; then
+        echo "Error: The kindImage has not been set in the configuration!"
+        exit
+    fi
+    for fakeNodeType in "${!fakeNodeTypes[@]}"; do
+        if [ "${fakeNodeTypeCpus[$fakeNodeType]}" == "" ]; then
+            echo "Error: No entry for ${fakeNodeType} found in the 'fakeNodeTypeCpus' array!"
+            exit 1
+        fi
+        if [ "${fakeNodeTypeMemory[$fakeNodeType]}" == "" ]; then
+            echo "Error: No entry for ${fakeNodeType} found in the 'fakeNodeTypeMemory' array!"
+            exit 1
+        fi
+    done
 }
 
 # Starts a local kind cluster with a single node.
@@ -38,7 +56,23 @@ function startLocalCluster() {
 
 # Deploys fake-kubelet to simulate nodes.
 function deployFakeKubelet() {
-    kubectl --context $CONTEXT apply -f "${SCRIPT_DIR}/fake-kubelet/"
+    kubectl --context $CONTEXT apply -f "${SCRIPT_DIR}/fake-kubelet/fake-kubelet-base.yaml"
+
+    local nodesTemplateBase=$(cat "${SCRIPT_DIR}/fake-kubelet/fake-kubelet-nodes-template.yaml")
+
+    for fakeNodeType in "${!fakeNodeTypes[@]}"; do
+        local fakeNodesCount="${fakeNodeTypes[$fakeNodeType]}"
+        local fakeCpus="${fakeNodeTypeCpus[$fakeNodeType]}"
+        local fakeMemory="${fakeNodeTypeMemory[$fakeNodeType]}"
+
+        echo "Creating ${fakeNodesCount} nodes of type ${fakeNodeType} with ${fakeCpus} CPUs and ${fakeMemory} RAM."
+
+        local nodeTypeYaml=$(echo "${nodesTemplateBase}" | sed -e "s/{{ \.polarisTemplate\.fakeNodeType }}/${fakeNodeType}/" -)
+        nodeTypeYaml=$(echo "${nodeTypeYaml}" | sed -e "s/{{ \.polarisTemplate\.fakeNodesCount }}/${fakeNodesCount}/" -)
+        nodeTypeYaml=$(echo "${nodeTypeYaml}" | sed -e "s/{{ \.polarisTemplate\.fakeCPUs }}/${fakeCpus}/" -)
+        nodeTypeYaml=$(echo "${nodeTypeYaml}" | sed -e "s/{{ \.polarisTemplate\.fakeMemory }}/${fakeMemory}/" -)
+        echo "${nodeTypeYaml}" | kubectl apply -f -
+    done
 }
 
 
@@ -46,13 +80,16 @@ function deployFakeKubelet() {
 # Script Start
 ###############################################################################
 
-# if [[ $1 =~ ^[0-9]+$ ]]; then
-#     nodesCount=$1
-# else
-#     echo "Please specify the number of cluster nodes as the first argument."
-#     printUsage
-#     exit 1
-# fi
+if [ "$1" == "" ] || [ ! -f "$1" ]; then
+    printUsage
+    exit 1
+fi
 
+
+# Load the configuration (yes, it is dangerous to do it this way, but this script is only used in our experiments).
+# For an example config file see: cluster.config.sh
+source "$1"
+
+validateConfig
 startLocalCluster
 deployFakeKubelet

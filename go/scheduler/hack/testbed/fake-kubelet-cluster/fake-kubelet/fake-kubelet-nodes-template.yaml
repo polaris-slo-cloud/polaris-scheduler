@@ -1,10 +1,26 @@
+# This YAML files in this folder are based on https://github.com/wzshiming/fake-kubelet/blob/a2f3ebfe711245a243906f021a24297f62f4b0aa/deploy.yaml
+# The file fake-kubelet-base.yaml creates the RBAC objects needed for deploying fake-kubelet.
+# The file fake-kubelet-nodes-template.yaml provides a template for creating the ConfigMap and deployment for the actual nodes.
+#
+# The file uses the following template variables that MUST be replaced before applying the YAML with kubectl:
+# - {{ .polarisTemplate.fakeNodeType }} - The name of the fake node type (this is also used for naming the ConfigMap and the fake-kubelet deployment).
+# - {{ .polarisTemplate.fakeNodesCount }} - The number of fake nodes of this type that should be created.
+# - {{ .polarisTemplate.fakeCPUs }} - The quantity of available CPUs.
+# - {{ .polarisTemplate.fakeMemory }} - The quantity of available memory.
+#
+# A pod that should be schedulable on one of the fake nodes needs to have the following annotation toleration:
+# tolerations:
+#   - key: "fake-kubelet/provider"
+#     operator: "Exists"
+#     effect: "NoSchedule"
+#
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: fake-kubelet
+  name: {{ .polarisTemplate.fakeNodeType }}
   namespace: kube-system
   labels:
-    app: fake-kubelet
+    app: {{ .polarisTemplate.fakeNodeType }}
 data:
   pod_status_template: |-
     {{ $startTime := .metadata.creationTimestamp }}
@@ -67,7 +83,7 @@ data:
       annotations:
         node.alpha.kubernetes.io/ttl: "0"
       labels:
-        app: fake-kubelet
+        app: {{ .polarisTemplate.fakeNodeType }}
         beta.kubernetes.io/arch: amd64
         beta.kubernetes.io/os: linux
         kubernetes.io/arch: amd64
@@ -75,7 +91,7 @@ data:
         kubernetes.io/os: linux
         kubernetes.io/role: agent
         node-role.kubernetes.io/agent: ""
-        type: fake-kubelet
+        type: {{ .polarisTemplate.fakeNodeType }}
       name: {{ .metadata.name }}
     spec:
       taints:
@@ -126,22 +142,14 @@ data:
     {{ end }}
 
     allocatable:
-    {{ with .allocatable }}
-    {{ YAML . 1 }}
-    {{ else }}
-      cpu: 1k
-      memory: 1Ti
+      cpu: {{ .polarisTemplate.fakeCPUs }}
+      memory: {{ .polarisTemplate.fakeMemory }}
       pods: 1M
-    {{ end }}
 
     capacity:
-    {{ with .capacity }}
-    {{ YAML . 1 }}
-    {{ else }}
-      cpu: 1k
-      memory: 1Ti
+      cpu: {{ .polarisTemplate.fakeCPUs }}
+      memory: {{ .polarisTemplate.fakeMemory }}
       pods: 1M
-    {{ end }}
 
     {{ with .nodeInfo }}
     nodeInfo:
@@ -164,19 +172,19 @@ data:
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: fake-kubelet
+  name: {{ .polarisTemplate.fakeNodeType }}
   namespace: kube-system
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: fake-kubelet
+      app: {{ .polarisTemplate.fakeNodeType }}
   template:
     metadata:
-      name: fake-kubelet
+      name: {{ .polarisTemplate.fakeNodeType }}
       namespace: kube-system
       labels:
-        app: fake-kubelet
+        app: {{ .polarisTemplate.fakeNodeType }}
     spec:
       containers:
         - name: fake-kubelet
@@ -186,11 +194,11 @@ spec:
             - name: NODE_NAME
               value: "" # This is to specify a single Node, use GENERATE_NODE_NAME and GENERATE_REPLICAS to generate multiple nodes
             - name: GENERATE_NODE_NAME
-              value: fake-
+              value: {{ .polarisTemplate.fakeNodeType }}-
             - name: GENERATE_REPLICAS
-              value: "5"
+              value: "{{ .polarisTemplate.fakeNodesCount }}"
             - name: TAKE_OVER_LABELS_SELECTOR
-              value: type=fake-kubelet
+              value: type={{ .polarisTemplate.fakeNodeType }}
             - name: TAKE_OVER_ALL
               value: "false"
             - name: CIDR
@@ -206,22 +214,22 @@ spec:
             - name: POD_STATUS_TEMPLATE
               valueFrom:
                 configMapKeyRef:
-                  name: fake-kubelet
+                  name: {{ .polarisTemplate.fakeNodeType }}
                   key: pod_status_template
             - name: NODE_TEMPLATE
               valueFrom:
                 configMapKeyRef:
-                  name: fake-kubelet
+                  name: {{ .polarisTemplate.fakeNodeType }}
                   key: node_template
             - name: NODE_HEARTBEAT_TEMPLATE
               valueFrom:
                 configMapKeyRef:
-                  name: fake-kubelet
+                  name: {{ .polarisTemplate.fakeNodeType }}
                   key: node_heartbeat_template
             - name: NODE_INITIALIZATION_TEMPLATE
               valueFrom:
                 configMapKeyRef:
-                  name: fake-kubelet
+                  name: {{ .polarisTemplate.fakeNodeType }}
                   key: node_initialization_template
           livenessProbe:
             httpGet:
