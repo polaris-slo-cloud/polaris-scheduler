@@ -2,11 +2,12 @@
 # The file fake-kubelet-base.yaml creates the RBAC objects needed for deploying fake-kubelet.
 # The file fake-kubelet-nodes-template.yaml provides a template for creating the ConfigMap and deployment for the actual nodes.
 #
-# The file uses the following template variables that MUST be replaced before applying the YAML with kubectl:
-# - {{ .polarisTemplate.fakeNodeType }} - The name of the fake node type (this is also used for naming the ConfigMap and the fake-kubelet deployment).
-# - {{ .polarisTemplate.fakeNodesCount }} - The number of fake nodes of this type that should be created.
-# - {{ .polarisTemplate.fakeCPUs }} - The quantity of available CPUs.
-# - {{ .polarisTemplate.fakeMemory }} - The quantity of available memory.
+# The file uses the following template variables (all surrounded by {{ and }}) that MUST be replaced before applying the YAML with kubectl:
+# - .polarisTemplate.fakeNodeType - The name of the fake node type (this is also used for naming the ConfigMap and the fake-kubelet deployment).
+# - .polarisTemplate.fakeNodesCount - The number of fake nodes of this type that should be created.
+# - .polarisTemplate.fakeCPUs - The quantity of available CPUs.
+# - .polarisTemplate.fakeMemory - The quantity of available memory.
+# - .polarisTemplate.extraNodeLabels - An optional list of extra node labels.
 #
 # A pod that should be schedulable on one of the fake nodes needs to have the following annotation toleration:
 # tolerations:
@@ -91,7 +92,7 @@ data:
         kubernetes.io/os: linux
         kubernetes.io/role: agent
         node-role.kubernetes.io/agent: ""
-        type: {{ .polarisTemplate.fakeNodeType }}
+        type: {{ .polarisTemplate.fakeNodeType }}{{ .polarisTemplate.extraNodeLabels }}
       name: {{ .metadata.name }}
     spec:
       taints:

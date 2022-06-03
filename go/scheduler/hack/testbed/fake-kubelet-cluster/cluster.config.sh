@@ -29,6 +29,14 @@ declare -A fakeNodeTypeMemory=(
     ["cloud-medium"]="16Gi"
 )
 
+# Optional extra node labels for each node type.
+# The value for each node type has to be a string of the following format (slashes and quotes must be escaped):
+# "<domain1.io>\/<label1>: <value1>;<domain2.io>\/<label2>: <value2>;<...>"
+declare -A extraNodeLabels=(
+    ["cell-5g-base-station"]="polaris-slo-cloud.github.io\/base-station-5g: \"\";polaris-slo-cloud.github.io\/test-label: \"true\""
+)
+
+
 # Additional extended resources.
 # The keys are composed of the node name and the name of the resource:
 # "<fake-node-type>:<resource-name>"

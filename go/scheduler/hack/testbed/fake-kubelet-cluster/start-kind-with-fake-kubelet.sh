@@ -20,6 +20,9 @@ source "${SCRIPT_DIR}/common.sh"
 API_PROXY_PORT="8001"
 API_PROXY_BASE_URL="localhost:${API_PROXY_PORT}"
 
+# Special indents for formatting raw YAML strings for the template.
+EXTRA_NODE_LABELS_INDENT="        "
+
 
 ###############################################################################
 # Functions
@@ -68,15 +71,38 @@ function deployFakeKubelet() {
         local fakeNodesCount="${fakeNodeTypes[$fakeNodeType]}"
         local fakeCpus="${fakeNodeTypeCpus[$fakeNodeType]}"
         local fakeMemory="${fakeNodeTypeMemory[$fakeNodeType]}"
+        getExtraNodeLabels "${fakeNodeType}"
+        local extraLabels="${RET}"
 
         echo "Creating ${fakeNodesCount} nodes of type ${fakeNodeType} with ${fakeCpus} CPUs and ${fakeMemory} RAM."
+        if [ "${extraLabels}" != "" ]; then
+            echo "Extra node labels: ${extraLabels}"
+        fi
 
         local nodeTypeYaml=$(echo "${nodesTemplateBase}" | sed -e "s/{{ \.polarisTemplate\.fakeNodeType }}/${fakeNodeType}/" -)
         nodeTypeYaml=$(echo "${nodeTypeYaml}" | sed -e "s/{{ \.polarisTemplate\.fakeNodesCount }}/${fakeNodesCount}/" -)
         nodeTypeYaml=$(echo "${nodeTypeYaml}" | sed -e "s/{{ \.polarisTemplate\.fakeCPUs }}/${fakeCpus}/" -)
         nodeTypeYaml=$(echo "${nodeTypeYaml}" | sed -e "s/{{ \.polarisTemplate\.fakeMemory }}/${fakeMemory}/" -)
+        nodeTypeYaml=$(echo "${nodeTypeYaml}" | sed -e "s/{{ \.polarisTemplate\.extraNodeLabels }}/${extraLabels}/" -)
         echo "${nodeTypeYaml}" | kubectl apply -f -
 
+    done
+}
+
+# Gets the extra node labels formatted YAML string for the current fakeNodeType
+function getExtraNodeLabels() {
+    local fakeNodeType=$1
+    RET=""
+
+    local rawLabels=${extraNodeLabels[$fakeNodeType]}
+    if [ "${rawLabels}" == "" ]; then
+        return
+    fi
+
+    readarray -d ";" -t labels <<< "${rawLabels}"
+    for label in "${labels[@]}"; do
+        local trimmedLabel=$(echo "${label}" | tr -d "\n")
+        RET="${RET}\n${EXTRA_NODE_LABELS_INDENT}${trimmedLabel}"
     done
 }
 
