@@ -7,7 +7,8 @@
 # - .polarisTemplate.fakeNodesCount - The number of fake nodes of this type that should be created.
 # - .polarisTemplate.fakeCPUs - The quantity of available CPUs.
 # - .polarisTemplate.fakeMemory - The quantity of available memory.
-# - .polarisTemplate.extraNodeLabels - An optional list of extra node labels.
+# - .polarisTemplate.extraNodeLabels - An list of extra node labels (may be "").
+# - .polarisTemplate.extendedResources - A list of extended resources (may be "").
 #
 # A pod that should be schedulable on one of the fake nodes needs to have the following annotation toleration:
 # tolerations:
@@ -150,7 +151,7 @@ data:
     capacity:
       cpu: {{ .polarisTemplate.fakeCPUs }}
       memory: {{ .polarisTemplate.fakeMemory }}
-      pods: 1M
+      pods: 1M{{ .polarisTemplate.extendedResources }}
 
     {{ with .nodeInfo }}
     nodeInfo:

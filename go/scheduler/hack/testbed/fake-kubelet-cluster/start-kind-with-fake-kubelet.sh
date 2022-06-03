@@ -22,6 +22,7 @@ API_PROXY_BASE_URL="localhost:${API_PROXY_PORT}"
 
 # Special indents for formatting raw YAML strings for the template.
 EXTRA_NODE_LABELS_INDENT="        "
+EXTENDED_RESOURCES_INDENT="      "
 
 
 ###############################################################################
@@ -73,10 +74,15 @@ function deployFakeKubelet() {
         local fakeMemory="${fakeNodeTypeMemory[$fakeNodeType]}"
         getExtraNodeLabels "${fakeNodeType}"
         local extraLabels="${RET}"
+        getExtendedResources "${fakeNodeType}"
+        local extendedResourcesYaml="${RET}"
 
         echo "Creating ${fakeNodesCount} nodes of type ${fakeNodeType} with ${fakeCpus} CPUs and ${fakeMemory} RAM."
         if [ "${extraLabels}" != "" ]; then
             echo "Extra node labels: ${extraLabels}"
+        fi
+        if [ "${extendedResourcesYaml}" != "" ]; then
+            echo "Extended resources: ${extendedResourcesYaml}"
         fi
 
         local nodeTypeYaml=$(echo "${nodesTemplateBase}" | sed -e "s/{{ \.polarisTemplate\.fakeNodeType }}/${fakeNodeType}/" -)
@@ -84,6 +90,7 @@ function deployFakeKubelet() {
         nodeTypeYaml=$(echo "${nodeTypeYaml}" | sed -e "s/{{ \.polarisTemplate\.fakeCPUs }}/${fakeCpus}/" -)
         nodeTypeYaml=$(echo "${nodeTypeYaml}" | sed -e "s/{{ \.polarisTemplate\.fakeMemory }}/${fakeMemory}/" -)
         nodeTypeYaml=$(echo "${nodeTypeYaml}" | sed -e "s/{{ \.polarisTemplate\.extraNodeLabels }}/${extraLabels}/" -)
+        nodeTypeYaml=$(echo "${nodeTypeYaml}" | sed -e "s/{{ \.polarisTemplate\.extendedResources }}/${extendedResourcesYaml}/" -)
         echo "${nodeTypeYaml}" | kubectl apply -f -
 
     done
@@ -91,61 +98,41 @@ function deployFakeKubelet() {
 
 # Gets the extra node labels formatted YAML string for the current fakeNodeType
 function getExtraNodeLabels() {
-    local fakeNodeType=$1
+    local fakeNodeType="$1"
     RET=""
 
-    local rawLabels=${extraNodeLabels[$fakeNodeType]}
+    local rawLabels="${extraNodeLabels[$fakeNodeType]}"
     if [ "${rawLabels}" == "" ]; then
         return
     fi
 
-    readarray -d ";" -t labels <<< "${rawLabels}"
-    for label in "${labels[@]}"; do
-        local trimmedLabel=$(echo "${label}" | tr -d "\n")
-        RET="${RET}\n${EXTRA_NODE_LABELS_INDENT}${trimmedLabel}"
-    done
+    transformToRawYamlString "${rawLabels}" "${EXTRA_NODE_LABELS_INDENT}"
 }
 
-# Creates the extended resources configured in fakeNodeTypeExtendedResources.
-function createExtendedResources() {
-    if [ "${#fakeNodeTypeExtendedResources[@]}" != "0" ]; then
-        local sleepTime="1m"
-        echo "Sleeping for ${sleepTime} to allow all nodes to be registered before creating extended resources."
-        sleep ${sleepTime}
+# Gets the extended resources formatted YAML string for the current fakeNodeType
+function getExtendedResources() {
+    local fakeNodeType="$1"
+    RET=""
+
+    local rawResources="${extendedResources[$fakeNodeType]}"
+    if [ "${rawResources}" == "" ]; then
+        return
     fi
 
-    # Run kubectl proxy in the background
-    kubectl proxy --port=${API_PROXY_PORT} &
-    local proxyPID=$!
-    echo "Executing 'kubectl proxy' in the background. PID: $proxyPID"
-    sleep 5s
+    transformToRawYamlString "${rawResources}" "${EXTENDED_RESOURCES_INDENT}"
+}
 
-    # Create extended resources.
-    for compoundKey in "${!fakeNodeTypeExtendedResources[@]}"; do
-        readarray -d : -t keyComponents <<< "${compoundKey}"
-        local fakeNodeType="${keyComponents[0]}"
-        local resourceName=$(echo "${keyComponents[1]}" | tr -d "\n")
-        local resourceValue="${fakeNodeTypeExtendedResources[$compoundKey]}"
-        local nodesCount="${fakeNodeTypes[$fakeNodeType]}"
+# Splits the input string $1 at ";" and converts it into a raw YAML string using $2 as the indent.
+function transformToRawYamlString() {
+    local inputStr=$1
+    local indent=$2
+    RET=""
 
-        if [ "${nodesCount}" == "" ]; then
-            echo "Error: Unknown fake node type ${fakeNodeType}."
-            exit 1
-        fi
-        echo "Creating extended resource for fakeNodeType: $fakeNodeType, resource: $resourceName = $resourceValue"
-
-        local maxIndex=$(($nodesCount - 1))
-        for i in $(seq 0 $maxIndex ); do
-            local nodeName="${fakeNodeType}-${i}"
-            curl --header "Content-Type: application/json-patch+json" \
-                --request PATCH \
-                --data "[{\"op\": \"add\", \"path\": \"/status/capacity/${resourceName}\", \"value\": \"${resourceValue}\"}]" \
-                "http://${API_PROXY_BASE_URL}/api/v1/nodes/${nodeName}/status"
-        done
+    readarray -d ";" -t yamlProperties <<< "${inputStr}"
+    for prop in "${yamlProperties[@]}"; do
+        local trimmedProp=$(echo "${prop}" | tr -d "\n")
+        RET="${RET}\n${indent}${trimmedProp}"
     done
-
-    echo "Stopping kubectl proxy"
-    kill -SIGTERM ${proxyPID}
 }
 
 
@@ -166,6 +153,5 @@ source "$1"
 validateConfig
 startLocalCluster
 deployFakeKubelet
-createExtendedResources
 
 echo "Successfully created cluster with fake-kubelet nodes."

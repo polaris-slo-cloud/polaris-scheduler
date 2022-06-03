@@ -36,10 +36,9 @@ declare -A extraNodeLabels=(
     ["cell-5g-base-station"]="polaris-slo-cloud.github.io\/base-station-5g: \"\";polaris-slo-cloud.github.io\/test-label: \"true\""
 )
 
-
-# Additional extended resources.
-# The keys are composed of the node name and the name of the resource:
-# "<fake-node-type>:<resource-name>"
-declare -A fakeNodeTypeExtendedResources=(
-    ["cell-5g-base-station:polaris-slo-cloud.github.io~1base-station-5g"]="1"
+# Extended resources.
+# The value for each node type has to be a string of the following format (slashes must be escaped):
+# "<domain1.io>\/<resource1>: <count1>;<domain2.io>\/<resource2>: <count2>;<...>"
+declare -A extendedResources=(
+    ["cell-5g-base-station"]="polaris-slo-cloud.github.io\/base-station-5g: 1;polaris-slo-cloud.github.io\/test-resource: 1"
 )
