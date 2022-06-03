@@ -1,6 +1,7 @@
 #!/bin/bash
 # set -x
 set -o errexit
+set -m
 
 # This script starts a single node kind cluster and deploys fake-kubelet (https://github.com/wzshiming/fake-kubelet) to create simulated nodes.
 # A pod that should be schedulable on one of the fake nodes needs to have the following annotation toleration:
@@ -15,6 +16,9 @@ set -o errexit
 
 SCRIPT_DIR=$(dirname "${BASH_SOURCE}")
 source "${SCRIPT_DIR}/common.sh"
+
+API_PROXY_PORT="8001"
+API_PROXY_BASE_URL="localhost:${API_PROXY_PORT}"
 
 
 ###############################################################################
@@ -72,7 +76,50 @@ function deployFakeKubelet() {
         nodeTypeYaml=$(echo "${nodeTypeYaml}" | sed -e "s/{{ \.polarisTemplate\.fakeCPUs }}/${fakeCpus}/" -)
         nodeTypeYaml=$(echo "${nodeTypeYaml}" | sed -e "s/{{ \.polarisTemplate\.fakeMemory }}/${fakeMemory}/" -)
         echo "${nodeTypeYaml}" | kubectl apply -f -
+
     done
+}
+
+# Creates the extended resources configured in fakeNodeTypeExtendedResources.
+function createExtendedResources() {
+    if [ "${#fakeNodeTypeExtendedResources[@]}" != "0" ]; then
+        local sleepTime="1m"
+        echo "Sleeping for ${sleepTime} to allow all nodes to be registered before creating extended resources."
+        sleep ${sleepTime}
+    fi
+
+    # Run kubectl proxy in the background
+    kubectl proxy --port=${API_PROXY_PORT} &
+    local proxyPID=$!
+    echo "Executing 'kubectl proxy' in the background. PID: $proxyPID"
+    sleep 5s
+
+    # Create extended resources.
+    for compoundKey in "${!fakeNodeTypeExtendedResources[@]}"; do
+        readarray -d : -t keyComponents <<< "${compoundKey}"
+        local fakeNodeType="${keyComponents[0]}"
+        local resourceName=$(echo "${keyComponents[1]}" | tr -d "\n")
+        local resourceValue="${fakeNodeTypeExtendedResources[$compoundKey]}"
+        local nodesCount="${fakeNodeTypes[$fakeNodeType]}"
+
+        if [ "${nodesCount}" == "" ]; then
+            echo "Error: Unknown fake node type ${fakeNodeType}."
+            exit 1
+        fi
+        echo "Creating extended resource for fakeNodeType: $fakeNodeType, resource: $resourceName = $resourceValue"
+
+        local maxIndex=$(($nodesCount - 1))
+        for i in $(seq 0 $maxIndex ); do
+            local nodeName="${fakeNodeType}-${i}"
+            curl --header "Content-Type: application/json-patch+json" \
+                --request PATCH \
+                --data "[{\"op\": \"add\", \"path\": \"/status/capacity/${resourceName}\", \"value\": \"${resourceValue}\"}]" \
+                "http://${API_PROXY_BASE_URL}/api/v1/nodes/${nodeName}/status"
+        done
+    done
+
+    echo "Stopping kubectl proxy"
+    kill -SIGTERM ${proxyPID}
 }
 
 
@@ -93,3 +140,6 @@ source "$1"
 validateConfig
 startLocalCluster
 deployFakeKubelet
+createExtendedResources
+
+echo "Successfully created cluster with fake-kubelet nodes."
