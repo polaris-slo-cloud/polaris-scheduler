@@ -17,9 +17,6 @@ set -m
 SCRIPT_DIR=$(dirname "${BASH_SOURCE}")
 source "${SCRIPT_DIR}/common.sh"
 
-API_PROXY_PORT="8001"
-API_PROXY_BASE_URL="localhost:${API_PROXY_PORT}"
-
 # Special indents for formatting raw YAML strings for the template.
 EXTRA_NODE_LABELS_INDENT="        "
 EXTENDED_RESOURCES_INDENT="      "
