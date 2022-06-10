@@ -136,19 +136,24 @@ spec:
     spec:
       schedulerName: "{{ .SchedulerName }}"
       containers:
-      - name: main
-        image: gcr.io/google-containers/pause:3.2
-        resources:
-          limits:
-            cpu: 1000m
-            memory: 1Gi
-        affinity:
-          nodeAffinity:
-            requiredDuringSchedulingIgnoredDuringExecution:
-              nodeSelectorTerms:
-                - matchExpressions:
-                    - key: polaris-slo-cloud.github.io/base-station-5g
-                      operator: Exists
+        - name: main
+          image: gcr.io/google-containers/pause:3.2
+          resources:
+            limits:
+              cpu: 1000m
+              memory: 1Gi
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - key: polaris-slo-cloud.github.io/base-station-5g
+                    operator: Exists
+      tolerations:
+        - key: "fake-kubelet/provider"
+          operator: "Equal"
+          value: "fake"
+          effect: "NoSchedule"
 ---
 # Aggregator Service
 apiVersion: apps/v1
@@ -176,12 +181,17 @@ spec:
     spec:
       schedulerName: "{{ .SchedulerName }}"
       containers:
-      - name: main
-        image: gcr.io/google-containers/pause:3.2
-        resources:
-          limits:
-            cpu: 4000m
-            memory: 4Gi
+        - name: main
+          image: gcr.io/google-containers/pause:3.2
+          resources:
+            limits:
+              cpu: 4000m
+              memory: 4Gi
+      tolerations:
+        - key: "fake-kubelet/provider"
+          operator: "Equal"
+          value: "fake"
+          effect: "NoSchedule"
 ---
 # HazardBroadcaster Service
 apiVersion: apps/v1
@@ -209,12 +219,17 @@ spec:
     spec:
       schedulerName: "{{ .SchedulerName }}"
       containers:
-      - name: main
-        image: gcr.io/google-containers/pause:3.2
-        resources:
-          limits:
-            cpu: 2000m
-            memory: 2Gi
+        - name: main
+          image: gcr.io/google-containers/pause:3.2
+          resources:
+            limits:
+              cpu: 2000m
+              memory: 2Gi
+      tolerations:
+        - key: "fake-kubelet/provider"
+          operator: "Equal"
+          value: "fake"
+          effect: "NoSchedule"
 ---
 # RegionManager Service
 apiVersion: apps/v1
@@ -242,12 +257,17 @@ spec:
     spec:
       schedulerName: "{{ .SchedulerName }}"
       containers:
-      - name: main
-        image: gcr.io/google-containers/pause:3.2
-        resources:
-          limits:
-            cpu: 4000m
-            memory: 8Gi
+        - name: main
+          image: gcr.io/google-containers/pause:3.2
+          resources:
+            limits:
+              cpu: 4000m
+              memory: 8Gi
+      tolerations:
+        - key: "fake-kubelet/provider"
+          operator: "Equal"
+          value: "fake"
+          effect: "NoSchedule"
 ---
 # TrafficInfoProvider Service
 apiVersion: apps/v1
@@ -275,9 +295,14 @@ spec:
     spec:
       schedulerName: "{{ .SchedulerName }}"
       containers:
-      - name: main
-        image: gcr.io/google-containers/pause:3.2
-        resources:
-          limits:
-            cpu: 2000m
-            memory: 2Gi
+        - name: main
+          image: gcr.io/google-containers/pause:3.2
+          resources:
+            limits:
+              cpu: 2000m
+              memory: 2Gi
+      tolerations:
+        - key: "fake-kubelet/provider"
+          operator: "Equal"
+          value: "fake"
+          effect: "NoSchedule"
