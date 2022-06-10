@@ -25,3 +25,6 @@ for i in $(seq 0 $maxClusterId); do
     yaml=$(bash "${SCRIPT_DIR}/gen-cluster-topology.sh" $i)
     kubectl apply -f - <<< "$yaml"
 done
+
+# Deploy the schedulers
+kubectl apply -f "${SCRIPT_DIR}/scheduler-deployments"
