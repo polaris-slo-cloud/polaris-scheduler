@@ -25,9 +25,7 @@ func (me *workloadTypeStateData) Clone() framework.StateData {
 // Gets the workloadTypeStateData from the CycleState or returns a framework.Success state if the current pod is not associated with a ServiceGraph
 // and, thus, does not have any workloadTypeStateData.
 func getWorkloadTypeStateDataOrStatus(cycleState *framework.CycleState) (*workloadTypeStateData, *framework.Status) {
-	cycleState.RLock()
 	stateData, err := cycleState.Read(workloadTypeStateKey)
-	cycleState.RUnlock()
 	if err == nil {
 		return stateData.(*workloadTypeStateData), nil
 	}

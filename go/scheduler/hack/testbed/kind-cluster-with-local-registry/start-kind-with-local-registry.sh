@@ -21,7 +21,7 @@ reg_name="kind-registry"
 reg_port="5000"
 
 # kind Kubernetes node image
-kindImage="kindest/node:v1.21.1@sha256:f4eaad3d61dfe1228b43407dc9db980cd0a2e254588d133762750e605f5f368a"
+kindImage="kindest/node:v1.22.9@sha256:ad5b8404c4052781365a4e70bb7d17c5331e4177bd4a7cd214339316cd6193b6"
 
 declare -i nodesCount=1
 

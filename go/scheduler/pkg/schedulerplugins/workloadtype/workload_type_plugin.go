@@ -52,9 +52,7 @@ func (me *WorkloadTypePlugin) PreScore(ctx context.Context, cycleState *framewor
 		// ToDo: Determine workload type, based on ML data.
 		workloadType: svcGraphState.ServiceGraphCRD().Name,
 	}
-	cycleState.Lock()
 	cycleState.Write(workloadTypeStateKey, &workloadTypeState)
-	cycleState.Unlock()
 
 	return framework.NewStatus(framework.Success)
 }

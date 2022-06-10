@@ -13,9 +13,7 @@ import (
 //
 // This function is thread-safe.
 func GetServiceGraphFromCycleState(cycleState *framework.CycleState) (servicegraphmanager.ServiceGraphState, error) {
-	cycleState.RLock()
 	svcGraphState, err := cycleState.Read(schedulerstate.ServiceGraphStateKey)
-	cycleState.RUnlock()
 	if err == nil {
 		return svcGraphState.(*schedulerstate.ServiceGraphStateData).ServiceGraphState, nil
 	}
@@ -38,14 +36,10 @@ func GetServiceGraphFromCycleStateOrStatus(cycleState *framework.CycleState) (se
 // This function is thread-safe.
 func WriteServiceGraphToCycleState(cycleState *framework.CycleState, svcGraphState servicegraphmanager.ServiceGraphState) {
 	stateData := schedulerstate.NewServiceGraphStateData(svcGraphState)
-	cycleState.Lock()
-	defer cycleState.Unlock()
 	cycleState.Write(schedulerstate.ServiceGraphStateKey, stateData)
 }
 
 // Removes the ServiceGraphState form the CycleState of the specified pod.
 func DeleteServiceGraphFromCycleState(cycleState *framework.CycleState) {
-	cycleState.Lock()
-	defer cycleState.Unlock()
 	cycleState.Delete(schedulerstate.ServiceGraphStateKey)
 }
