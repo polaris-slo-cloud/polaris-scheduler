@@ -22,13 +22,13 @@ spec:
         rainbow-h2020.eu/max-delay-ms: "200"
         app: taxi-cloud
     spec:
-      schedulerName: rainbow-scheduler
+      schedulerName: polaris-scheduler
       nodeSelector:
         # Force this deployment to be run in the cloud.
         node-role.kubernetes.io/cloud: ""
       containers:
         - name: taxi-async
-          image: rainbowh2020/taxi-async:0.0.1
+          image: polarissloc/taxi-async:0.0.1
           resources:
             limits:
               memory: "1Gi"
@@ -65,10 +65,10 @@ spec:
         rainbow-h2020.eu/max-delay-ms: "50"
         app: taxi-iot
     spec:
-      schedulerName: rainbow-scheduler
+      schedulerName: polaris-scheduler
       containers:
         - name: taxi-async
-          image: rainbowh2020/taxi-async:0.0.1
+          image: polarissloc/taxi-async:0.0.1
           resources:
             limits:
               memory: "256Mi"
@@ -105,10 +105,10 @@ spec:
         rainbow-h2020.eu/max-delay-ms: "50"
         app: taxi-edge-bronx
     spec:
-      schedulerName: rainbow-scheduler
+      schedulerName: polaris-scheduler
       containers:
         - name: taxi-async
-          image: rainbowh2020/taxi-async:0.0.1
+          image: polarissloc/taxi-async:0.0.1
           resources:
             limits:
               memory: "512Mi"
@@ -147,10 +147,10 @@ spec:
         rainbow-h2020.eu/max-delay-ms: "50"
         app: taxi-edge-brooklyn
     spec:
-      schedulerName: rainbow-scheduler
+      schedulerName: polaris-scheduler
       containers:
         - name: taxi-async
-          image: rainbowh2020/taxi-async:0.0.1
+          image: polarissloc/taxi-async:0.0.1
           resources:
             limits:
               memory: "512Mi"

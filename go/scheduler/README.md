@@ -47,8 +47,8 @@ Info taken from https://www.youtube.com/watch?v=Wr1TMbdc4O0
 
 ## Test Scenarios for Comparing Against Other Schedulers
 
-We have prepared a set of scenarios to compare rainbow-scheduler against other scheduling approaches.
-These scenarios can be found in [this repository](https://gitlab.com/tommazzo89/scheduler-test-scenarios).
+We have prepared a set of scenarios to compare polaris-scheduler against other scheduling approaches.
+These scenarios can be found in [here](./hack/testbed/experiments).
 
 
 ## Building and Debugging

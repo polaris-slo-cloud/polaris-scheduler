@@ -7,9 +7,9 @@
             "preLaunchTask": "build-debug",
             "request": "launch",
             "mode": "exec",
-            "program": "${workspaceFolder}/bin/rainbow-scheduler",
+            "program": "${workspaceFolder}/bin/polaris-scheduler",
             "args": [
-                "--config=${workspaceFolder}/bin/default-rainbow-scheduler-config.yaml",
+                "--config=${workspaceFolder}/bin/default-polaris-scheduler-config.yaml",
                 "--authentication-kubeconfig=${workspaceFolder}/bin/config/kubernetes/scheduler.conf",
                 "--authorization-kubeconfig=${workspaceFolder}/bin/config/kubernetes/scheduler.conf",
                 "--bind-address=127.0.0.1",
@@ -32,7 +32,7 @@
             "imageRegistry": "localhost:5000",
             "debug": [
                 {
-                    "image": "rainbowh2020/rainbow-scheduler",
+                    "image": "polarissloc/polaris-scheduler",
                     "sourceFileMap": {
                         "${workspaceFolder}": "/bin"
                     }

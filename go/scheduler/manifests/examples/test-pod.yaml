@@ -5,7 +5,7 @@ metadata:
   labels:
     name: multischeduler-example
 spec:
-  schedulerName: rainbow-scheduler
+  schedulerName: polaris-scheduler
   containers:
   - name: pod-with-second-annotation-container
     image: k8s.gcr.io/pause:2.0
@@ -20,7 +20,7 @@ metadata:
   labels:
     name: multischeduler-example
 spec:
-  schedulerName: rainbow-scheduler
+  schedulerName: polaris-scheduler
   containers:
   - name: pod-with-second-annotation-container
     image: k8s.gcr.io/pause:2.0

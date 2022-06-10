@@ -2,12 +2,12 @@
 
 # IMPORTANT: Configure the names of the scheduler pods here.
 # Use the following syntax: "<namespace>:<pod-name"
-# E.g., ["rainbow-scheduler"]="rainbow-system:rainbow-scheduler-xyz"
+# E.g., ["polaris-scheduler"]="polaris:polaris-scheduler-xyz"
 declare -A schedulerPods=(
     ["greedy-first-fit-scheduler"]=""
     ["round-robin-scheduler"]=""
     ["timed-kube-scheduler"]=""
-    ["rainbow-scheduler"]=""
+    ["polaris-scheduler"]=""
 )
 
 # The number of iterations to execute.

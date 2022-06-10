@@ -86,7 +86,7 @@ spec:
         - --authorization-kubeconfig=/etc/kubernetes/scheduler.conf
         - --bind-address=0.0.0.0
         # - --scheduler-name=comparison-scheduler
-        image: rainbowh2020/comparison-scheduler:202201261254-v0.1.0
+        image: polarissloc/comparison-scheduler:202201261254-v0.1.0
         env:
           # We need at least one GO environment variable to allow the Google Cloud Code VS Code extension to detect that it is a Go program.
           - name: GOTRACEBACK

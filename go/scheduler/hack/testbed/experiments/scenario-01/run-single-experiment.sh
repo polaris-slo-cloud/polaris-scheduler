@@ -5,8 +5,8 @@
 function printUsage() {
     echo "Usage:"
     echo "./run-single-experiment.sh [deployment-YAML-template] [schedulerName] [instanceCount] [iterationsCount]"
-    echo "Example with 10 instances, 5 iterations, and rainbow-scheduler:"
-    echo "./run-single-experiment.sh ./test-app.template.yaml rainbow-scheduler 10 5"
+    echo "Example with 10 instances, 5 iterations, and polaris-scheduler:"
+    echo "./run-single-experiment.sh ./test-app.template.yaml polaris-scheduler 10 5"
 }
 
 if [ "$1" == "" ] || [ ! -f $1 ]; then

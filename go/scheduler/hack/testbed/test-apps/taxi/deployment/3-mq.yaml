@@ -61,7 +61,7 @@ spec:
         rainbow-h2020.eu/max-delay-ms: "50" # Workaround until we have a proper CRD for describing the application.
         app: rabbitmq
     spec:
-      schedulerName: rainbow-scheduler
+      schedulerName: polaris-scheduler
       serviceAccountName: rabbitmq
       terminationGracePeriodSeconds: 10
       nodeSelector:

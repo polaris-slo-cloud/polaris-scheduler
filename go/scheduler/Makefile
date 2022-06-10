@@ -1,5 +1,6 @@
 # Copyright 2020 The Kubernetes Authors.
 # Modifications copyright 2020 Rainbow Project.
+# Modifications copyright 2022 Polaris SLO Cloud Project.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -18,17 +19,16 @@ BUILDENVVAR=CGO_ENABLED=0
 
 PROJECT_VERSION=0.2.0
 
-LOCAL_REGISTRY=localhost:5000/rainbow
-LOCAL_IMAGE=rainbow-scheduler:latest
+LOCAL_REGISTRY=localhost:5000/polarissloc
+LOCAL_IMAGE=polaris-scheduler:latest
 
-# TODO: This needs to be adjusted for the RAINBOW registry.
 # RELEASE_REGISTRY is the container registry to push
 # into. The default is to push to the staging
 # registry, not production(k8s.gcr.io).
-RELEASE_REGISTRY?=registry.gitlab.com/rainbow-project1/rainbow-integration
+RELEASE_REGISTRY?=polarissloc
 RELEASE_VERSION?=$(shell date +%Y%m%d%H%M)-v$(PROJECT_VERSION)
 # RELEASE_VERSION?=v$(shell date +%Y%m%d)-$(shell git describe --tags --match "v*")
-RELEASE_IMAGE:=rainbow-scheduler:$(RELEASE_VERSION)
+RELEASE_IMAGE:=polaris-scheduler:$(RELEASE_VERSION)
 
 # VERSION is the scheduler's version
 #
@@ -48,11 +48,11 @@ build: build-scheduler
 
 .PHONY: build-scheduler
 build-scheduler: autogen
-	$(COMMONENVVAR) $(BUILDENVVAR) go build -ldflags '-X k8s.io/component-base/version.gitVersion=$(VERSION) -w' -o bin/rainbow-scheduler cmd/scheduler/main.go
+	$(COMMONENVVAR) $(BUILDENVVAR) go build -ldflags '-X k8s.io/component-base/version.gitVersion=$(VERSION) -w' -o bin/polaris-scheduler cmd/scheduler/main.go
 
 .PHONY: build-scheduler-debug
 build-scheduler-debug: autogen debug-config
-	$(COMMONENVVAR) $(BUILDENVVAR) go build -gcflags="all=-N -l" -ldflags '-X k8s.io/component-base/version.gitVersion=$(VERSION)' -o bin/rainbow-scheduler cmd/scheduler/main.go
+	$(COMMONENVVAR) $(BUILDENVVAR) go build -gcflags="all=-N -l" -ldflags '-X k8s.io/component-base/version.gitVersion=$(VERSION)' -o bin/polaris-scheduler cmd/scheduler/main.go
 
 .PHONY: local-image
 local-image:
@@ -94,7 +94,7 @@ verify-gofmt:
 .PHONY: debug-config
 debug-config:
 	mkdir -p ./bin
-	sed -e "s/kubeconfig:.*/kubeconfig: '$(DEBUG_CONFIG_PATH)'/" manifests/rainbow-scheduler/default-rainbow-scheduler-config.yaml > bin/default-rainbow-scheduler-config.yaml
+	sed -e "s/kubeconfig:.*/kubeconfig: '$(DEBUG_CONFIG_PATH)'/" manifests/polaris-scheduler/default-polaris-scheduler-config.yaml > bin/default-polaris-scheduler-config.yaml
 
 .PHONY: clean
 clean:
