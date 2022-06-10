@@ -13,9 +13,19 @@ declare -A schedulerPods=(
 # The number of iterations to execute.
 iterationsCount=5
 
-instanceCounts=(
-    "1"
-    # "8"
+# Specifies how many instances of the test app to deploy and what multiplier to use for the replica counts within an instance.
+# E.g., "2x4" indicates 2 distinct instances of the test app (in 2 namespaces) and within each instance the replica multiplier 4 is used
+# to multiply the base replica counts of the services.
+# Base replica counts:
+# collector: 3
+# aggregator: 1
+# hazard-broadcaster: 1
+# traffic-info-provider: 1
+# region-manager: 1 (not affected by multiplier)
+instancesConfigs=(
+    "1:1"
+    "1:10"
+    # "2:5"
 )
 
 experimentFiles=(
@@ -32,17 +42,21 @@ done
 mkdir -p "logs"
 
 for scheduler in "${!schedulerPods[@]}"; do
-    for instanceCount in "${instanceCounts[@]}"; do
+    for instanceConfigStr in "${instancesConfigs[@]}"; do
+        readarray -d ":" -t config <<< "${instanceConfigStr}"
+        instanceCount=$(tr -d "\n" <<< ${config[0]})
+        replicaMultiplier=$(tr -d "\n" <<< ${config[1]})
+
         for experimentFile in "${experimentFiles[@]}"; do
-            startInfo="$(date) Running experiment $experimentFile with $scheduler and $instanceCount instances"
+            startInfo="$(date) Running experiment $experimentFile with $scheduler and $instanceCount instances and replica multiplier $replicaMultipler"
             echo "$startInfo"
 
-            ./run-single-experiment.sh "${experimentFile}" "${scheduler}" "${instanceCount}" "${iterationsCount}"
+            ./run-single-experiment.sh "${experimentFile}" "${scheduler}" "${instanceCount}" "${replicaMultiplier}" "${iterationsCount}"
 
             readarray -d : -t podId <<< "${schedulerPods[$scheduler]}"
             podNamespace="${podId[0]}"
             podName=$(echo "${podId[1]}" | tr -d "\n")
-            logFile="./logs/${scheduler}-${instanceCount}instances-$(date +%s).log"
+            logFile="./logs/${scheduler}-${instanceCount}instances-${replicaMultiplier}replicamult-$(date +%s).log"
 
             if [ "$podName" != "" ]; then
                 echo "$startInfo" > "$logFile"

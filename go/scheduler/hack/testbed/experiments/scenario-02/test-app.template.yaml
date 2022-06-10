@@ -5,6 +5,11 @@
 # This file requires 2 template parameters to be set:
 # 1. {{ .Namespace }}
 # 2. {{ .SchedulerName }}
+# 3. {{ .CollectorReplicas }}
+# 4. {{ .AggregatorReplicas }}
+# 5. {{ .HazardBroadcasterReplicas }}
+# 6. {{ .RegionManagerReplicas }}
+# 7. {{ .TrafficInfoProviderReplicas }}
 
 apiVersion: v1
 kind: Namespace
@@ -121,7 +126,7 @@ spec:
       component: collector
       rainbow-h2020.eu/service-graph: traffic-monitoring
       rainbow-h2020.eu/service-graph-node: collector
-  replicas: 3
+  replicas: {{ .CollectorReplicas }}
   template:
     metadata:
       labels:
@@ -161,7 +166,7 @@ spec:
       component: aggregator
       rainbow-h2020.eu/service-graph: traffic-monitoring
       rainbow-h2020.eu/service-graph-node: aggregator
-  replicas: 1
+  replicas: {{ .AggregatorReplicas }}
   template:
     metadata:
       labels:
@@ -194,7 +199,7 @@ spec:
       component: hazard-broadcaster
       rainbow-h2020.eu/service-graph: traffic-monitoring
       rainbow-h2020.eu/service-graph-node: hazard-broadcaster
-  replicas: 1
+  replicas: {{ .HazardBroadcasterReplicas }}
   template:
     metadata:
       labels:
@@ -227,7 +232,7 @@ spec:
       component: region-manager
       rainbow-h2020.eu/service-graph: traffic-monitoring
       rainbow-h2020.eu/service-graph-node: region-manager
-  replicas: 1
+  replicas: {{ .RegionManagerReplicas }}
   template:
     metadata:
       labels:
@@ -260,7 +265,7 @@ spec:
       component: traffic-info-provider
       rainbow-h2020.eu/service-graph: traffic-monitoring
       rainbow-h2020.eu/service-graph-node: traffic-info-provider
-  replicas: 1
+  replicas: {{ .TrafficInfoProviderReplicas }}
   template:
     metadata:
       labels:
