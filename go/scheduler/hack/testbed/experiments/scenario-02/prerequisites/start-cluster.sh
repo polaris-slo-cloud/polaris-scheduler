@@ -13,8 +13,15 @@ set -m
 SCRIPT_DIR=$(dirname "${BASH_SOURCE}")
 CLUSTER_CONFIG="${SCRIPT_DIR}/cluster.config.sh"
 
+source "${CLUSTER_CONFIG}"
 (source "${SCRIPT_DIR}/../../../fake-kubelet-cluster/start-kind-with-fake-kubelet.sh" "${CLUSTER_CONFIG}")
 
-# Install the CRDs and the apply the cluster topology.
+# Install the CRDs.
 kubectl apply -f "${SCRIPT_DIR}/../../prerequisites/"
-kubectl apply -f "${SCRIPT_DIR}/cluster-topology/"
+
+# Generate the cluster topology.
+let maxClusterId=subclustersCount-1
+for i in $(seq 0 $maxClusterId); do
+    yaml=$(bash "${SCRIPT_DIR}/gen-cluster-topology.sh" $i)
+    kubectl apply -f - <<< "$yaml"
+done

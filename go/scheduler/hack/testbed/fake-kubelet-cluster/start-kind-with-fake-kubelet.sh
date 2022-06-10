@@ -63,6 +63,7 @@ function startLocalCluster() {
 function deployFakeKubelet() {
     kubectl --context $CONTEXT apply -f "${SCRIPT_DIR}/fake-kubelet/fake-kubelet-base.yaml"
 
+    local totalNodes=0
     local nodesTemplateBase=$(cat "${SCRIPT_DIR}/fake-kubelet/fake-kubelet-nodes-template.yaml")
 
     for fakeNodeType in "${!fakeNodeTypes[@]}"; do
@@ -90,7 +91,10 @@ function deployFakeKubelet() {
         nodeTypeYaml=$(echo "${nodeTypeYaml}" | sed -e "s/{{ \.polarisTemplate\.extendedResources }}/${extendedResourcesYaml}/" -)
         echo "${nodeTypeYaml}" | kubectl apply -f -
 
+        let totalNodes=totalNodes+fakeNodesCount
     done
+
+    RET=${totalNodes}
 }
 
 # Gets the extra node labels formatted YAML string for the current fakeNodeType
@@ -151,4 +155,4 @@ validateConfig
 startLocalCluster
 deployFakeKubelet
 
-echo "Successfully created cluster with fake-kubelet nodes."
+echo "Successfully created cluster with ${RET} fake-kubelet nodes."
