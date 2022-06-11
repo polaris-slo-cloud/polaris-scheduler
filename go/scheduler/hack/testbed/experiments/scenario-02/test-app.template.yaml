@@ -140,8 +140,8 @@ spec:
           image: gcr.io/google-containers/pause:3.2
           resources:
             limits:
-              cpu: 1000m
-              memory: 1Gi
+              polaris-slo-cloud.github.io/fake-cpu: 1000m
+              polaris-slo-cloud.github.io/fake-memory: 1Gi
       affinity:
         nodeAffinity:
           requiredDuringSchedulingIgnoredDuringExecution:
@@ -185,8 +185,8 @@ spec:
           image: gcr.io/google-containers/pause:3.2
           resources:
             limits:
-              cpu: 4000m
-              memory: 4Gi
+              polaris-slo-cloud.github.io/fake-cpu: 4000m
+              polaris-slo-cloud.github.io/fake-memory: 4Gi
       tolerations:
         - key: "fake-kubelet/provider"
           operator: "Equal"
@@ -223,8 +223,8 @@ spec:
           image: gcr.io/google-containers/pause:3.2
           resources:
             limits:
-              cpu: 2000m
-              memory: 2Gi
+              polaris-slo-cloud.github.io/fake-cpu: 2000m
+              polaris-slo-cloud.github.io/fake-memory: 2Gi
       tolerations:
         - key: "fake-kubelet/provider"
           operator: "Equal"
@@ -261,8 +261,8 @@ spec:
           image: gcr.io/google-containers/pause:3.2
           resources:
             limits:
-              cpu: 4000m
-              memory: 8Gi
+              polaris-slo-cloud.github.io/fake-cpu: 4000m
+              polaris-slo-cloud.github.io/fake-memory: 8Gi
       tolerations:
         - key: "fake-kubelet/provider"
           operator: "Equal"
@@ -299,8 +299,8 @@ spec:
           image: gcr.io/google-containers/pause:3.2
           resources:
             limits:
-              cpu: 2000m
-              memory: 2Gi
+              polaris-slo-cloud.github.io/fake-cpu: 2000m
+              polaris-slo-cloud.github.io/fake-memory: 2Gi
       tolerations:
         - key: "fake-kubelet/provider"
           operator: "Equal"

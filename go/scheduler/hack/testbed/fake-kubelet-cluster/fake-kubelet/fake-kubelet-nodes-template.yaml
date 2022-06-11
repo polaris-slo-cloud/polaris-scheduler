@@ -151,7 +151,9 @@ data:
     capacity:
       cpu: {{ .polarisTemplate.fakeCPUs }}
       memory: {{ .polarisTemplate.fakeMemory }}
-      pods: 1M{{ .polarisTemplate.extendedResources }}
+      pods: 1M
+      polaris-slo-cloud.github.io/fake-cpu: {{ .polarisTemplate.fakeCPUs }}
+      polaris-slo-cloud.github.io/fake-memory: {{ .polarisTemplate.fakeMemory }}{{ .polarisTemplate.extendedResources }}
 
     {{ with .nodeInfo }}
     nodeInfo:
