@@ -32,6 +32,8 @@ experimentFiles=(
     "./test-app.template.yaml"
 )
 
+LOGS_DIR="./results/logs"
+
 for scheduler in "${!schedulerPods[@]}"; do
     if [ "${schedulerPods[$scheduler]}" == "" ]; then
         echo "Please set the names of the scheduler pods in the schedulerPods array!"
@@ -39,7 +41,7 @@ for scheduler in "${!schedulerPods[@]}"; do
     fi
 done
 
-mkdir -p "logs"
+mkdir -p "${LOGS_DIR}"
 
 for scheduler in "${!schedulerPods[@]}"; do
     for instanceConfigStr in "${instancesConfigs[@]}"; do
@@ -56,7 +58,7 @@ for scheduler in "${!schedulerPods[@]}"; do
             readarray -d : -t podId <<< "${schedulerPods[$scheduler]}"
             podNamespace="${podId[0]}"
             podName=$(echo "${podId[1]}" | tr -d "\n")
-            logFile="./logs/${scheduler}-${instanceCount}instances-${replicaMultiplier}replicamult-$(date +%s).log"
+            logFile="${LOGS_DIR}/${scheduler}-${instanceCount}instances-${replicaMultiplier}replicamult-$(date +%s).log"
 
             if [ "$podName" != "" ]; then
                 echo "$startInfo" > "$logFile"
