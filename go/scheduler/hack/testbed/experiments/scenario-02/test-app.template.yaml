@@ -186,7 +186,7 @@ spec:
           resources:
             limits:
               polaris-slo-cloud.github.io/fake-cpu: 4000m
-              polaris-slo-cloud.github.io/fake-memory: 4Gi
+              polaris-slo-cloud.github.io/fake-memory: 2Gi
       tolerations:
         - key: "fake-kubelet/provider"
           operator: "Equal"

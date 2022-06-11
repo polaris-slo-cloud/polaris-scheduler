@@ -118,9 +118,9 @@ spec:
   nodeA: ${cloudNode}
   nodeB: ${raspi4m1}
   qos:
-    qualityClass: QC5Mbps
+    qualityClass: QC10Mbps
     throughput:
-      bandwidthKbps: 5000
+      bandwidthKbps: 10000
       bandwidthVariance: 0
     latency:
       packetDelayMsec: 50
@@ -293,10 +293,10 @@ spec:
 apiVersion: cluster.k8s.rainbow-h2020.eu/v1
 kind: NetworkLink
 metadata:
-  name: ${raspi3b1}-to-raspi-4s1
+  name: ${raspi3b1}-to-${raspi4s1}
 spec:
   nodeA: ${raspi3b1}
-  nodeB: raspi-4s1
+  nodeB: ${raspi4s1}
   qos:
     qualityClass: QC10Mbps
     throughput:
@@ -316,9 +316,9 @@ spec:
   nodeA: ${baseStation0}
   nodeB: ${raspi4m3}
   qos:
-    qualityClass: QC10Mbps
+    qualityClass: QC50Mbps
     throughput:
-      bandwidthKbps: 10000
+      bandwidthKbps: 50000
       bandwidthVariance: 17000000
     latency:
       packetDelayMsec: 5
@@ -334,12 +334,30 @@ spec:
   nodeA: ${baseStation0}
   nodeB: ${raspi4s0}
   qos:
-    qualityClass: QC2Mbps
+    qualityClass: QC20Mbps
     throughput:
-      bandwidthKbps: 2000
+      bandwidthKbps: 20000
       bandwidthVariance: 64000
     latency:
-      packetDelayMsec: 10
+      packetDelayMsec: 5
+      packetDelayVariance: 0
+    packetLoss:
+      packetLossBp: 0
+---
+apiVersion: cluster.k8s.rainbow-h2020.eu/v1
+kind: NetworkLink
+metadata:
+  name: ${raspi4s0}-to-${raspi4s1}
+spec:
+  nodeA: ${raspi4s0}
+  nodeB: ${raspi4s1}
+  qos:
+    qualityClass: QC10Mbps
+    throughput:
+      bandwidthKbps: 10000
+      bandwidthVariance: 0
+    latency:
+      packetDelayMsec: 5
       packetDelayVariance: 0
     packetLoss:
       packetLossBp: 0

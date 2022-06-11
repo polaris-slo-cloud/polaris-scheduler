@@ -60,10 +60,10 @@
 			<text x="-87.14" y="497.84" class="st2">10ms, 10Mbit</text>		</g>
 		<g id="shape1007-31" transform="translate(173.288,-99.9003)">
 			<title>Dynamic connector.1007</title>
-			<desc>10ms, 2Mbit Low BW var</desc>
+			<desc>5ms, 20Mbit Low BW var</desc>
 			<path d="M0 461.74 L-41.61 509.13" class="st4"/>
 			<rect x="-46.4601" y="473.437" width="51.3086" height="23.9999" class="st5"/>
-			<text x="-46.46" y="482.44" class="st2">10ms, 2Mbit <tspan x="-44.94" dy="1.2em" class="st3">Low BW var</tspan></text>		</g>
+			<text x="-46.46" y="482.44" class="st2">5ms, 20Mbit <tspan x="-44.94" dy="1.2em" class="st3">Low BW var</tspan></text>		</g>
 		<g id="shape1008-37" transform="translate(163.112,-92.463)">
 			<title>Circle.7</title>
 			<desc>raspi-4s-0 CPU=4, RAM=2G</desc>
@@ -78,16 +78,16 @@
 						x="11.85" dy="1.2em" class="st3">RAM=4G</tspan></text>		</g>
 		<g id="shape1010-47" transform="translate(70.5165,-99.7954)">
 			<title>Dynamic connector.1010</title>
-			<desc>5ms, 10Mbit High BW var</desc>
+			<desc>5ms, 50Mbit High BW var</desc>
 			<path d="M0 461.74 L26.15 505.78" class="st4"/>
 			<rect x="-12.5812" y="471.762" width="51.3086" height="23.9999" class="st5"/>
-			<text x="-12.58" y="480.76" class="st2">5ms, 10Mbit <tspan x="-12" dy="1.2em" class="st3">High BW var</tspan></text>		</g>
+			<text x="-12.58" y="480.76" class="st2">5ms, 50Mbit <tspan x="-12" dy="1.2em" class="st3">High BW var</tspan></text>		</g>
 		<g id="shape1011-53" transform="translate(219.207,-107.899)">
 			<title>Dynamic connector.1011</title>
 			<desc>10ms, 10Mbit</desc>
 			<path d="M0 461.74 L78.01 504.9 A2.3622 2.3622 0 0 1 82.15 507.18 L114.58 525.13" class="st4"/>
-			<rect x="15.6669" y="478.492" width="56.3769" height="12.0001" class="st5"/>
-			<text x="15.67" y="487.49" class="st2">10ms, 10Mbit</text>		</g>
+			<rect x="3.89624" y="473.927" width="56.3769" height="12.0001" class="st5"/>
+			<text x="3.9" y="482.93" class="st2">10ms, 10Mbit</text>		</g>
 		<g id="shape1012-58" transform="translate(226.048,-56.7602)">
 			<title>Dynamic connector.1012</title>
 			<desc>5ms, 10Mbit</desc>
@@ -156,10 +156,10 @@
 			<text x="-10.99" y="479.95" class="st2">5ms, 20Mbit</text>		</g>
 		<g id="shape1024-113" transform="translate(190.164,-395.603)">
 			<title>Dynamic connector.1024</title>
-			<desc>50ms, 5Mbit</desc>
+			<desc>50ms, 10Mbit</desc>
 			<path d="M0 461.74 L-38.5 555.34" class="st4"/>
-			<rect x="-44.9045" y="502.544" width="51.3086" height="12.0001" class="st5"/>
-			<text x="-44.9" y="511.54" class="st2">50ms, 5Mbit</text>		</g>
+			<rect x="-47.4386" y="502.544" width="56.3769" height="12.0001" class="st5"/>
+			<text x="-47.44" y="511.54" class="st2">50ms, 10Mbit</text>		</g>
 		<g id="shape1025-118" transform="translate(160.381,-397.381)">
 			<title>Dynamic connector.1025</title>
 			<desc>20ms, 20Mbit</desc>
@@ -312,5 +312,11 @@
 							 451.63 2.22 451.63 2.22 451.63 Z" class="st10"/>
 			</g>
 		</g>
+		<g id="shape1049-184" transform="translate(379.66,-131.036)">
+			<title>Dynamic connector.1049</title>
+			<desc>5ms, 10Mbit</desc>
+			<path d="M0 467.69 L-156.72 469.97" class="st4"/>
+			<rect x="-104.397" y="463.843" width="51.3086" height="12.0001" class="st5"/>
+			<text x="-104.4" y="472.84" class="st2">5ms, 10Mbit</text>		</g>
 	</g>
 </svg>
