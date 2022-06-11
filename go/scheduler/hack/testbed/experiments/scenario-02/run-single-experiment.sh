@@ -53,11 +53,11 @@ totalPods=3
 deployedNamespaces=()
 separatorLines="\n---------------------------------------------------------------------------\n"
 
-let collectorReplicas=replicaMultiplier*3
-let aggregatorReplicas=replicaMultiplier*1
-let hazardBroadcasterReplicas=replicaMultiplier*1
-let trafficInfoProviderReplicas=replicaMultiplier*1
-let regionManagerReplicas=1
+collectorReplicas=$(($replicaMultiplier * 3))
+aggregatorReplicas=$(($replicaMultiplier * 1))
+hazardBroadcasterReplicas=$(($replicaMultiplier * 1))
+trafficInfoProviderReplicas=$(($replicaMultiplier * 1))
+regionManagerReplicas=1
 
 # Waits until all pods are ready and appends the checking output to the log file.
 function waitForResult() {

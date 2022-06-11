@@ -91,7 +91,7 @@ function deployFakeKubelet() {
         nodeTypeYaml=$(echo "${nodeTypeYaml}" | sed -e "s/{{ \.polarisTemplate\.extendedResources }}/${extendedResourcesYaml}/" -)
         echo "${nodeTypeYaml}" | kubectl apply -f -
 
-        let totalNodes=totalNodes+fakeNodesCount
+        totalNodes=$(($totalNodes + $fakeNodesCount))
     done
 
     RET=${totalNodes}

@@ -20,7 +20,8 @@ source "${CLUSTER_CONFIG}"
 kubectl apply -f "${SCRIPT_DIR}/../../prerequisites/"
 
 # Generate the cluster topology.
-let maxClusterId=subclustersCount-1
+maxClusterId=$((${subclustersCount} - 1))
+echo "Generating cluster topologies for ${subclustersCount} subclusters."
 for i in $(seq 0 $maxClusterId); do
     yaml=$(bash "${SCRIPT_DIR}/gen-cluster-topology.sh" $i)
     kubectl apply -f - <<< "$yaml"

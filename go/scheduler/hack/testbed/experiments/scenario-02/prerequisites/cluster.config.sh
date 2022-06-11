@@ -6,11 +6,11 @@ subclustersCount=10
 # kind Kubernetes node image
 kindImage="kindest/node:v1.22.9@sha256:ad5b8404c4052781365a4e70bb7d17c5331e4177bd4a7cd214339316cd6193b6"
 
-let raspi3bNodes=subclustersCount*2
-let raspi4sNodes=subclustersCount*2
-let raspi4mNodes=subclustersCount*4
-let baseStationNodes=subclustersCount*3
-let cloudMediumNodes=subclustersCount*1
+raspi3bNodes=$(($subclustersCount * 2))
+raspi4sNodes=$(($subclustersCount * 2))
+raspi4mNodes=$(($subclustersCount * 4))
+baseStationNodes=$(($subclustersCount * 3))
+cloudMediumNodes=$(($subclustersCount * 1))
 
 # Declares the types of fake nodes and how many nodes of each type to create.
 # For each fake node type, the amount of CPUs and memory must be added to fakeNodeTypeCpus and fakeNodeTypeMemory respectively.

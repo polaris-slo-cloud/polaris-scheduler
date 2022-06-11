@@ -14,7 +14,7 @@ function printUsage() {
 
 function generateIntraCloudLinks() {
     local clusterId=$1
-    let prevClusterId=clusterId-1
+    local prevClusterId=$(($clusterId - 1))
     local clusterCloudNode="${CLOUD_NODE_PREFIX}${clusterId}"
     local retYaml=""
 
@@ -68,25 +68,25 @@ function generateSubcluster() {
     local intraCloudYaml="${RET}"
 
     local cloudNode="${CLOUD_NODE_PREFIX}${clusterId}"
-    let i=clusterId*2
+    local i=$(($clusterId * 2))
     local raspi3b0="raspi-3b-${i}"
     local raspi4s0="raspi-4s-${i}"
-    let i++
+    i=$(($i + 1))
     local raspi3b1="raspi-3b-${i}"
     local raspi4s1="raspi-4s-${i}"
-    let i=clusterId*4
+    i=$(($clusterId * 4))
     local raspi4m0="raspi-4m-${i}"
-    let i++
+    i=$(($i + 1))
     local raspi4m1="raspi-4m-${i}"
-    let i++
+    i=$(($i + 1))
     local raspi4m2="raspi-4m-${i}"
-    let i++
+    i=$(($i + 1))
     local raspi4m3="raspi-4m-${i}"
-    let i=clusterId*3
+    i=$(($clusterId * 3))
     local baseStation0="base-station-5g-${i}"
-    let i++
+    i=$(($i + 1))
     local baseStation1="base-station-5g-${i}"
-    let i++
+    i=$(($i + 1))
     local baseStation2="base-station-5g-${i}"
 
     subclusterYaml=$(cat <<EOF
