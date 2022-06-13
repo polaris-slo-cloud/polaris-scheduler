@@ -400,17 +400,22 @@ func (me *NetworkQosPlugin) checkNodeMeetsMinRequirements(
 	if requirements == nil {
 		return true
 	}
+	if (requirements.LinkType == nil || requirements.LinkType.MinQualityClass == nil) &&
+		requirements.Throughput == nil && requirements.Latency == nil && requirements.PacketLoss == nil {
+		return true
+	}
 
-	ok := true
+	compliantNodeFound := false
 
 	candidateNodeId := candidateK8sNode.ID()
 	networkLinksIterator := region.Graph().From(candidateNodeId)
-	for networkLinksIterator.Next() && ok {
+	for networkLinksIterator.Next() && !compliantNodeFound {
 		link := region.Graph().Edge(candidateNodeId, networkLinksIterator.Node().ID()).(regiongraph.Edge)
 		linkQos := link.NetworkLinkQoS()
 		if linkQos == nil {
 			continue
 		}
+		ok := true
 
 		// QualityClass
 		if req := requirements.LinkType; req != nil && req.MinQualityClass != nil {
@@ -440,9 +445,10 @@ func (me *NetworkQosPlugin) checkNodeMeetsMinRequirements(
 			ok = ok && linkQos.PacketLoss.PacketLossBp <= req.MaxPacketLossBp
 		}
 
+		compliantNodeFound = compliantNodeFound || ok
 	}
 
-	return ok
+	return compliantNodeFound
 }
 
 // Computes a node score, based on the highest bandwidth and latency variance values of the shortestPaths.
