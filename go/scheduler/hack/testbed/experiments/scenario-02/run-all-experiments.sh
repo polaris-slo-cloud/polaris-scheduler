@@ -50,7 +50,7 @@ for scheduler in "${!schedulerPods[@]}"; do
         replicaMultiplier=$(tr -d "\n" <<< ${config[1]})
 
         for experimentFile in "${experimentFiles[@]}"; do
-            startInfo="$(date) Running experiment $experimentFile with $scheduler and $instanceCount instances and replica multiplier $replicaMultipler"
+            startInfo="$(date) Running experiment $experimentFile with $scheduler and $instanceCount instances and replica multiplier $replicaMultiplier"
             echo "$startInfo"
 
             ./run-single-experiment.sh "${experimentFile}" "${scheduler}" "${instanceCount}" "${replicaMultiplier}" "${iterationsCount}"
