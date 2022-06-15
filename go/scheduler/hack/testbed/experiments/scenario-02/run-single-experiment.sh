@@ -138,7 +138,7 @@ function executeIteration() {
 
 
 for deployment in "${deploymentConfigs[@]}"; do
-    resultsDir="$(dirname "${deployment}")/${resultsDirPrefix}/${schedulerName}/$(basename ${deployment})-${instanceCount}instances"
+    resultsDir="$(dirname "${deployment}")/${resultsDirPrefix}/${schedulerName}/$(basename ${deployment})-${instanceCount}x${replicaMultiplier}"
     mkdir -p "$resultsDir"
     for i in $(seq 1 $iterationsCount ); do
         echo "$deployment iteration: $i"
