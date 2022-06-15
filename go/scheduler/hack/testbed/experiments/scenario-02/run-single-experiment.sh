@@ -47,8 +47,8 @@ iterationsCount="$5"
 namespaceBase="traffic-"
 shortSleepTime="20s"
 longSleepTime="1m"
-resultsDirSuffix=""
-resultsDir="results"
+resultsDirPrefix="results"
+resultsDir=""
 totalPods=3
 deployedNamespaces=()
 separatorLines="\n---------------------------------------------------------------------------\n"
@@ -138,7 +138,7 @@ function executeIteration() {
 
 
 for deployment in "${deploymentConfigs[@]}"; do
-    resultsDir="$(dirname "${deployment}")/${schedulerName}-${resultsDirSuffix}/$(basename ${deployment})-${instanceCount}instances"
+    resultsDir="$(dirname "${deployment}")/${resultsDirPrefix}/${schedulerName}/$(basename ${deployment})-${instanceCount}instances"
     mkdir -p "$resultsDir"
     for i in $(seq 1 $iterationsCount ); do
         echo "$deployment iteration: $i"
