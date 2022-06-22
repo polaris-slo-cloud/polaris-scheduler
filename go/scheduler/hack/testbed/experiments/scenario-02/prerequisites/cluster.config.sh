@@ -28,7 +28,7 @@ declare -A fakeNodeTypeCpus=(
     ["raspi-4s"]="4000m"
     ["raspi-4m"]="4000m"
     ["base-station-5g"]="4000m"
-    ["cloud-medium"]="8000m"
+    ["cloud-medium"]="16000m"
 )
 
 # Each node's memory is configured as `memory` and `polaris-slo-cloud.github.io/fake-memory`.
@@ -37,7 +37,7 @@ declare -A fakeNodeTypeMemory=(
     ["raspi-4s"]="2Gi"
     ["raspi-4m"]="4Gi"
     ["base-station-5g"]="1Gi"
-    ["cloud-medium"]="16Gi"
+    ["cloud-medium"]="32Gi"
 )
 
 # Optional extra node labels for each node type.
