@@ -17,7 +17,7 @@
 COMMONENVVAR=GOOS=$(shell uname -s | tr A-Z a-z) GOARCH=$(subst x86_64,amd64,$(patsubst i%86,386,$(shell uname -m)))
 BUILDENVVAR=CGO_ENABLED=0
 
-PROJECT_VERSION=0.2.1
+PROJECT_VERSION=0.2.2
 
 LOCAL_REGISTRY=localhost:5000/polarissloc
 LOCAL_IMAGE=polaris-scheduler:latest

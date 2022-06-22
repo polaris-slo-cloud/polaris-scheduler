@@ -37,7 +37,7 @@ profiles:
       score:
         enabled:
           - name: NetworkQoS
-            weight: 1
+            weight: 10
           - name: PodsPerNode
             weight: 1
           - name: NodeCost
