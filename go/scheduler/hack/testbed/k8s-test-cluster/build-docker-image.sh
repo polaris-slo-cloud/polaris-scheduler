@@ -1,4 +1,4 @@
 #!/bin/sh
 
 set -x
-docker build . -t rainbowh2020/k8s-test-cluster:v0.0.2 -t rainbowh2020/k8s-test-cluster:latest
+docker build . -t polarissloc/k8s-test-cluster:v0.0.2 -t polarissloc/k8s-test-cluster:latest

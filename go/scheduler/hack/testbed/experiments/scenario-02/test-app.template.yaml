@@ -1,0 +1,308 @@
+# This use case is inspired by Google Maps traffic monitoring and UC2 of the RAINBOW project.
+# See https://googleblog.blogspot.com/2009/08/bright-side-of-sitting-in-traffic.html
+# and RAINBOW use case 2 on page 30 of https://rainbow-h2020.eu/wp-content/uploads/2021/02/RAINBOW_D1.3-Use-Cases-Descriptions-Version-1.0.pdf
+#
+# This file requires 2 template parameters to be set:
+# 1. {{ .Namespace }}
+# 2. {{ .SchedulerName }}
+# 3. {{ .CollectorReplicas }}
+# 4. {{ .AggregatorReplicas }}
+# 5. {{ .HazardBroadcasterReplicas }}
+# 6. {{ .RegionManagerReplicas }}
+# 7. {{ .TrafficInfoProviderReplicas }}
+
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: "{{ .Namespace }}"
+---
+apiVersion: fogapps.k8s.rainbow-h2020.eu/v1
+kind: ServiceGraph
+
+metadata:
+  name: traffic-monitoring
+  namespace: "{{ .Namespace }}"
+
+spec:
+  # List of ServiceGraphNodes
+  nodes:
+    # Collector Service:
+    # - Receives events from cars in the vicinity about their movement.
+    # - Runs on a 5G base station node.
+    # - Performs initial filtering of data and detects if there is a hazard on the road.
+    # - Data are forwarded to the Aggregator Service and hazards are also forwarded to the next HazardBroadcaster service.
+    - name: collector
+      containers:
+        - name: main
+          image: gcr.io/google-containers/pause:3.2
+      replicas:
+        max: 100
+
+    # Aggregator Service:
+    # - Runs on a more powerful node than the Collector.
+    # - Aggregates traffic and hazard data from multiple Collectors.
+    # - Forwards the aggregated data to the RegionManager.
+    - name: aggregator
+      containers:
+        - name: main
+          image: gcr.io/google-containers/pause:3.2
+      replicas:
+        max: 20
+
+    # HazardBroadcaster Service:
+    # - Receives hazard alerts from a Collector.
+    # - Determines within which vicinity vehicles need to be informed immediately and notifies them via 5G.
+    - name: hazard-broadcaster
+      containers:
+        - name: main
+          image: gcr.io/google-containers/pause:3.2
+      replicas:
+        max: 50
+
+    # RegionManager Service:
+    # - Runs on a powerful node.
+    # - Aggregates traffic and hazard data from all Aggregators in the region into a unified traffic view of this region
+    # - Forwards the unified traffic view to Traffic Info Providers nodes.
+    - name: region-manager
+      containers:
+        - name: main
+          image: gcr.io/google-containers/pause:3.2
+      replicas:
+        max: 1
+
+    # TrafficInfoProvider Service:
+    # - Allows cards to periodically pull updates to the unified traffic view of the region.
+    - name: traffic-info-provider
+      containers:
+        - name: main
+          image: gcr.io/google-containers/pause:3.2
+      replicas:
+        max: 20
+
+  # List of directed ServiceLinks that connect the above nodes.
+  links:
+    - source: collector
+      target: aggregator
+      qosRequirements:
+        throughput:
+          minBandwidthKbps: 10000
+        latency:
+          maxPacketDelayMsec: 50
+    - source: collector
+      target: hazard-broadcaster
+      qosRequirements:
+        throughput:
+          minBandwidthKbps: 1000
+        latency:
+          maxPacketDelayMsec: 10
+    - source: aggregator
+      target: region-manager
+      qosRequirements:
+        throughput:
+          minBandwidthKbps: 10000
+        latency:
+          maxPacketDelayMsec: 100
+    - source: region-manager
+      target: traffic-info-provider
+      qosRequirements:
+        throughput:
+          minBandwidthKbps: 20000
+        latency:
+          maxPacketDelayMsec: 50
+---
+# Collector Service
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    component: collector
+    rainbow-h2020.eu/service-graph: traffic-monitoring
+    rainbow-h2020.eu/service-graph-node: collector
+  name: collector
+  namespace: "{{ .Namespace }}"
+spec:
+  selector:
+    matchLabels:
+      component: collector
+      rainbow-h2020.eu/service-graph: traffic-monitoring
+      rainbow-h2020.eu/service-graph-node: collector
+  replicas: {{ .CollectorReplicas }}
+  template:
+    metadata:
+      labels:
+        component: collector
+        rainbow-h2020.eu/service-graph: traffic-monitoring
+        rainbow-h2020.eu/service-graph-node: collector
+    spec:
+      schedulerName: "{{ .SchedulerName }}"
+      containers:
+        - name: main
+          image: gcr.io/google-containers/pause:3.2
+          resources:
+            limits:
+              polaris-slo-cloud.github.io/fake-cpu: 1000m
+              polaris-slo-cloud.github.io/fake-memory: 1Gi
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - key: polaris-slo-cloud.github.io/base-station-5g
+                    operator: Exists
+      tolerations:
+        - key: "fake-kubelet/provider"
+          operator: "Equal"
+          value: "fake"
+          effect: "NoSchedule"
+---
+# Aggregator Service
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    component: aggregator
+    rainbow-h2020.eu/service-graph: traffic-monitoring
+    rainbow-h2020.eu/service-graph-node: aggregator
+  name: aggregator
+  namespace: "{{ .Namespace }}"
+spec:
+  selector:
+    matchLabels:
+      component: aggregator
+      rainbow-h2020.eu/service-graph: traffic-monitoring
+      rainbow-h2020.eu/service-graph-node: aggregator
+  replicas: {{ .AggregatorReplicas }}
+  template:
+    metadata:
+      labels:
+        component: aggregator
+        rainbow-h2020.eu/service-graph: traffic-monitoring
+        rainbow-h2020.eu/service-graph-node: aggregator
+    spec:
+      schedulerName: "{{ .SchedulerName }}"
+      containers:
+        - name: main
+          image: gcr.io/google-containers/pause:3.2
+          resources:
+            limits:
+              polaris-slo-cloud.github.io/fake-cpu: 4000m
+              polaris-slo-cloud.github.io/fake-memory: 2Gi
+      tolerations:
+        - key: "fake-kubelet/provider"
+          operator: "Equal"
+          value: "fake"
+          effect: "NoSchedule"
+---
+# HazardBroadcaster Service
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    component: hazard-broadcaster
+    rainbow-h2020.eu/service-graph: traffic-monitoring
+    rainbow-h2020.eu/service-graph-node: hazard-broadcaster
+  name: hazard-broadcaster
+  namespace: "{{ .Namespace }}"
+spec:
+  selector:
+    matchLabels:
+      component: hazard-broadcaster
+      rainbow-h2020.eu/service-graph: traffic-monitoring
+      rainbow-h2020.eu/service-graph-node: hazard-broadcaster
+  replicas: {{ .HazardBroadcasterReplicas }}
+  template:
+    metadata:
+      labels:
+        component: hazard-broadcaster
+        rainbow-h2020.eu/service-graph: traffic-monitoring
+        rainbow-h2020.eu/service-graph-node: hazard-broadcaster
+    spec:
+      schedulerName: "{{ .SchedulerName }}"
+      containers:
+        - name: main
+          image: gcr.io/google-containers/pause:3.2
+          resources:
+            limits:
+              polaris-slo-cloud.github.io/fake-cpu: 2000m
+              polaris-slo-cloud.github.io/fake-memory: 2Gi
+      tolerations:
+        - key: "fake-kubelet/provider"
+          operator: "Equal"
+          value: "fake"
+          effect: "NoSchedule"
+---
+# RegionManager Service
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    component: region-manager
+    rainbow-h2020.eu/service-graph: traffic-monitoring
+    rainbow-h2020.eu/service-graph-node: region-manager
+  name: region-manager
+  namespace: "{{ .Namespace }}"
+spec:
+  selector:
+    matchLabels:
+      component: region-manager
+      rainbow-h2020.eu/service-graph: traffic-monitoring
+      rainbow-h2020.eu/service-graph-node: region-manager
+  replicas: {{ .RegionManagerReplicas }}
+  template:
+    metadata:
+      labels:
+        component: region-manager
+        rainbow-h2020.eu/service-graph: traffic-monitoring
+        rainbow-h2020.eu/service-graph-node: region-manager
+    spec:
+      schedulerName: "{{ .SchedulerName }}"
+      containers:
+        - name: main
+          image: gcr.io/google-containers/pause:3.2
+          resources:
+            limits:
+              polaris-slo-cloud.github.io/fake-cpu: 4000m
+              polaris-slo-cloud.github.io/fake-memory: 8Gi
+      tolerations:
+        - key: "fake-kubelet/provider"
+          operator: "Equal"
+          value: "fake"
+          effect: "NoSchedule"
+---
+# TrafficInfoProvider Service
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    component: traffic-info-provider
+    rainbow-h2020.eu/service-graph: traffic-monitoring
+    rainbow-h2020.eu/service-graph-node: traffic-info-provider
+  name: traffic-info-provider
+  namespace: "{{ .Namespace }}"
+spec:
+  selector:
+    matchLabels:
+      component: traffic-info-provider
+      rainbow-h2020.eu/service-graph: traffic-monitoring
+      rainbow-h2020.eu/service-graph-node: traffic-info-provider
+  replicas: {{ .TrafficInfoProviderReplicas }}
+  template:
+    metadata:
+      labels:
+        component: traffic-info-provider
+        rainbow-h2020.eu/service-graph: traffic-monitoring
+        rainbow-h2020.eu/service-graph-node: traffic-info-provider
+    spec:
+      schedulerName: "{{ .SchedulerName }}"
+      containers:
+        - name: main
+          image: gcr.io/google-containers/pause:3.2
+          resources:
+            limits:
+              polaris-slo-cloud.github.io/fake-cpu: 2000m
+              polaris-slo-cloud.github.io/fake-memory: 2Gi
+      tolerations:
+        - key: "fake-kubelet/provider"
+          operator: "Equal"
+          value: "fake"
+          effect: "NoSchedule"

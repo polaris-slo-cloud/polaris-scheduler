@@ -1,4 +1,4 @@
-# Default configuration for the rainbow-scheduler
+# Default configuration for the polaris-scheduler
 # To see all possible values or the active configuration of a scheduler, run it with the `--write-config-to` argument.
 apiVersion: kubescheduler.config.k8s.io/v1beta1
 kind: KubeSchedulerConfiguration
@@ -6,14 +6,14 @@ clientConnection:
   kubeconfig: /etc/kubernetes/scheduler.conf
 leaderElection:
   leaderElect: false # Leader election requires additional privileges.
-  resourceName: rainbow-scheduler
-  resourceNamespace: rainbow-system
-# When comparing the rainbow-scheduler with others, we want to make sure that all nodes are scored,
+  resourceName: polaris-scheduler
+  resourceNamespace: polaris
+# When comparing the polaris-scheduler with others, we want to make sure that all nodes are scored,
 # because some of the schedulers compared against, depend on that.
 percentageOfNodesToScore: 100
 profiles:
   # - schedulerName: default-scheduler
-  - schedulerName: rainbow-scheduler
+  - schedulerName: polaris-scheduler
     plugins:
       # This section is merged with the default configuration, so we do not need to specify the default plugins.
       queueSort:
@@ -37,7 +37,7 @@ profiles:
       score:
         enabled:
           - name: NetworkQoS
-            weight: 1
+            weight: 10
           - name: PodsPerNode
             weight: 1
           - name: NodeCost

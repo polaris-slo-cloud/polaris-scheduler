@@ -24,10 +24,10 @@ WORKDIR /go/src/k8s.rainbow-h2020.eu/rainbow/scheduler
 ARG RELEASE_VERSION
 RUN RELEASE_VERSION=${RELEASE_VERSION} make build-scheduler
 
-FROM alpine:3.12
+FROM alpine:3.15
 
-COPY ./scheduler/manifests/rainbow-scheduler/default-rainbow-scheduler-config.yaml /etc/rainbow-scheduler/default-rainbow-scheduler-config.yaml
-COPY --from=0 /go/src/k8s.rainbow-h2020.eu/rainbow/scheduler/bin/rainbow-scheduler /bin/rainbow-scheduler
+COPY ./scheduler/manifests/polaris-scheduler/default-polaris-scheduler-config.yaml /etc/polaris-scheduler/default-polaris-scheduler-config.yaml
+COPY --from=0 /go/src/k8s.rainbow-h2020.eu/rainbow/scheduler/bin/polaris-scheduler /bin/polaris-scheduler
 
 WORKDIR /bin
-CMD ["rainbow-scheduler"]
+CMD ["polaris-scheduler"]

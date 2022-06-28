@@ -7,7 +7,7 @@ version: "3.8"
 #       com.docker.network.bridge.enable_ip_masquerade: "true"
 services:
   control-plane:
-    image: rainbowh2020/k8s-test-cluster:latest
+    image: polarissloc/k8s-test-cluster:latest
     hostname: control-plane
     labels:
       eu.rainbow-h2020.node-type: control-plane
@@ -34,7 +34,7 @@ services:
       - "apparmor=unconfined"
     restart: "on-failure:1"
   worker0:
-    image: rainbowh2020/k8s-test-cluster:latest
+    image: polarissloc/k8s-test-cluster:latest
     depends_on:
       - control-plane
     labels:
@@ -61,7 +61,7 @@ services:
       - "apparmor=unconfined"
     restart: "on-failure:1"
   worker1:
-    image: rainbowh2020/k8s-test-cluster:latest
+    image: polarissloc/k8s-test-cluster:latest
     depends_on:
       - control-plane
     labels:

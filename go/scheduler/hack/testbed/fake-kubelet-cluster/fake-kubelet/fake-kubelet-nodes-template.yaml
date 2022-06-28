@@ -1,0 +1,265 @@
+# This YAML files in this folder are based on https://github.com/wzshiming/fake-kubelet/blob/a2f3ebfe711245a243906f021a24297f62f4b0aa/deploy.yaml
+# The file fake-kubelet-base.yaml creates the RBAC objects needed for deploying fake-kubelet.
+# The file fake-kubelet-nodes-template.yaml provides a template for creating the ConfigMap and deployment for the actual nodes.
+#
+# The file uses the following template variables (all surrounded by {{ and }}) that MUST be replaced before applying the YAML with kubectl:
+# - .polarisTemplate.fakeNodeType - The name of the fake node type (this is also used for naming the ConfigMap and the fake-kubelet deployment).
+# - .polarisTemplate.fakeNodesCount - The number of fake nodes of this type that should be created.
+# - .polarisTemplate.fakeCPUs - The quantity of available CPUs.
+# - .polarisTemplate.fakeMemory - The quantity of available memory.
+# - .polarisTemplate.extraNodeLabels - An list of extra node labels (may be "").
+# - .polarisTemplate.extendedResources - A list of extended resources (may be "").
+#
+# A pod that should be schedulable on one of the fake nodes needs to have the following annotation toleration:
+# tolerations:
+#   - key: "fake-kubelet/provider"
+#     operator: "Exists"
+#     effect: "NoSchedule"
+#
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .polarisTemplate.fakeNodeType }}
+  namespace: kube-system
+  labels:
+    app: {{ .polarisTemplate.fakeNodeType }}
+data:
+  pod_status_template: |-
+    {{ $startTime := .metadata.creationTimestamp }}
+
+    conditions:
+    - lastTransitionTime: {{ $startTime }}
+      status: "True"
+      type: Initialized
+    - lastTransitionTime: {{ $startTime }}
+      status: "True"
+      type: Ready
+    - lastTransitionTime: {{ $startTime }}
+      status: "True"
+      type: ContainersReady
+    - lastTransitionTime: {{ $startTime }}
+      status: "True"
+      type: PodScheduled
+    {{ range .spec.readinessGates }}
+    - lastTransitionTime: {{ $startTime }}
+      status: "True"
+      type: {{ .conditionType }}
+    {{ end }}
+
+    containerStatuses:
+    {{ range .spec.containers }}
+    - image: {{ .image }}
+      name: {{ .name }}
+      ready: true
+      restartCount: 0
+      state:
+        running:
+          startedAt: {{ $startTime }}
+    {{ end }}
+
+    initContainerStatuses:
+    {{ range .spec.initContainers }}
+    - image: {{ .image }}
+      name: {{ .name }}
+      ready: true
+      restartCount: 0
+      state:
+        terminated:
+          exitCode: 0
+          finishedAt: {{ $startTime }}
+          reason: Completed
+          startedAt: {{ $startTime }}
+    {{ end }}
+
+    {{ with .status }}
+    hostIP: {{ with .hostIP }} {{ . }} {{ else }} {{ NodeIP }} {{ end }}
+    podIP: {{ with .podIP }} {{ . }} {{ else }} {{ PodIP }} {{ end }}
+    {{ end }}
+
+    phase: Running
+    startTime: {{ $startTime }}
+  node_template: |-
+    apiVersion: v1
+    kind: Node
+    metadata:
+      annotations:
+        node.alpha.kubernetes.io/ttl: "0"
+      labels:
+        app: {{ .polarisTemplate.fakeNodeType }}
+        beta.kubernetes.io/arch: amd64
+        beta.kubernetes.io/os: linux
+        kubernetes.io/arch: amd64
+        kubernetes.io/hostname: {{ .metadata.name }}
+        kubernetes.io/os: linux
+        kubernetes.io/role: agent
+        node-role.kubernetes.io/agent: ""
+        type: {{ .polarisTemplate.fakeNodeType }}{{ .polarisTemplate.extraNodeLabels }}
+      name: {{ .metadata.name }}
+    spec:
+      taints:
+        - effect: NoSchedule
+          key: fake-kubelet/provider
+          value: fake
+  node_heartbeat_template: |-
+    conditions:
+    - lastHeartbeatTime: {{ Now }}
+      lastTransitionTime: {{ StartTime }}
+      message: kubelet is posting ready status
+      reason: KubeletReady
+      status: "True"
+      type: Ready
+    - lastHeartbeatTime: {{ Now }}
+      lastTransitionTime: {{ StartTime }}
+      message: kubelet has sufficient disk space available
+      reason: KubeletHasSufficientDisk
+      status: "False"
+      type: OutOfDisk
+    - lastHeartbeatTime: {{ Now }}
+      lastTransitionTime: {{ StartTime }}
+      message: kubelet has sufficient memory available
+      reason: KubeletHasSufficientMemory
+      status: "False"
+      type: MemoryPressure
+    - lastHeartbeatTime: {{ Now }}
+      lastTransitionTime: {{ StartTime }}
+      message: kubelet has no disk pressure
+      reason: KubeletHasNoDiskPressure
+      status: "False"
+      type: DiskPressure
+    - lastHeartbeatTime: {{ Now }}
+      lastTransitionTime: {{ StartTime }}
+      message: RouteController created a route
+      reason: RouteCreated
+      status: "False"
+      type: NetworkUnavailable
+  node_initialization_template: |-
+    {{ with .status }}
+
+    addresses:
+    {{ with .addresses }}
+    {{ YAML . 1 }}
+    {{ else }}
+    - address: {{ NodeIP }}
+      type: InternalIP
+    {{ end }}
+
+    allocatable:
+      cpu: {{ .polarisTemplate.fakeCPUs }}
+      memory: {{ .polarisTemplate.fakeMemory }}
+      pods: 1M
+      polaris-slo-cloud.github.io/fake-cpu: {{ .polarisTemplate.fakeCPUs }}
+      polaris-slo-cloud.github.io/fake-memory: {{ .polarisTemplate.fakeMemory }}{{ .polarisTemplate.extendedResources }}
+
+    capacity:
+      cpu: {{ .polarisTemplate.fakeCPUs }}
+      memory: {{ .polarisTemplate.fakeMemory }}
+      pods: 1M
+      polaris-slo-cloud.github.io/fake-cpu: {{ .polarisTemplate.fakeCPUs }}
+      polaris-slo-cloud.github.io/fake-memory: {{ .polarisTemplate.fakeMemory }}{{ .polarisTemplate.extendedResources }}
+
+    {{ with .nodeInfo }}
+    nodeInfo:
+      architecture: {{ with .architecture }} {{ . }} {{ else }} "amd64" {{ end }}
+      bootID: {{ with .bootID }} {{ . }} {{ else }} "" {{ end }}
+      containerRuntimeVersion: {{ with .containerRuntimeVersion }} {{ . }} {{ else }} "" {{ end }}
+      kernelVersion: {{ with .kernelVersion }} {{ . }} {{ else }} "" {{ end }}
+      kubeProxyVersion: {{ with .kubeProxyVersion }} {{ . }} {{ else }} "fake" {{ end }}
+      kubeletVersion: {{ with .kubeletVersion }} {{ . }} {{ else }} "fake" {{ end }}
+      machineID: {{ with .machineID }} {{ . }} {{ else }} "" {{ end }}
+      operatingSystem: {{ with .operatingSystem }} {{ . }} {{ else }} "linux" {{ end }}
+      osImage: {{ with .osImage }} {{ . }} {{ else }} "" {{ end }}
+      systemUUID: {{ with .osImage }} {{ . }} {{ else }} "" {{ end }}
+    {{ end }}
+
+    phase: Running
+
+    {{ end }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .polarisTemplate.fakeNodeType }}
+  namespace: kube-system
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: {{ .polarisTemplate.fakeNodeType }}
+  template:
+    metadata:
+      name: {{ .polarisTemplate.fakeNodeType }}
+      namespace: kube-system
+      labels:
+        app: {{ .polarisTemplate.fakeNodeType }}
+    spec:
+      containers:
+        - name: fake-kubelet
+          image: ghcr.io/wzshiming/fake-kubelet/fake-kubelet:v0.6.0
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: NODE_NAME
+              value: "" # This is to specify a single Node, use GENERATE_NODE_NAME and GENERATE_REPLICAS to generate multiple nodes
+            - name: GENERATE_NODE_NAME
+              value: {{ .polarisTemplate.fakeNodeType }}-
+            - name: GENERATE_REPLICAS
+              value: "{{ .polarisTemplate.fakeNodesCount }}"
+            - name: TAKE_OVER_LABELS_SELECTOR
+              value: type={{ .polarisTemplate.fakeNodeType }}
+            - name: TAKE_OVER_ALL
+              value: "false"
+            - name: CIDR
+              value: 10.0.0.1/24
+            - name: HEALTH_ADDRESS # deprecated: use SERVER_ADDRESS instead
+              value: :8080
+            - name: SERVER_ADDRESS
+              value: :8080
+            - name: NODE_IP
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.podIP
+            - name: POD_STATUS_TEMPLATE
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ .polarisTemplate.fakeNodeType }}
+                  key: pod_status_template
+            - name: NODE_TEMPLATE
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ .polarisTemplate.fakeNodeType }}
+                  key: node_template
+            - name: NODE_HEARTBEAT_TEMPLATE
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ .polarisTemplate.fakeNodeType }}
+                  key: node_heartbeat_template
+            - name: NODE_INITIALIZATION_TEMPLATE
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ .polarisTemplate.fakeNodeType }}
+                  key: node_initialization_template
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+              scheme: HTTP
+            initialDelaySeconds: 2
+            timeoutSeconds: 2
+            periodSeconds: 10
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+              scheme: HTTP
+            initialDelaySeconds: 2
+            timeoutSeconds: 2
+            periodSeconds: 10
+            failureThreshold: 3
+      serviceAccount: fake-kubelet
+      serviceAccountName: fake-kubelet
+      restartPolicy: Always
+      tolerations:
+        - key: "node-role.kubernetes.io/master"
+          operator: "Exists"
+          effect: "NoSchedule"
+---

@@ -176,7 +176,9 @@ func (me *NetworkQosPlugin) NormalizeScore(ctx context.Context, cycleState *fram
 		return noSvcGraphStatus
 	}
 
-	util.NormalizeNodeScores(scores)
+	// The score method already returns normalized values.
+	// So, we only use NormalizeScore() for cleaning up the state.
+	// util.NormalizeNodeScores(scores)
 
 	// Purge qosState from CycleState to allow freeing memory.
 	cycleState.Delete(networkQosStateKey)
@@ -400,17 +402,22 @@ func (me *NetworkQosPlugin) checkNodeMeetsMinRequirements(
 	if requirements == nil {
 		return true
 	}
+	if (requirements.LinkType == nil || requirements.LinkType.MinQualityClass == nil) &&
+		requirements.Throughput == nil && requirements.Latency == nil && requirements.PacketLoss == nil {
+		return true
+	}
 
-	ok := true
+	compliantNodeFound := false
 
 	candidateNodeId := candidateK8sNode.ID()
 	networkLinksIterator := region.Graph().From(candidateNodeId)
-	for networkLinksIterator.Next() && ok {
+	for networkLinksIterator.Next() && !compliantNodeFound {
 		link := region.Graph().Edge(candidateNodeId, networkLinksIterator.Node().ID()).(regiongraph.Edge)
 		linkQos := link.NetworkLinkQoS()
 		if linkQos == nil {
 			continue
 		}
+		ok := true
 
 		// QualityClass
 		if req := requirements.LinkType; req != nil && req.MinQualityClass != nil {
@@ -440,37 +447,52 @@ func (me *NetworkQosPlugin) checkNodeMeetsMinRequirements(
 			ok = ok && linkQos.PacketLoss.PacketLossBp <= req.MaxPacketLossBp
 		}
 
+		compliantNodeFound = compliantNodeFound || ok
 	}
 
-	return ok
+	return compliantNodeFound
 }
 
-// Computes a node score, based on the highest bandwidth and latency variance values of the shortestPaths.
+// Computes a node score, based on the highest bandwidth and latency variance value among the incoming the shortestPaths.
 func (me *NetworkQosPlugin) computeNodeScore(shortestPaths []*networkPathInfo) int64 {
-	var bandwidthVarianceSum int64 = 0
-	var packetDelayVarianceSum int64 = 0
+	if len(shortestPaths) == 0 {
+		// There are no incoming service links, so we return the best score.
+		return 100
+	}
+
+	var highestBandwidthVarPath *networkPathInfo
+	var highestPacketDelayVarPath *networkPathInfo
 	for _, path := range shortestPaths {
-		bandwidthVarianceSum += path.highestBandwidthVariance
-		packetDelayVarianceSum += int64(path.highestPacketDelayVariance)
+		if highestBandwidthVarPath == nil || path.highestBandwidthVariance > highestBandwidthVarPath.highestBandwidthVariance {
+			highestBandwidthVarPath = path
+		}
+		if highestPacketDelayVarPath == nil || path.highestPacketDelayVariance > highestPacketDelayVarPath.highestPacketDelayVariance {
+			highestPacketDelayVarPath = path
+		}
 	}
 
-	pathsCount := len(shortestPaths)
-	var avgBandwidthVariance float64
-	var avgPacketDelayVariance float64
-	if pathsCount > 0 {
-		avgBandwidthVariance = float64(bandwidthVarianceSum) / float64(pathsCount)
-		avgPacketDelayVariance = float64(packetDelayVarianceSum) / float64(pathsCount)
-	} else {
-		// There were no incoming service links, so we set the variances to 0 to get the best score.
-		avgBandwidthVariance = 0
-		avgPacketDelayVariance = 0
+	// To calculate the score, we compute the standard deviation of the bandwidth and divide it by the lowest bandwidth found along the path to get a sort of fluctuation percentage value.
+	// Then we calculate the score as score = 100 (fluctuationPercentage * 100 * 10)
+	bandwidthStdDev := math.Sqrt(float64(highestBandwidthVarPath.highestBandwidthVariance))
+	bandwidthFluctuationPercentage := bandwidthStdDev / float64(highestBandwidthVarPath.lowestBandwithKbps)
+	bandwidthScore := 100.0 - bandwidthFluctuationPercentage*1000
+	bandwidthScore = math.Max(0, bandwidthScore)
+
+	// The same for the latency, except that we use only 100 as the multiplier for the fluctuationPercentage:
+	latencyStdDev := math.Sqrt(float64(highestPacketDelayVarPath.highestPacketDelayVariance))
+	latencyFluctuationPercentage := latencyStdDev / float64(highestPacketDelayVarPath.totalPacketDelayMsec)
+	latencyScore := 100.0 - latencyFluctuationPercentage*100
+	latencyScore = math.Max(0, latencyScore)
+
+	overallScore := int64(math.Round((bandwidthScore + latencyScore) / 2))
+	if overallScore < 0 {
+		overallScore = 0
+	}
+	if overallScore > 100 {
+		overallScore = 100
 	}
 
-	var highestScore float64 = 1000000
-	bandwidthScore := highestScore / (avgBandwidthVariance + 1)
-	packetDelayScore := highestScore / (avgPacketDelayVariance + 1)
-	overallScore := math.Round((bandwidthScore + packetDelayScore) / 2)
-	return int64(overallScore)
+	return overallScore
 }
 
 // Creates a new LinkQosRequirements object filled with the most lenient values.

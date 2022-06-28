@@ -16,8 +16,6 @@ kind load docker-image $APP_IMAGE
 # Deploy the CRDs and the cluster topology.
 kubectl apply -f "${SCRIPT_DIR}/../../prerequisites"
 kubectl apply -f "${SCRIPT_DIR}/cluster-topology.yaml"
-# Undeploy the rainbow-orchestrator, which is not needed for scheduler testing.
-kubectl delete deployment -n rainbow-system rainbow-orchestrator-controller-manager
 
 echo "Please run the following:"
 echo "1. kubectl proxy (in a second terminal)"

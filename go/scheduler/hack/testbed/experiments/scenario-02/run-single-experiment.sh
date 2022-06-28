@@ -4,9 +4,9 @@
 
 function printUsage() {
     echo "Usage:"
-    echo "./run-single-experiment.sh [deployment-YAML-template] [schedulerName] [instanceCount] [iterationsCount]"
-    echo "Example with 10 instances, 5 iterations, and polaris-scheduler:"
-    echo "./run-single-experiment.sh ./test-app.template.yaml polaris-scheduler 10 5"
+    echo "./run-single-experiment.sh [deployment-YAML-template] [schedulerName] [instanceCount] [replicaMultiplier] [iterationsCount]"
+    echo "Example with 2 instances, a replica multiplier of 4, 5 iterations, and polaris-scheduler:"
+    echo "./run-single-experiment.sh ./test-app.template.yaml polaris-scheduler 2 4 5"
 }
 
 if [ "$1" == "" ] || [ ! -f $1 ]; then
@@ -28,7 +28,13 @@ if [ "$3" == "" ]; then
 fi
 
 if [ "$4" == "" ]; then
-    echo "Please provide the number of iterations as the fourth argument."
+    echo "Please provide the replica multiplier as the fourth argument."
+    printUsage
+    exit 1
+fi
+
+if [ "$5" == "" ]; then
+    echo "Please provide the number of iterations as the fifth argument."
     printUsage
     exit 1
 fi
@@ -36,15 +42,22 @@ fi
 deploymentConfigs=("$1")
 schedulerName="$2"
 instanceCount="$3"
-iterationsCount="$4"
-namespaceBase="traffic-safety-"
+replicaMultiplier="$4"
+iterationsCount="$5"
+namespaceBase="traffic-"
 shortSleepTime="20s"
 longSleepTime="1m"
-resultsDirSuffix="results"
+resultsDirPrefix="results"
 resultsDir=""
 totalPods=3
 deployedNamespaces=()
 separatorLines="\n---------------------------------------------------------------------------\n"
+
+collectorReplicas=$(($replicaMultiplier * 3))
+aggregatorReplicas=$(($replicaMultiplier * 1))
+hazardBroadcasterReplicas=$(($replicaMultiplier * 1))
+trafficInfoProviderReplicas=$(($replicaMultiplier * 1))
+regionManagerReplicas=1
 
 # Waits until all pods are ready and appends the checking output to the log file.
 function waitForResult() {
@@ -101,13 +114,20 @@ function executeIteration() {
 
     for instance in $(seq 1 $instanceCount); do
         local finalNamespace="${namespaceBase}${instance}"
-        local deploymentYaml=$(sed -e "s/{{ \.Namespace }}/${finalNamespace}/" ${deploymentTemplateFile})
-        deploymentYaml=$(echo "${deploymentYaml}" | sed -e "s/{{ \.SchedulerName }}/${schedulerName}/" -)
+        local deploymentYaml=$(sed \
+            -e "s/{{ \.Namespace }}/${finalNamespace}/" \
+            -e "s/{{ \.SchedulerName }}/${schedulerName}/" \
+            -e "s/{{ \.CollectorReplicas }}/${collectorReplicas}/" \
+            -e "s/{{ \.AggregatorReplicas }}/${aggregatorReplicas}/" \
+            -e "s/{{ \.HazardBroadcasterReplicas }}/${hazardBroadcasterReplicas}/" \
+            -e "s/{{ \.TrafficInfoProviderReplicas }}/${trafficInfoProviderReplicas}/" \
+            -e "s/{{ \.RegionManagerReplicas }}/${regionManagerReplicas}/" \
+            ${deploymentTemplateFile})
         fullDeploymentYaml=$(echo -e "${fullDeploymentYaml}\n---\n${deploymentYaml}")
         deployedNamespaces+=("${finalNamespace}")
     done
 
-    echo "${fullDeploymentYaml}" | kubectl apply -f -
+    kubectl apply -f - <<< "${fullDeploymentYaml}"
     waitForResult $deployment $iteration
 
     echo "Undeploying iteration ${iteration}"
@@ -118,7 +138,7 @@ function executeIteration() {
 
 
 for deployment in "${deploymentConfigs[@]}"; do
-    resultsDir="$(dirname "${deployment}")/${schedulerName}-${resultsDirSuffix}/$(basename ${deployment})-${instanceCount}instances"
+    resultsDir="$(dirname "${deployment}")/${resultsDirPrefix}/${schedulerName}/$(basename ${deployment})-${instanceCount}x${replicaMultiplier}"
     mkdir -p "$resultsDir"
     for i in $(seq 1 $iterationsCount ); do
         echo "$deployment iteration: $i"

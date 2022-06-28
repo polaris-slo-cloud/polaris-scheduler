@@ -1,0 +1,199 @@
+# Adapted from https://kubernetes.io/docs/tasks/extend-kubernetes/configure-multiple-schedulers/#define-a-kubernetes-deployment-for-the-scheduler
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: polaris
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: polaris-scheduler
+  namespace: polaris
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: networklink-viewer-role
+rules:
+- apiGroups:
+  - cluster.k8s.rainbow-h2020.eu
+  resources:
+  - networklinks
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - cluster.k8s.rainbow-h2020.eu
+  resources:
+  - networklinks/status
+  verbs:
+  - get
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: servicegraph-viewer-role
+rules:
+- apiGroups:
+  - fogapps.k8s.rainbow-h2020.eu
+  resources:
+  - servicegraphs
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - fogapps.k8s.rainbow-h2020.eu
+  resources:
+  - servicegraphs/status
+  verbs:
+  - get
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: polaris-scheduler-networklinks-reader
+  namespace: polaris
+subjects:
+- kind: ServiceAccount
+  name: polaris-scheduler
+  namespace: polaris
+roleRef:
+  kind: ClusterRole
+  name: networklink-viewer-role
+  apiGroup: rbac.authorization.k8s.io
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: polaris-scheduler-servicegraph-reader
+  namespace: polaris
+subjects:
+- kind: ServiceAccount
+  name: polaris-scheduler
+  namespace: polaris
+roleRef:
+  kind: ClusterRole
+  name: servicegraph-viewer-role
+  apiGroup: rbac.authorization.k8s.io
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: polaris-scheduler-as-kube-scheduler
+subjects:
+- kind: ServiceAccount
+  name: polaris-scheduler
+  namespace: polaris
+roleRef:
+  kind: ClusterRole
+  name: system:kube-scheduler
+  apiGroup: rbac.authorization.k8s.io
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: polaris-scheduler-as-volume-scheduler
+subjects:
+- kind: ServiceAccount
+  name: polaris-scheduler
+  namespace: polaris
+roleRef:
+  kind: ClusterRole
+  name: system:volume-scheduler
+  apiGroup: rbac.authorization.k8s.io
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: polaris-scheduler-authentication-reader
+  namespace: polaris
+subjects:
+- kind: ServiceAccount
+  name: polaris-scheduler
+  namespace: polaris
+roleRef:
+  kind: Role
+  name: extension-apiserver-authentication-reader
+  apiGroup: rbac.authorization.k8s.io
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    component: scheduler
+    tier: control-plane
+  name: polaris-scheduler
+  namespace: polaris
+spec:
+  selector:
+    matchLabels:
+      component: scheduler
+      tier: control-plane
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        component: scheduler
+        tier: control-plane
+        version: second
+    spec:
+      serviceAccountName: polaris-scheduler
+      nodeSelector:
+        node-role.kubernetes.io/control-plane: ""
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  # Ensure that the scheduler pods are only scheduled on Intel 64-bit nodes.
+                  - key: kubernetes.io/arch
+                    operator: In
+                    values:
+                      - amd64
+      priorityClassName: system-node-critical
+      tolerations:
+      - key: node-role.kubernetes.io/master
+        operator: Exists
+        effect: NoSchedule
+      containers:
+      - command:
+        - /bin/polaris-scheduler
+        - --config=/etc/polaris-scheduler/default-polaris-scheduler-config.yaml
+        - --authentication-kubeconfig=/etc/kubernetes/scheduler.conf
+        - --authorization-kubeconfig=/etc/kubernetes/scheduler.conf
+        - --bind-address=0.0.0.0
+        image: polarissloc/polaris-scheduler:202206222105-v0.2.2
+        env:
+          # We need at least one GO environment variable to allow the Google Cloud Code VS Code extension to detect that it is a Go program.
+          - name: GOTRACEBACK
+            value: all
+        livenessProbe:
+          httpGet:
+            path: /healthz
+            port: 10251
+          initialDelaySeconds: 15
+        name: kube-polaris-scheduler
+        readinessProbe:
+          httpGet:
+            path: /healthz
+            port: 10251
+        resources:
+          requests:
+            cpu: '0.1'
+        securityContext:
+          privileged: false
+        volumeMounts:
+          - mountPath: /etc/kubernetes
+            name: etc-kubernetes
+            readOnly: true
+      imagePullSecrets:
+        - name: regcred
+      hostNetwork: false
+      hostPID: false
+      volumes:
+        - name: etc-kubernetes
+          hostPath:
+            path: /etc/kubernetes
+            type: Directory

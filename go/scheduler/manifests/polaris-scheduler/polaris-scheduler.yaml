@@ -2,13 +2,13 @@
 apiVersion: v1
 kind: Namespace
 metadata:
-  name: rainbow-system
+  name: polaris
 ---
 apiVersion: v1
 kind: ServiceAccount
 metadata:
-  name: rainbow-scheduler
-  namespace: rainbow-system
+  name: polaris-scheduler
+  namespace: polaris
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
@@ -53,12 +53,12 @@ rules:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
-  name: rainbow-scheduler-networklinks-reader
-  namespace: rainbow-system
+  name: polaris-scheduler-networklinks-reader
+  namespace: polaris
 subjects:
 - kind: ServiceAccount
-  name: rainbow-scheduler
-  namespace: rainbow-system
+  name: polaris-scheduler
+  namespace: polaris
 roleRef:
   kind: ClusterRole
   name: networklink-viewer-role
@@ -67,12 +67,12 @@ roleRef:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
-  name: rainbow-scheduler-servicegraph-reader
-  namespace: rainbow-system
+  name: polaris-scheduler-servicegraph-reader
+  namespace: polaris
 subjects:
 - kind: ServiceAccount
-  name: rainbow-scheduler
-  namespace: rainbow-system
+  name: polaris-scheduler
+  namespace: polaris
 roleRef:
   kind: ClusterRole
   name: servicegraph-viewer-role
@@ -81,11 +81,11 @@ roleRef:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
-  name: rainbow-scheduler-as-kube-scheduler
+  name: polaris-scheduler-as-kube-scheduler
 subjects:
 - kind: ServiceAccount
-  name: rainbow-scheduler
-  namespace: rainbow-system
+  name: polaris-scheduler
+  namespace: polaris
 roleRef:
   kind: ClusterRole
   name: system:kube-scheduler
@@ -94,11 +94,11 @@ roleRef:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
-  name: rainbow-scheduler-as-volume-scheduler
+  name: polaris-scheduler-as-volume-scheduler
 subjects:
 - kind: ServiceAccount
-  name: rainbow-scheduler
-  namespace: rainbow-system
+  name: polaris-scheduler
+  namespace: polaris
 roleRef:
   kind: ClusterRole
   name: system:volume-scheduler
@@ -107,12 +107,12 @@ roleRef:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
 metadata:
-  name: rainbow-scheduler-authentication-reader
-  namespace: rainbow-system
+  name: polaris-scheduler-authentication-reader
+  namespace: polaris
 subjects:
 - kind: ServiceAccount
-  name: rainbow-scheduler
-  namespace: rainbow-system
+  name: polaris-scheduler
+  namespace: polaris
 roleRef:
   kind: Role
   name: extension-apiserver-authentication-reader
@@ -124,8 +124,8 @@ metadata:
   labels:
     component: scheduler
     tier: control-plane
-  name: rainbow-scheduler
-  namespace: rainbow-system
+  name: polaris-scheduler
+  namespace: polaris
 spec:
   selector:
     matchLabels:
@@ -139,7 +139,7 @@ spec:
         tier: control-plane
         version: second
     spec:
-      serviceAccountName: rainbow-scheduler
+      serviceAccountName: polaris-scheduler
       nodeSelector:
         node-role.kubernetes.io/control-plane: ""
       affinity:
@@ -159,12 +159,12 @@ spec:
         effect: NoSchedule
       containers:
       - command:
-        - /bin/rainbow-scheduler
-        - --config=/etc/rainbow-scheduler/default-rainbow-scheduler-config.yaml
+        - /bin/polaris-scheduler
+        - --config=/etc/polaris-scheduler/default-polaris-scheduler-config.yaml
         - --authentication-kubeconfig=/etc/kubernetes/scheduler.conf
         - --authorization-kubeconfig=/etc/kubernetes/scheduler.conf
         - --bind-address=0.0.0.0
-        image: rainbowh2020/rainbow-scheduler:202201261232-v0.1.0
+        image: polarissloc/polaris-scheduler:202206222105-v0.2.2
         env:
           # We need at least one GO environment variable to allow the Google Cloud Code VS Code extension to detect that it is a Go program.
           - name: GOTRACEBACK
@@ -174,7 +174,7 @@ spec:
             path: /healthz
             port: 10251
           initialDelaySeconds: 15
-        name: kube-rainbow-scheduler
+        name: kube-polaris-scheduler
         readinessProbe:
           httpGet:
             path: /healthz
@@ -197,3 +197,4 @@ spec:
           hostPath:
             path: /etc/kubernetes
             type: Directory
+
