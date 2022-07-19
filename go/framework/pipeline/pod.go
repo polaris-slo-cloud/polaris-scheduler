@@ -15,3 +15,10 @@ type PodInfo struct {
 type QueuedPodInfo struct {
 	*PodInfo
 }
+
+// Supplies new pods that need to be scheduled to the scheduling pipeline.
+type PodSource interface {
+
+	// Returns a channel that emits the incoming pods that need to be scheduled.
+	IncomingPods() chan *core.Pod
+}

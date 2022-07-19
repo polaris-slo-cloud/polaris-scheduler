@@ -8,4 +8,12 @@ import (
 type PolarisSchedulerService interface {
 	// Gets the scheduler configuration.
 	Config() *config.SchedulerConfig
+
+	// Starts the scheduling process.
+	Start()
+}
+
+// Creates a new instance of the default implementation of the PolarisSchedulerService.
+func NewDefaultPolarisSchedulerService(config *config.SchedulerConfig, podSource PodSource) PolarisSchedulerService {
+	return newPolarisSchedulerServiceImpl(config, podSource)
 }

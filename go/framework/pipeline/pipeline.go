@@ -97,6 +97,9 @@ type ScorePlugin interface {
 	// These scores are used to rank the nodes.
 	// All ScorePlugins must return a Success Status, otherwise the pod is rejected.
 	Score(ctx SchedulingContext, podInfo *PodInfo, nodeInfo *NodeInfo) (int64, Status)
+
+	// Returns the ScoreExtensions, if they are implemented by this plugin, otherwise nil.
+	ScoreExtensions() ScoreExtensions
 }
 
 // A ReservePlugin is called after the scheduling pipeline has chosen the final target node after the Score stage.
