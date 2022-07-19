@@ -17,9 +17,6 @@ type SchedulingContext interface {
 	// This method is thread-safe.
 	Context() context.Context
 
-	// Gets the polaris-scheduler service instance.
-	Scheduler() PolarisSchedulerService
-
 	// Reads state data from the SchedulingContext.
 	// Returns the StateData stored under the given key and a boolean indicating if the key was found.
 	//

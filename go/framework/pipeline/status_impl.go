@@ -6,9 +6,7 @@ import (
 )
 
 var (
-	stImpl *statusImpl = nil
-
-	_ Status = stImpl
+	_ Status = (*statusImpl)(nil)
 )
 
 // Default implementation of Status

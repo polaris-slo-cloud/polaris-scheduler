@@ -6,25 +6,21 @@ import (
 )
 
 var (
-	schedulingCtxImpl *schedulingContextImpl = nil
-
-	_ SchedulingContext = schedulingCtxImpl
+	_ SchedulingContext = (*schedulingContextImpl)(nil)
 )
 
 type schedulingContextImpl struct {
-	mutex     sync.RWMutex
-	ctx       context.Context
-	scheduler PolarisSchedulerService
-	state     map[string]StateData
+	mutex sync.RWMutex
+	ctx   context.Context
+	state map[string]StateData
 }
 
 // Creates a new SchedulingContext
-func NewSchedulingContext(ctx context.Context, scheduler PolarisSchedulerService) SchedulingContext {
+func NewSchedulingContext(ctx context.Context) SchedulingContext {
 	schedulingCtx := schedulingContextImpl{
-		mutex:     sync.RWMutex{},
-		ctx:       ctx,
-		scheduler: scheduler,
-		state:     make(map[string]StateData),
+		mutex: sync.RWMutex{},
+		ctx:   ctx,
+		state: make(map[string]StateData),
 	}
 	return &schedulingCtx
 }
@@ -33,10 +29,6 @@ func (schedCtx *schedulingContextImpl) Context() context.Context {
 	schedCtx.mutex.RLock()
 	defer schedCtx.mutex.RUnlock()
 	return schedCtx.ctx
-}
-
-func (schedCtx *schedulingContextImpl) Scheduler() PolarisSchedulerService {
-	return schedCtx.scheduler
 }
 
 func (schedCtx *schedulingContextImpl) Read(key string) (StateData, bool) {
