@@ -18,7 +18,7 @@ type Plugin interface {
 }
 
 // Defines a factory function for creating Polaris scheduling pipeline plugins.
-type PluginFactory func(config config.PluginConfig, scheduler PolarisSchedulerService) (Plugin, error)
+type PluginFactory func(config config.PluginConfig, scheduler PolarisScheduler) (Plugin, error)
 
 // A SortPlugin is used to establish the order, in which incoming pods will be handled by the scheduling pipeline.
 type SortPlugin interface {
