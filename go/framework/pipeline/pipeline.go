@@ -26,7 +26,7 @@ type SortPlugin interface {
 
 	// Less returns true if podA should be scheduled before podB.
 	// Otherwise, it returns false.
-	Less(podA *QueuedPodInfo, ctxA SchedulingContext, podB *QueuedPodInfo, ctxB SchedulingContext) bool
+	Less(podA *QueuedPodInfo, podB *QueuedPodInfo) bool
 }
 
 // A SampleNodesPlugin is used to obtain a sample of nodes from the entire supercluster as hosting candidates for the pod.

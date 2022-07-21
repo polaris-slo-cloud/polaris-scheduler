@@ -1,6 +1,8 @@
 package pipeline
 
 import (
+	"fmt"
+
 	core "k8s.io/api/core/v1"
 )
 
@@ -14,6 +16,9 @@ type PodInfo struct {
 // Represents information about a queued pod.
 type QueuedPodInfo struct {
 	*PodInfo
+
+	// The SchedulingContext of this queue pod.
+	Ctx SchedulingContext
 }
 
 // Supplies new pods that need to be scheduled to the scheduling pipeline.
@@ -21,4 +26,10 @@ type PodSource interface {
 
 	// Returns a channel that emits the incoming pods that need to be scheduled.
 	IncomingPods() chan *core.Pod
+}
+
+// Returns a key that can be used to identify this pod in a map.
+// The key is generated according to the following scheme: "<namespace>.<name>"
+func (q *QueuedPodInfo) GetKey() string {
+	return fmt.Sprintf("%s.%s", q.Pod.GetNamespace(), q.Pod.GetName())
 }
