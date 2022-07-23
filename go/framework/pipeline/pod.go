@@ -33,3 +33,13 @@ type PodSource interface {
 func (q *QueuedPodInfo) GetKey() string {
 	return fmt.Sprintf("%s.%s", q.Pod.GetNamespace(), q.Pod.GetName())
 }
+
+// Creates a new QueuedPodInfo from a pod.
+func NewQueuedPodInfo(pod *core.Pod, ctx SchedulingContext) *QueuedPodInfo {
+	return &QueuedPodInfo{
+		PodInfo: &PodInfo{
+			Pod: pod,
+		},
+		Ctx: ctx,
+	}
+}

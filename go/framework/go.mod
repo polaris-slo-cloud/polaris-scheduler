@@ -2,10 +2,12 @@ module polaris-slo-cloud.github.io/polaris-scheduler/v2/framework
 
 go 1.18
 
-require k8s.io/api v0.24.3
+require (
+	github.com/go-logr/logr v1.2.0
+	k8s.io/api v0.24.3
+)
 
 require (
-	github.com/go-logr/logr v1.2.0 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/google/gofuzz v1.1.0 // indirect
 	github.com/json-iterator/go v1.1.12 // indirect

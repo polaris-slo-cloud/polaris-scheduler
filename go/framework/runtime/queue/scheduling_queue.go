@@ -26,4 +26,7 @@ type SchedulingQueue interface {
 
 	// Returns true if the queue is closed.
 	IsClosed() bool
+
+	// Returns the number of pods currently in the queue.
+	Len() int
 }

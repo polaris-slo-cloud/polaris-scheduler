@@ -78,3 +78,9 @@ func (pq *PrioritySchedulingQueue) IsClosed() bool {
 	defer pq.mutex.RUnlock()
 	return pq.isClosed
 }
+
+func (pq *PrioritySchedulingQueue) Len() int {
+	pq.mutex.RLock()
+	defer pq.mutex.RUnlock()
+	return pq.heapMap.Len()
+}
