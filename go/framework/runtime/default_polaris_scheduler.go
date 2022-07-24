@@ -23,18 +23,33 @@ const (
 	pristine int32 = 0
 	started  int32 = 1
 	stopped  int32 = 2
+
+	decisionPipelineQueueSize = 400
 )
 
 // The default implementation of the PolarisScheduler.
 type DefaultPolarisScheduler struct {
-	config     *config.SchedulerConfig
-	plugins    *pipeline.PluginRegistry
-	podSource  pipeline.PodSource
+	config         *config.SchedulerConfig
+	pluginsFactory pipeline.PluginsFactory
+	podSource      pipeline.PodSource
+
+	// The scheduling queue, which is sorted by the SortPlugin.
 	schedQueue queue.SchedulingQueue
 
-	// The number of pods currently in the pipeline.
+	// Contains pods, for which nodes have been sampled and which are now waiting to enter the decision pipeline.
+	decisionPipelineQueue chan *pipeline.SampledPodInfo
+
+	// The number of pods currently in the SampleNodes stage.
 	// This field must be read/written using atomic operations.
-	podsInPipeline int32
+	podsInSampling int32
+
+	// The number of pods currently waiting to enter the decision pipeline.
+	// This field must be read/written using atomic operations.
+	podsWaitingForDecisionPipeline int32
+
+	// The number of pods currently in the decision pipeline.
+	// This field must be read/written using atomic operations.
+	podsInDecisionPipeline int32
 
 	// The context.Context used by the scheduler.
 	ctx context.Context
@@ -51,16 +66,23 @@ type DefaultPolarisScheduler struct {
 }
 
 // Creates a new instance of the default implementation of the PolarisScheduler.
-func NewDefaultPolarisScheduler(conf *config.SchedulerConfig, podSource pipeline.PodSource, logger *logr.Logger) *DefaultPolarisScheduler {
+func NewDefaultPolarisScheduler(
+	conf *config.SchedulerConfig,
+	pluginsRegistry *pipeline.PluginsRegistry,
+	podSource pipeline.PodSource,
+	logger *logr.Logger,
+) *DefaultPolarisScheduler {
 	config.SetDefaultsSchedulerConfig(conf)
 	log := logger.WithName("DefaultPolarisScheduler")
 
 	scheduler := DefaultPolarisScheduler{
-		config:    conf,
-		podSource: podSource,
-		stopCh:    make(chan bool, 1),
-		state:     pristine,
-		logger:    &log,
+		config:                conf,
+		pluginsFactory:        NewDefaultPluginsFactory(pluginsRegistry),
+		podSource:             podSource,
+		decisionPipelineQueue: make(chan *pipeline.SampledPodInfo, decisionPipelineQueueSize),
+		stopCh:                make(chan bool, 1),
+		state:                 pristine,
+		logger:                &log,
 	}
 	return &scheduler
 }
@@ -81,11 +103,33 @@ func (ps *DefaultPolarisScheduler) Start(ctx context.Context) error {
 		return err
 	}
 
-	ps.schedQueue = queue.NewPrioritySchedulingQueue(ps.plugins.Sort.Less)
+	// Start the scheduling queue.
+	sortPlugin, err := ps.pluginsFactory.NewSortPlugin(ps)
+	if err != nil {
+		return err
+	}
+	ps.schedQueue = queue.NewPrioritySchedulingQueue(sortPlugin.Less)
 	go ps.pumpIntoQueue(ps.podSource)
 
-	for i := 0; i < int(ps.config.ParallelSchedulingPipelines); i++ {
-		go ps.executePipelinePump(i)
+	// Start the sampling goroutines.
+	for i := 0; i < int(ps.config.ParallelNodeSamplers); i++ {
+		sampleNodesPlugin, err := ps.pluginsFactory.NewSampleNodesPlugin(ps)
+		if err != nil {
+			ps.Stop()
+			return err
+		}
+		go ps.executeSamplingLoop(i, sampleNodesPlugin)
+	}
+
+	// Start the decision pipelines.
+	for i := 0; i < int(ps.config.ParallelDecisionPipelines); i++ {
+		decisionPipelinePlugins, err := ps.pluginsFactory.NewDecisionPipelinePlugins(ps)
+		if err != nil {
+			ps.Stop()
+			return err
+		}
+		decisionPipeline := NewDefaultDecisionPipeline(i, decisionPipelinePlugins, ps)
+		go ps.executeDecisionPipelinePump(i, decisionPipeline)
 	}
 
 	return nil
@@ -103,28 +147,38 @@ func (ps *DefaultPolarisScheduler) IsActive() bool {
 	return atomic.LoadInt32(&ps.state) == started
 }
 
-func (ps *DefaultPolarisScheduler) PodsInPipelineCount() int {
-	return int(atomic.LoadInt32(&ps.podsInPipeline))
-}
-
 func (ps *DefaultPolarisScheduler) PodsInQueueCount() int {
 	return ps.schedQueue.Len()
 }
 
+func (ps *DefaultPolarisScheduler) PodsInNodeSamplingCount() int {
+	return int(atomic.LoadInt32(&ps.podsInSampling))
+}
+
+func (ps *DefaultPolarisScheduler) PodsWaitingForDecisionPipelineCount() int {
+	return int(atomic.LoadInt32(&ps.podsWaitingForDecisionPipeline))
+}
+
+func (ps *DefaultPolarisScheduler) PodsInDecisionPipelineCount() int {
+	return int(atomic.LoadInt32(&ps.podsInDecisionPipeline))
+}
+
 func (ps *DefaultPolarisScheduler) validateConfig() error {
-	if ps.plugins.Sort == nil {
+	pluginsList := ps.config.Plugins
+
+	if pluginsList.Sort == nil {
 		return fmt.Errorf("cannot start DefaultPolarisScheduler, because no SortPlugin is configured")
 	}
 
-	if len(ps.plugins.SampleNodes) == 0 {
+	if pluginsList.SampleNodes == nil {
 		return fmt.Errorf("cannot start DefaultPolarisScheduler, because no SampleNodesPlugin is configured")
 	}
 
-	if len(ps.plugins.Filter) == 0 {
+	if len(pluginsList.Filter) == 0 {
 		return fmt.Errorf("cannot start DefaultPolarisScheduler, because no FilterPlugin is configured")
 	}
 
-	if len(ps.plugins.Score) == 0 {
+	if len(pluginsList.Score) == 0 {
 		return fmt.Errorf("cannot start DefaultPolarisScheduler, because no ScorePlugin is configured")
 	}
 
@@ -157,10 +211,10 @@ func (ps *DefaultPolarisScheduler) addPodToQueue(pod *core.Pod) {
 	ps.schedQueue.Enqueue(queuedPod)
 }
 
-// Continuously retrieves pods from the scheduling queue and pumps each of them through
-// a single scheduling pipeline.
-func (ps *DefaultPolarisScheduler) executePipelinePump(id int) {
-	ps.logger.Info("starting DefaultPolarisScheduler pipeline", "id", id)
+// Continuously retrieves pods from the scheduling queue, samples nodes for each pod,
+// and then adds the pod to the decisionPipelineQueue.
+func (ps *DefaultPolarisScheduler) executeSamplingLoop(id int, sampler pipeline.SampleNodesPlugin) {
+	ps.logger.Info("starting SampleNodesPlugin", "id", id)
 
 	for {
 		pod := ps.schedQueue.Dequeue()
@@ -168,15 +222,69 @@ func (ps *DefaultPolarisScheduler) executePipelinePump(id int) {
 			break
 		}
 
-		atomic.AddInt32(&ps.podsInPipeline, 1)
-		ps.schedulePod(pod.PodInfo)
-		atomic.AddInt32(&ps.podsInPipeline, -1)
+		atomic.AddInt32(&ps.podsInSampling, 1)
+		ps.sampleNodesForPod(pod, sampler)
+		atomic.AddInt32(&ps.podsInSampling, -1)
 	}
 
-	ps.logger.Info("stopped DefaultPolarisScheduler pipeline", "id", id)
+	ps.logger.Info("stopped DefaultPolarisScheduler SampleNodesPlugin", "id", id)
 }
 
-// Executes the scheduling pipeline for the specified pod.
-func (ps *DefaultPolarisScheduler) schedulePod(podInfo *pipeline.PodInfo) error {
+// Uses the SampleNodesPlugin (sampler) to sample nodes for the specified pod and, if successful, adds the sampled pod info
+// to the decisionPipelineQueue. If an error occurs, the error information is committed to the Pod object in the cluster.
+func (ps *DefaultPolarisScheduler) sampleNodesForPod(pod *pipeline.QueuedPodInfo, sampler pipeline.SampleNodesPlugin) error {
+	candidateNodes, status := sampler.SampleNodes(pod.Ctx, pod.PodInfo, ps.config)
+	if !pipeline.IsSuccessStatus(status) {
+		return ps.handleFailureStatus(pipeline.SampleNodesStage, sampler, pod.Ctx, pod.PodInfo, status)
+	}
+	if len(candidateNodes) == 0 {
+		status := pipeline.NewStatus(pipeline.Unschedulable, "the SampleNodesPlugin returned 0 nodes")
+		return ps.handleFailureStatus(pipeline.SampleNodesStage, sampler, pod.Ctx, pod.PodInfo, status)
+	}
+
+	sampledPod := pipeline.SampledPodInfo{
+		QueuedPodInfo: pod,
+		SampledNodes:  candidateNodes,
+	}
+	atomic.AddInt32(&ps.podsWaitingForDecisionPipeline, 1)
+	ps.decisionPipelineQueue <- &sampledPod
+	return nil
+}
+
+// Continuously retrieves pods from the decision pipeline queue and pumps each of them through
+// a single decision pipeline.
+func (ps *DefaultPolarisScheduler) executeDecisionPipelinePump(id int, decisionPipeline pipeline.DecisionPipeline) {
+	ps.logger.Info("starting DefaultPolarisScheduler DecisionPipeline", "id", id)
+
+	for {
+		select {
+		case pod := <-ps.decisionPipelineQueue:
+			atomic.AddInt32(&ps.podsInDecisionPipeline, 1)
+			decision, status := decisionPipeline.SchedulePod(pod)
+			if pipeline.IsSuccessStatus(status) {
+				ps.commitSchedulingDecision(pod.Ctx, decision)
+			} else {
+				ps.handleFailureStatus(status.FailedStage(), status.FailedPlugin(), pod.Ctx, pod.PodInfo, status)
+			}
+			atomic.AddInt32(&ps.podsInDecisionPipeline, -1)
+
+		case <-ps.stopCh:
+			// Stop signal received, so we stop the scheduler.
+			return
+		}
+	}
+
+	ps.logger.Info("stopped DefaultPolarisScheduler DecisionPipeline", "id", id)
+}
+
+func (ps *DefaultPolarisScheduler) handleFailureStatus(stage string, plugin pipeline.Plugin, schedCtx pipeline.SchedulingContext, podInfo *pipeline.PodInfo, status pipeline.Status) error {
+	switch status.Code() {
+	case pipeline.InternalError:
+		// ToDo
+	}
+}
+
+// Commits the decision of the scheduling pipeline to the orchestrator.
+func (ps *DefaultPolarisScheduler) commitSchedulingDecision(schedCtx pipeline.SchedulingContext, decision *pipeline.SchedulingDecision) error {
 
 }

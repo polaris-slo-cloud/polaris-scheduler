@@ -24,6 +24,13 @@ type PolarisScheduler interface {
 	// Returns the number of queued pods.
 	PodsInQueueCount() int
 
-	// Returns the number of pods currently in the scheduling pipeline.
-	PodsInPipelineCount() int
+	// Returns the number of pods, for which nodes are currently being sampled.
+	PodsInNodeSamplingCount() int
+
+	// Returns the number of pods, for which nodes have been sampled, and which are
+	// now waiting to enter the decision pipeline.
+	PodsWaitingForDecisionPipelineCount() int
+
+	// Returns the number of pods currently in the decision pipeline.
+	PodsInDecisionPipelineCount() int
 }

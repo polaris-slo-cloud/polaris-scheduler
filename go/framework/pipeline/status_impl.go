@@ -14,7 +14,8 @@ type statusImpl struct {
 	code         StatusCode
 	err          error
 	reasons      []string
-	failedPlugin string
+	failedPlugin Plugin
+	failedStage  string
 }
 
 func NewStatus(code StatusCode, reasons ...string) Status {
@@ -53,12 +54,17 @@ func (s *statusImpl) Error() error {
 	return s.err
 }
 
-func (s *statusImpl) FailedPlugin() string {
+func (s *statusImpl) FailedPlugin() Plugin {
 	return s.failedPlugin
 }
 
-func (s *statusImpl) SetFailedPlugin(name string) {
-	s.failedPlugin = name
+func (s *statusImpl) FailedStage() string {
+	return s.failedStage
+}
+
+func (s *statusImpl) SetFailedPlugin(plugin Plugin, stage string) {
+	s.failedPlugin = plugin
+	s.failedStage = stage
 }
 
 func (s *statusImpl) Message() string {

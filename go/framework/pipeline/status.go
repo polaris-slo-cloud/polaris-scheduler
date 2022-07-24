@@ -43,11 +43,15 @@ type Status interface {
 
 	// Gets the plugin that has caused scheduling to fail.
 	// This is set by the framework and is nil, if all plugins returned success.
-	FailedPlugin() string
+	FailedPlugin() Plugin
 
-	// Sets the name of the plugin that has caused the scheduling pipeline to fail.
+	// Gets the stage of the scheduling pipeline that caused scheduling to fail.
+	// This is set by the framework and is an empty string, if all plugins returned success.
+	FailedStage() string
+
+	// Sets the the plugin that has caused the scheduling pipeline to fail.
 	// This should be done by the scheduling pipeline only.
-	SetFailedPlugin(name string)
+	SetFailedPlugin(plugin Plugin, stage string)
 
 	// Gets the reasons for the current status as a single string.
 	Message() string

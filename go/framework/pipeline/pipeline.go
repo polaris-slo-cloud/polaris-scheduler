@@ -145,6 +145,9 @@ type ReservePlugin interface {
 // Represents a scheduling decision made by the Decision Pipeline.
 type SchedulingDecision struct {
 
+	// The pod, for which the node has been selected.
+	Pod *PodInfo
+
 	// The node that has been selected for the pod.
 	SelectedNode *NodeInfo
 }
