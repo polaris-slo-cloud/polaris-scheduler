@@ -17,8 +17,17 @@ type PodInfo struct {
 type QueuedPodInfo struct {
 	*PodInfo
 
-	// The SchedulingContext of this queue pod.
+	// The SchedulingContext of this queued pod.
 	Ctx SchedulingContext
+}
+
+// Represents information about a pod, for which nodes have already been sampled, and
+// which is, thus, ready for entering the Decision Pipeline.
+type SampledPodInfo struct {
+	*QueuedPodInfo
+
+	// The nodes that have been sampled for this pod.
+	SampledNodes []*NodeInfo
 }
 
 // Supplies new pods that need to be scheduled to the scheduling pipeline.

@@ -4,6 +4,19 @@ import (
 	"runtime"
 )
 
+const (
+	// Default number of nodes to sample = 2%.
+	DefaultNodesToSampleBp uint32 = 200
+)
+
+var (
+	// Default number of parallel node samplers = number of CPU cores.
+	DefaultParallelNodeSamplers uint32 = uint32(runtime.NumCPU())
+
+	// Default number of parallel Scheduling Decision Pipelines = number of CPU cores.
+	DefaultParallelDecisionPipelines uint32 = uint32(runtime.NumCPU())
+)
+
 // Represents the configuration of a polaris-scheduler instance.
 type SchedulerConfig struct {
 
@@ -14,20 +27,31 @@ type SchedulerConfig struct {
 	// +kubebuilder:validation:Maximum=10000
 	NodesToSampleBp uint32
 
-	// The number of scheduling pipelines to run in parallel.
-	ParallelSchedulingPipelines uint32
+	// The number of node samplers to run in parallel.
+	//
+	// Default: number of CPU cores.
+	ParallelNodeSamplers uint32
+
+	// The number of Scheduling Decision Pipelines to run in parallel.
+	//
+	// Default: number of CPU cores.
+	ParallelDecisionPipelines uint32
 }
 
 // Sets the default values in the SchedulerConfig for fields that are not set properly.
 func SetDefaultsSchedulerConfig(config *SchedulerConfig) {
 	if config.NodesToSampleBp == 0 {
-		config.NodesToSampleBp = 200 // = 2%
+		config.NodesToSampleBp = DefaultNodesToSampleBp
 	}
 	if config.NodesToSampleBp > 10000 {
 		config.NodesToSampleBp = 10000
 	}
 
-	if config.ParallelSchedulingPipelines == 0 {
-		config.ParallelSchedulingPipelines = uint32(runtime.NumCPU())
+	if config.ParallelNodeSamplers == 0 {
+		config.ParallelNodeSamplers = DefaultParallelNodeSamplers
+	}
+
+	if config.ParallelDecisionPipelines == 0 {
+		config.ParallelDecisionPipelines = DefaultParallelDecisionPipelines
 	}
 }

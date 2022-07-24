@@ -10,15 +10,37 @@ const (
 
 	// The maximum node score that may be returned by a ScorePlugin (after NormalizeScore).
 	MaxNodeScore int64 = 100
+
+	SortStage        = "Sort"
+	SampleNodesStage = "SampleNodes"
+	PreFilterStage   = "PreFilter"
+	FilterStage      = "Filter"
+	PreScoreStage    = "PreScore"
+	ScoreStage       = "Score"
+	ReserveStage     = "Reserve"
 )
 
 // Plugin is the parent interface for all Polaris scheduling pipeline plugins
+//
+// The Polaris scheduling pipeline consists of the following stages:
+// - Sort (one plugin only)
+// - SampleNodes (one plugin only)
+// - PreFilter
+// - Filter
+// - PreScore
+// - Score
+// - Reserve
+//
+// The stages from PreFilter up to (including) Reserve are called the "Decision Pipeline".
+// For Decision Pipeline plugins it is common to tie into multiple stages of the pipeline.
+// For each pipeline instance only a single instance of each plugin will be created, even if it ties
+// into multiple stages (e.g., PreFilter, Filter, and Score).
+//
+// Multiple Decision Pipeline instances may execute in parallel, but each instance will
+// execute on a single goroutine and only be traversed by a single pod at a time.
 type Plugin interface {
 	Name() string
 }
-
-// Defines a factory function for creating Polaris scheduling pipeline plugins.
-type PluginFactory func(config config.PluginConfig, scheduler PolarisScheduler) (Plugin, error)
 
 // A SortPlugin is used to establish the order, in which incoming pods will be handled by the scheduling pipeline.
 type SortPlugin interface {
@@ -118,4 +140,23 @@ type ReservePlugin interface {
 	// This method must be idempotent and may be called by the scheduling pipeline even if Reserve() was not
 	// previously called.
 	Unreserve(ctx SchedulingContext, podInfo *PodInfo, targetNode *NodeInfo)
+}
+
+// Represents a scheduling decision made by the Decision Pipeline.
+type SchedulingDecision struct {
+
+	// The node that has been selected for the pod.
+	SelectedNode *NodeInfo
+}
+
+// Represents an instance of the Polaris Scheduler Decision Pipeline,
+// encompassing all stages from PreFilter until (including) Reserve.
+//
+// A Decision Pipeline executes on a single goroutine and there is only
+// a single pod traversing the pipeline at a time.
+type DecisionPipeline interface {
+
+	// Executes the Decision Pipeline and returns a SchedulingDecision and a Status.
+	// The SchedulingDecision is nil in case the pod could not be scheduled or if an error occurred.
+	SchedulePod(podInfo *SampledPodInfo) (*SchedulingDecision, Status)
 }
