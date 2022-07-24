@@ -20,6 +20,9 @@ var (
 // Represents the configuration of a polaris-scheduler instance.
 type SchedulerConfig struct {
 
+	// The name of this scheduler.
+	SchedulerName string
+
 	// The number of nodes to sample defined as basis points (bp) of the total number of nodes.
 	// 1 bp = 0.01%
 	//
@@ -36,6 +39,12 @@ type SchedulerConfig struct {
 	//
 	// Default: number of CPU cores.
 	ParallelDecisionPipelines uint32
+
+	// The list of plugins for the scheduling pipeline.
+	Plugins PluginsList
+
+	// (optional) Allows specifying configuration parameters for each plugin.
+	PluginsConfig []*PluginsConfigListEntry
 }
 
 // Sets the default values in the SchedulerConfig for fields that are not set properly.

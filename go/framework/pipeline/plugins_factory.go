@@ -28,7 +28,7 @@ type DecisionPipelinePlugins struct {
 
 	PreScore []PreScorePlugin
 
-	Score []ScorePluginWithExtensions
+	Score []*ScorePluginWithExtensions
 
 	Reserve []ReservePlugin
 }
@@ -37,11 +37,31 @@ type DecisionPipelinePlugins struct {
 type PluginsFactory interface {
 
 	// Creates a new instance of the configured SortPlugin.
-	NewSortPlugin() SortPlugin
+	NewSortPlugin(scheduler PolarisScheduler) (SortPlugin, error)
 
 	// Creates a new instance of the configured SampleNodesPlugin.
-	NewSampleNodesPlugin() SampleNodesPlugin
+	NewSampleNodesPlugin(scheduler PolarisScheduler) (SampleNodesPlugin, error)
 
 	// Creates a new set of instances of the plugins configured for the Decision Pipeline.
-	NewDecisionPipelinePlugins() DecisionPipelinePlugins
+	NewDecisionPipelinePlugins(scheduler PolarisScheduler) (*DecisionPipelinePlugins, error)
+}
+
+// Contains the factory functions for all available plugins.
+type PluginsRegistry struct {
+	registry map[string]PluginFactoryFunc
+}
+
+func NewPluginsRegistry(factories map[string]PluginFactoryFunc) *PluginsRegistry {
+	reg := PluginsRegistry{
+		registry: factories,
+	}
+	return &reg
+}
+
+// Returns the PluginFactoryFunc for the specified plugin name or nil, if no factory is registered for this name.
+func (pr *PluginsRegistry) GetPluginFactory(pluginName string) PluginFactoryFunc {
+	if factoryFn, ok := pr.registry[pluginName]; ok {
+		return factoryFn
+	}
+	return nil
 }
