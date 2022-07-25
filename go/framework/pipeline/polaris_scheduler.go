@@ -3,6 +3,7 @@ package pipeline
 import (
 	"context"
 
+	"polaris-slo-cloud.github.io/polaris-scheduler/v2/framework/client"
 	"polaris-slo-cloud.github.io/polaris-scheduler/v2/framework/config"
 )
 
@@ -10,6 +11,9 @@ import (
 type PolarisScheduler interface {
 	// Gets the scheduler configuration.
 	Config() *config.SchedulerConfig
+
+	// Gets the ClusterClientsManager for communicating with the node clusters.
+	ClusterClientsManager() client.ClusterClientsManager
 
 	// Starts the scheduling process and then returns nil
 	// or an error, if any occurred.

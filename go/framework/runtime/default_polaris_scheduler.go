@@ -7,7 +7,9 @@ import (
 
 	"github.com/go-logr/logr"
 	core "k8s.io/api/core/v1"
+	meta "k8s.io/apimachinery/pkg/apis/meta/v1"
 
+	"polaris-slo-cloud.github.io/polaris-scheduler/v2/framework/client"
 	"polaris-slo-cloud.github.io/polaris-scheduler/v2/framework/config"
 	"polaris-slo-cloud.github.io/polaris-scheduler/v2/framework/pipeline"
 	"polaris-slo-cloud.github.io/polaris-scheduler/v2/framework/runtime/queue"
@@ -29,9 +31,10 @@ const (
 
 // The default implementation of the PolarisScheduler.
 type DefaultPolarisScheduler struct {
-	config         *config.SchedulerConfig
-	pluginsFactory pipeline.PluginsFactory
-	podSource      pipeline.PodSource
+	config            *config.SchedulerConfig
+	clusterClientsMgr client.ClusterClientsManager
+	pluginsFactory    pipeline.PluginsFactory
+	podSource         pipeline.PodSource
 
 	// The scheduling queue, which is sorted by the SortPlugin.
 	schedQueue queue.SchedulingQueue
@@ -70,6 +73,7 @@ func NewDefaultPolarisScheduler(
 	conf *config.SchedulerConfig,
 	pluginsRegistry *pipeline.PluginsRegistry,
 	podSource pipeline.PodSource,
+	clusterClientsMgr client.ClusterClientsManager,
 	logger *logr.Logger,
 ) *DefaultPolarisScheduler {
 	config.SetDefaultsSchedulerConfig(conf)
@@ -77,6 +81,7 @@ func NewDefaultPolarisScheduler(
 
 	scheduler := DefaultPolarisScheduler{
 		config:                conf,
+		clusterClientsMgr:     clusterClientsMgr,
 		pluginsFactory:        NewDefaultPluginsFactory(pluginsRegistry),
 		podSource:             podSource,
 		decisionPipelineQueue: make(chan *pipeline.SampledPodInfo, decisionPipelineQueueSize),
@@ -89,6 +94,10 @@ func NewDefaultPolarisScheduler(
 
 func (ps *DefaultPolarisScheduler) Config() *config.SchedulerConfig {
 	return ps.config
+}
+
+func (ps *DefaultPolarisScheduler) ClusterClientsManager() client.ClusterClientsManager {
+	return ps.clusterClientsMgr
 }
 
 func (ps *DefaultPolarisScheduler) Start(ctx context.Context) error {
@@ -270,21 +279,46 @@ func (ps *DefaultPolarisScheduler) executeDecisionPipelinePump(id int, decisionP
 
 		case <-ps.stopCh:
 			// Stop signal received, so we stop the scheduler.
+			ps.logger.Info("stopped DefaultPolarisScheduler DecisionPipeline", "id", id)
 			return
 		}
 	}
-
-	ps.logger.Info("stopped DefaultPolarisScheduler DecisionPipeline", "id", id)
 }
 
 func (ps *DefaultPolarisScheduler) handleFailureStatus(stage string, plugin pipeline.Plugin, schedCtx pipeline.SchedulingContext, podInfo *pipeline.PodInfo, status pipeline.Status) error {
-	switch status.Code() {
-	case pipeline.InternalError:
-		// ToDo
+	pod := podInfo.Pod
+
+	// ToDo: which cluster client should we get - the pod might not have been assigned to a cluster yet.
+	clusterClient, err := ps.clusterClientsMgr.GetClusterClient("ToDo")
+	if err != nil {
+		ps.logger.Error(err, "could not obtain ClusterClient")
+		return err
 	}
+	eventRecorder := clusterClient.EventRecorder()
+
+	msg := status.Message()
+	eventRecorder.Eventf(pod, nil, core.EventTypeWarning, "FailedScheduling", "Scheduling", msg)
+	return nil
 }
 
 // Commits the decision of the scheduling pipeline to the orchestrator.
-func (ps *DefaultPolarisScheduler) commitSchedulingDecision(schedCtx pipeline.SchedulingContext, decision *pipeline.SchedulingDecision) error {
+func (ps *DefaultPolarisScheduler) commitSchedulingDecision(schedCtx pipeline.SchedulingContext, decision *pipeline.SchedulingDecision) {
+	pod := decision.Pod.Pod
+	pod.Spec.NodeName = decision.SelectedNode.Node.Name
 
+	// ToDo: get client for correct cluster.
+	clusterClient, err := ps.clusterClientsMgr.GetClusterClient("ToDo")
+	if err != nil {
+		ps.logger.Error(err, "could not obtain ClusterClient")
+		return
+	}
+
+	go ps.savePod(schedCtx, clusterClient, pod)
+}
+
+func (ps *DefaultPolarisScheduler) savePod(schedCtx pipeline.SchedulingContext, clusterClient client.ClusterClient, pod *core.Pod) {
+	_, err := clusterClient.ClientSet().CoreV1().Pods(pod.Namespace).Update(schedCtx.Context(), pod, meta.UpdateOptions{})
+	if err != nil {
+		ps.logger.Error(err, "could not update Pod", "pod", pod)
+	}
 }
