@@ -152,6 +152,10 @@ func (ps *DefaultPolarisScheduler) Stop() error {
 	return nil
 }
 
+func (ps *DefaultPolarisScheduler) Logger() *logr.Logger {
+	return ps.logger
+}
+
 func (ps *DefaultPolarisScheduler) IsActive() bool {
 	return atomic.LoadInt32(&ps.state) == started
 }
@@ -304,7 +308,7 @@ func (ps *DefaultPolarisScheduler) handleFailureStatus(stage string, plugin pipe
 // Commits the decision of the scheduling pipeline to the orchestrator.
 func (ps *DefaultPolarisScheduler) commitSchedulingDecision(schedCtx pipeline.SchedulingContext, decision *pipeline.SchedulingDecision) {
 	pod := decision.Pod.Pod
-	pod.Spec.NodeName = decision.SelectedNode.Node.Name
+	pod.Spec.NodeName = decision.TargetNode.Node.Name
 
 	// ToDo: get client for correct cluster.
 	clusterClient, err := ps.clusterClientsMgr.GetClusterClient("ToDo")

@@ -103,7 +103,7 @@ type PreScorePlugin interface {
 // Allows defining optional actions supported by a ScorePlugin
 type ScoreExtensions interface {
 	// Called to normalize the node scores returned by the associated ScorePlugin to a range between MinNodeScore and MaxNodeScore.
-	// This method should updated the scores list and return a Success Status.
+	// This method should updated the scores list (without changing the order or the number of elements) and return a Success Status.
 	NormalizeScores(ctx SchedulingContext, podInfo *PodInfo, scores []NodeScore) Status
 }
 
@@ -149,7 +149,7 @@ type SchedulingDecision struct {
 	Pod *PodInfo
 
 	// The node that has been selected for the pod.
-	SelectedNode *NodeInfo
+	TargetNode *NodeInfo
 }
 
 // Represents an instance of the Polaris Scheduler Decision Pipeline,

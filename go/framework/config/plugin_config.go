@@ -11,7 +11,7 @@ type PluginListEntry struct {
 
 	// The weight of the plugin (applies only to Score plugins).
 	// Default: 1
-	Weight uint32
+	Weight int32
 }
 
 // Used to configure the plugins used in the scheduling pipeline.
@@ -38,5 +38,5 @@ type PluginsConfigListEntry struct {
 	Name string
 
 	// Configuration data for the plugin.
-	config PluginConfig
+	Config PluginConfig
 }

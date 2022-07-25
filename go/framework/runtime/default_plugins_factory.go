@@ -71,9 +71,14 @@ func (f *DefaultPluginsFactory) NewDecisionPipelinePlugins(scheduler pipeline.Po
 	if plugins, err := setUpPlugins[pipeline.ScorePlugin](pluginsList.Score, f.pluginsRegistry, scheduler, pluginInstances, pipeline.ScoreStage); err == nil {
 		scorePluginsWithExt := make([]*pipeline.ScorePluginWithExtensions, len(plugins))
 		for i, scorePlugin := range plugins {
+			weight := pluginsList.Score[i].Weight
+			if weight == 0 {
+				weight = 1
+			}
 			scorePluginsWithExt[i] = &pipeline.ScorePluginWithExtensions{
 				ScorePlugin:     scorePlugin,
 				ScoreExtensions: scorePlugin.ScoreExtensions(),
+				Weight:          weight,
 			}
 		}
 		decisionPipelinePlugins.Score = scorePluginsWithExt

@@ -15,6 +15,9 @@ type ScorePluginWithExtensions struct {
 
 	// The ScoreExtensions supplied by the ScorePlugin or nil, if the plugin does not have any.
 	ScoreExtensions
+
+	// The weight assigned to this score plugin.
+	Weight int32
 }
 
 // Contains plugin instances for a single DecisionPipeline instance.

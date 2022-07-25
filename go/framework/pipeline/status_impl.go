@@ -68,10 +68,17 @@ func (s *statusImpl) SetFailedPlugin(plugin Plugin, stage string) {
 }
 
 func (s *statusImpl) Message() string {
-	if s.reasons != nil {
-		return strings.Join(s.reasons, ", ")
+	var msg string
+	if s.failedPlugin != nil {
+		msg = s.failedPlugin.Name()
 	}
-	return ""
+	if len(s.failedStage) > 0 {
+		msg = msg + " @ " + s.failedStage + ": "
+	}
+	if s.reasons != nil {
+		msg = msg + strings.Join(s.reasons, ", ")
+	}
+	return msg
 }
 
 func (s *statusImpl) Reasons() []string {

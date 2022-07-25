@@ -3,6 +3,8 @@ package pipeline
 import (
 	"context"
 
+	"github.com/go-logr/logr"
+
 	"polaris-slo-cloud.github.io/polaris-scheduler/v2/framework/client"
 	"polaris-slo-cloud.github.io/polaris-scheduler/v2/framework/config"
 )
@@ -21,6 +23,9 @@ type PolarisScheduler interface {
 
 	// Stops the scheduling process.
 	Stop() error
+
+	// Gets the logger used by this scheduler.
+	Logger() *logr.Logger
 
 	// Returns true if the scheduling process has been started.
 	IsActive() bool
