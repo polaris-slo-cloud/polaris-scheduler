@@ -3,18 +3,32 @@ package cmd
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 
 	"github.com/go-logr/logr"
 	"github.com/go-logr/stdr"
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v3"
 
+	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/rest"
+	"k8s.io/client-go/tools/clientcmd"
+	"k8s.io/client-go/util/homedir"
+
 	"polaris-slo-cloud.github.io/polaris-scheduler/v2/framework/config"
 )
 
+type commandLineArgs struct {
+	// The path to the scheduler config.
+	config string
+
+	// The path to the KUBECONFIG file.
+	kubeconfig string
+}
+
 // Creates a new polaris-scheduler command.
 func NewPolarisSchedulerCmd() *cobra.Command {
-	var configPath string
+	cmdLineArgs := commandLineArgs{}
 
 	logger := initLogger()
 
@@ -25,18 +39,23 @@ func NewPolarisSchedulerCmd() *cobra.Command {
 		Run: func(cmd *cobra.Command, args []string) {
 			logger.Info("polaris-scheduler")
 
-			schedConfig, err := loadConfigWithDefaults(configPath, logger)
+			schedConfig, err := loadConfigWithDefaults(cmdLineArgs.config, logger)
 			if err != nil {
 				logger.Error(err, "Error loading config.")
 				os.Exit(1)
 			}
 
-			runScheduler(schedConfig, logger)
+			if err := runScheduler(schedConfig, logger, &cmdLineArgs); err != nil {
+				logger.Error(err, "Error starting polaris-scheduler")
+				os.Exit(1)
+			}
 		},
 	}
 
-	cmd.PersistentFlags().StringVarP(&configPath, "config", "c", "", "The path of the polaris-scheduler configuration file.")
+	cmd.PersistentFlags().StringVarP(&cmdLineArgs.config, "config", "c", "", "The path to the polaris-scheduler configuration file.")
 	cmd.MarkFlagFilename("config")
+	cmd.PersistentFlags().StringVar(&cmdLineArgs.kubeconfig, "kubeconfig", "", "The path to the KUBECONFIG file.")
+	cmd.MarkFlagFilename("kubeconfig")
 
 	return &cmd
 }
@@ -46,6 +65,7 @@ func initLogger() *logr.Logger {
 	return &logger
 }
 
+// Loads the SchedulerConfig from the specified path and fills empty fields with default values.
 func loadConfigWithDefaults(configPath string, logger *logr.Logger) (*config.SchedulerConfig, error) {
 	schedConfig, err := loadConfig(configPath, logger)
 	if err != nil {
@@ -55,6 +75,7 @@ func loadConfigWithDefaults(configPath string, logger *logr.Logger) (*config.Sch
 	return schedConfig, nil
 }
 
+// Loads the SchedulerConfig from the specified path or returns an empty config, if configPath is empty.
 func loadConfig(configPath string, logger *logr.Logger) (*config.SchedulerConfig, error) {
 	schedConfig := &config.SchedulerConfig{}
 
@@ -87,10 +108,65 @@ func loadConfig(configPath string, logger *logr.Logger) (*config.SchedulerConfig
 	return schedConfig, nil
 }
 
+// Fills empty fields in the SchedulerConfig with default values.
 func fillConfigWithDefaults(schedConfig *config.SchedulerConfig) {
 	config.SetDefaultsSchedulerConfig(schedConfig)
 }
 
-func runScheduler(schedConfig *config.SchedulerConfig, logger *logr.Logger) error {
+// Loads the Kubernetes config.
+// First we attempt to load it from a pod environment (i.e., when operating inside a cluster).
+// If this fails, we use the local KUBECONFIG file.
+func loadKubeconfig(args *commandLineArgs) (*rest.Config, error) {
+	// Try loading the config from the in-cluster environment.
+	k8sConfig, err := rest.InClusterConfig()
+	if err == nil {
+		return k8sConfig, nil
+	}
+	// If an unexpected error occurred, return it.
+	if err != rest.ErrNotInCluster {
+		return nil, err
+	}
+
+	// Try loading the config from a file.
+	kubeconfigPath := getKubeconfigPath(args.kubeconfig)
+	if k8sConfig, err := clientcmd.BuildConfigFromFlags("", kubeconfigPath); err != nil {
+		return nil, err
+	} else {
+		return k8sConfig, nil
+	}
+}
+
+// Returns the path of the KUBECONFIG file.
+// It uses the following order of preference:
+//
+// 1. --kubeconfig command line flag
+// 2. $KUBECONFIG environment variable
+// 3. $HOME/.kube/config
+func getKubeconfigPath(cmdLineFlagValue string) string {
+	if cmdLineFlagValue != "" {
+		return cmdLineFlagValue
+	}
+
+	if kubeconfigPath, ok := os.LookupEnv("KUBECONFIG"); ok && kubeconfigPath != "" {
+		return kubeconfigPath
+	}
+
+	home := homedir.HomeDir()
+	return filepath.Join(home, ".kube", "config")
+}
+
+func runScheduler(schedConfig *config.SchedulerConfig, logger *logr.Logger, cmdLineArgs *commandLineArgs) error {
+	k8sConfig, err := loadKubeconfig(cmdLineArgs)
+	if err != nil {
+		return err
+	}
+
+	k8sClientSet, err := kubernetes.NewForConfig(k8sConfig)
+	if err != nil {
+		return err
+	}
+
+	var _ = k8sClientSet
+
 	return nil
 }
