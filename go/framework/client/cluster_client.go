@@ -2,7 +2,7 @@ package client
 
 import (
 	clientset "k8s.io/client-go/kubernetes"
-	"k8s.io/client-go/tools/events"
+	"k8s.io/client-go/tools/record"
 )
 
 // Represents a client for communicating with a single cluster.
@@ -11,12 +11,12 @@ type ClusterClient interface {
 	ClientSet() clientset.Interface
 
 	// Gets the EventRecorder for this cluster.
-	EventRecorder() events.EventRecorder
+	EventRecorder() record.EventRecorder
 }
 
 // Manages the clients for multiple clusters.
 type ClusterClientsManager interface {
 
-	// Gets the ClusterClient for the specified cluster.
+	// Gets the ClusterClient for the specified cluster or an error, if the specified cluster cannot be found.
 	GetClusterClient(clusterName string) (ClusterClient, error)
 }

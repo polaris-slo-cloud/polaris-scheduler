@@ -301,7 +301,7 @@ func (ps *DefaultPolarisScheduler) handleFailureStatus(stage string, plugin pipe
 	eventRecorder := clusterClient.EventRecorder()
 
 	msg := status.Message()
-	eventRecorder.Eventf(pod, nil, core.EventTypeWarning, "FailedScheduling", "Scheduling", msg)
+	eventRecorder.Eventf(pod, core.EventTypeWarning, "FailedScheduling", "Scheduling", msg)
 	return nil
 }
 

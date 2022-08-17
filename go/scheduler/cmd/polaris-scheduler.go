@@ -10,12 +10,12 @@ import (
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v3"
 
-	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/client-go/util/homedir"
 
 	"polaris-slo-cloud.github.io/polaris-scheduler/v2/framework/config"
+	"polaris-slo-cloud.github.io/polaris-scheduler/v2/scheduler/kubernetes"
 )
 
 type commandLineArgs struct {
@@ -116,10 +116,11 @@ func fillConfigWithDefaults(schedConfig *config.SchedulerConfig) {
 // Loads the Kubernetes config.
 // First we attempt to load it from a pod environment (i.e., when operating inside a cluster).
 // If this fails, we use the local KUBECONFIG file.
-func loadKubeconfig(args *commandLineArgs) (*rest.Config, error) {
+func loadKubeconfig(args *commandLineArgs, logger *logr.Logger) (*rest.Config, error) {
 	// Try loading the config from the in-cluster environment.
 	k8sConfig, err := rest.InClusterConfig()
 	if err == nil {
+		logger.Info("Using in-cluster KUBECONFIG")
 		return k8sConfig, nil
 	}
 	// If an unexpected error occurred, return it.
@@ -132,6 +133,7 @@ func loadKubeconfig(args *commandLineArgs) (*rest.Config, error) {
 	if k8sConfig, err := clientcmd.BuildConfigFromFlags("", kubeconfigPath); err != nil {
 		return nil, err
 	} else {
+		logger.Info("Using KUBECONFIG", "path", kubeconfigPath)
 		return k8sConfig, nil
 	}
 }
@@ -156,17 +158,23 @@ func getKubeconfigPath(cmdLineFlagValue string) string {
 }
 
 func runScheduler(schedConfig *config.SchedulerConfig, logger *logr.Logger, cmdLineArgs *commandLineArgs) error {
-	k8sConfig, err := loadKubeconfig(cmdLineArgs)
+	k8sConfig, err := loadKubeconfig(cmdLineArgs, logger)
 	if err != nil {
 		return err
 	}
 
-	k8sClientSet, err := kubernetes.NewForConfig(k8sConfig)
+	k8sConfigs := map[string]*rest.Config{
+		k8sConfig.ServerName: k8sConfig,
+	}
+
+	clusterClientsMgr, err := kubernetes.NewKubernetesClusterClientsManager(k8sConfigs, schedConfig, logger)
 	if err != nil {
 		return err
 	}
 
-	var _ = k8sClientSet
+	// ToDo PodSource
+
+	// ToDo Plugins (in separate files and registry creation in main.go)
 
 	return nil
 }
