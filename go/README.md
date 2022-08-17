@@ -1,6 +1,6 @@
-# RAINBOW Kubernetes Controllers
+# Polaris Scheduler Workspace Organization
 
-This directory contains RAINBOW's Kubernetes controllers and CRDs written in Go, which can be found in the subfolders of this directory:
+This directory contains the modules that comprise the Polaris Scheduler workspace:
 
-* [orchestrator](./orchestration): All shared CRDs and data structures and the controller for the RAINBOW CRDs.
-* [scheduler](./scheduler): Fog-aware Kubernetes scheduler, based on kube-scheduler.
+* [framework](./framework): The orchestrator-independent Polaris Scheduler framework library that defines the scheduling pipeline and plugin structures.
+* [scheduler](./scheduler): Kubernetes implementation of the Polaris Scheduler.
