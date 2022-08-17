@@ -1,0 +1,56 @@
+# Configuration for the polaris-scheduler
+
+# The name of this scheduler (used to direct pods to this scheduler).
+schedulerName: polaris-scheduler
+
+# The number of nodes to sample defined as basis points (bp) of the total number of nodes.
+# 1 bp = 0.01%
+#
+# Min: 0
+# Max: 10000
+# Default: 200 (= 2%)
+nodesToSampleBp: 200
+
+# The number of node samplers to run in parallel.
+# Default: 0 (number of CPU cores)
+parallelNodeSamplers: 0
+
+# The number of Scheduling Decision Pipelines to run in parallel.
+# Default: 0 (number of CPU cores)
+parallelDecisionPipelines: 0
+
+# The list of plugins for the scheduling pipeline.
+plugins:
+  # The Sort stage must be configured with a single plugin.
+  sort:
+    name: ToDo
+
+  preFilter:
+    - name: Plugin1
+    - name: Plugin2
+
+  filter:
+    - name: Plugin1
+    - name: Plugin2
+
+  preScore:
+    - name: Plugin1
+    - name: Plugin2
+
+  score:
+    - name: Plugin1
+      weight: 1
+    - name: Plugin2
+      weight: 1
+
+  reserve:
+    - name: Plugin1
+    - name: Plugin2
+
+
+# (optional) Allows specifying configuration parameters for each plugin.
+pluginsConfig:
+  - name: Plugin1
+    config:
+      keyA: valueA
+      keyB: valueB
