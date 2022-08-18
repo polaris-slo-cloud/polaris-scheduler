@@ -19,4 +19,10 @@ type ClusterClientsManager interface {
 
 	// Gets the ClusterClient for the specified cluster or an error, if the specified cluster cannot be found.
 	GetClusterClient(clusterName string) (ClusterClient, error)
+
+	// Gets the number of clusters known to this ClusterClientsManager.
+	ClustersCount() int
+
+	// Calls the specified function for each cluster.
+	ForEach(fn func(clusterName string, client ClusterClient))
 }

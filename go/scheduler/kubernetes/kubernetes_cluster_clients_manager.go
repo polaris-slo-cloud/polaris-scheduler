@@ -42,3 +42,13 @@ func (mgr *KubernetesClusterClientsManager) GetClusterClient(clusterName string)
 	}
 	return nil, fmt.Errorf("could not find a ClusterClient for cluster %s", clusterName)
 }
+
+func (mgr *KubernetesClusterClientsManager) ClustersCount() int {
+	return len(mgr.clients)
+}
+
+func (mgr *KubernetesClusterClientsManager) ForEach(fn func(clusterName string, client client.ClusterClient)) {
+	for cluster, client := range mgr.clients {
+		fn(cluster, client)
+	}
+}
