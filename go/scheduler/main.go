@@ -11,13 +11,16 @@ import (
 
 	"polaris-slo-cloud.github.io/polaris-scheduler/v2/framework/pipeline"
 	"polaris-slo-cloud.github.io/polaris-scheduler/v2/scheduler/cmd"
+	"polaris-slo-cloud.github.io/polaris-scheduler/v2/scheduler/plugins/prioritysort"
 )
 
 func main() {
 	rand.Seed(time.Now().UnixNano())
 	ctx := setupSignalHandlingContext()
 
-	pluginsRegistry := pipeline.NewPluginsRegistry(map[string]pipeline.PluginFactoryFunc{})
+	pluginsRegistry := pipeline.NewPluginsRegistry(map[string]pipeline.PluginFactoryFunc{
+		prioritysort.PluginName: prioritysort.NewPrioritySortPlugin,
+	})
 
 	schedulerCmd := cmd.NewPolarisSchedulerCmd(ctx, pluginsRegistry)
 	if err := schedulerCmd.Execute(); err != nil {

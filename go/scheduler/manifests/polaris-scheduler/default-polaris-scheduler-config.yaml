@@ -27,7 +27,7 @@ incomingPodsBufferSize: 1000
 plugins:
   # The Sort stage must be configured with a single plugin.
   sort:
-    name: ToDo
+    name: PrioritySort
 
   # The SampleNodes stage must be configured with a single plugin.
   sampleNodes:
