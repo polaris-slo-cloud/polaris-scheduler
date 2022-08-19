@@ -24,5 +24,6 @@ type ClusterClientsManager interface {
 	ClustersCount() int
 
 	// Calls the specified function for each cluster.
-	ForEach(fn func(clusterName string, client ClusterClient))
+	// If the function returns an error, the iteration is stopped immediately and returns that error.
+	ForEach(fn func(clusterName string, clusterClient ClusterClient) error) error
 }

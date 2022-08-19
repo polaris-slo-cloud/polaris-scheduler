@@ -31,7 +31,7 @@ plugins:
 
   # The SampleNodes stage must be configured with a single plugin.
   sampleNodes:
-    name: ToDo
+    name: RandomNodesSampler
 
   preFilter:
     - name: Plugin1

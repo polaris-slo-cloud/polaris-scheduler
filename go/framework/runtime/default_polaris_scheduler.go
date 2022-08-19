@@ -258,7 +258,7 @@ func (ps *DefaultPolarisScheduler) executeSamplingLoop(id int, sampler pipeline.
 // Uses the SampleNodesPlugin (sampler) to sample nodes for the specified pod and, if successful, adds the sampled pod info
 // to the decisionPipelineQueue. If an error occurs, the error information is committed to the Pod object in the cluster.
 func (ps *DefaultPolarisScheduler) sampleNodesForPod(pod *pipeline.QueuedPodInfo, sampler pipeline.SampleNodesPlugin) error {
-	candidateNodes, status := sampler.SampleNodes(pod.Ctx, pod.PodInfo, ps.config)
+	candidateNodes, status := sampler.SampleNodes(pod.Ctx, pod.PodInfo)
 	if !pipeline.IsSuccessStatus(status) {
 		return ps.handleFailureStatus(pipeline.SampleNodesStage, sampler, pod.Ctx, pod.PodInfo, status)
 	}

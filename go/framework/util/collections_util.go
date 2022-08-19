@@ -27,3 +27,10 @@ func ConvertToSlice[T any](linkedList *list.List) []T {
 	}
 	return slice
 }
+
+// Swaps the elements in the positions i and j.
+func Swap[T any](slice []T, i int, j int) {
+	temp := slice[j]
+	slice[j] = slice[i]
+	slice[i] = temp
+}

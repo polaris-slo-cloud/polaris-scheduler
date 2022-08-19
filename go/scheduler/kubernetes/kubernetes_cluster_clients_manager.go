@@ -47,8 +47,11 @@ func (mgr *KubernetesClusterClientsManager) ClustersCount() int {
 	return len(mgr.clients)
 }
 
-func (mgr *KubernetesClusterClientsManager) ForEach(fn func(clusterName string, client client.ClusterClient)) {
+func (mgr *KubernetesClusterClientsManager) ForEach(fn func(clusterName string, client client.ClusterClient) error) error {
 	for cluster, client := range mgr.clients {
-		fn(cluster, client)
+		if err := fn(cluster, client); err != nil {
+			return err
+		}
 	}
+	return nil
 }

@@ -1,9 +1,5 @@
 package pipeline
 
-import (
-	"polaris-slo-cloud.github.io/polaris-scheduler/v2/framework/config"
-)
-
 const (
 	// The minimum node score that may be returned by a ScorePlugin (after NormalizeScore).
 	MinNodeScore int64 = 0
@@ -59,7 +55,7 @@ type SampleNodesPlugin interface {
 	// Samples nodes across the entire supercluster to act has hosting candidates for the pod.
 	//
 	// Returns an array of NodeInfos that describe the sampled nodes and a Status.
-	SampleNodes(ctx SchedulingContext, podInfo *PodInfo, config *config.SchedulerConfig) ([]*NodeInfo, Status)
+	SampleNodes(ctx SchedulingContext, podInfo *PodInfo) ([]*NodeInfo, Status)
 }
 
 // A PreFilterPlugin is called once per Pod and can be used to pre-compute information that will be needed by a FilterPlugin.

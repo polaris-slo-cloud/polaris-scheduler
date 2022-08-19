@@ -74,8 +74,9 @@ func (kps *KubernetesPodSource) IncomingPods() chan *core.Pod {
 }
 
 func (kps *KubernetesPodSource) setUpInformers() {
-	kps.clientsMgr.ForEach(func(clusterName string, client client.ClusterClient) {
-		kps.sharedInformers[clusterName] = kps.setUpInformer(client)
+	kps.clientsMgr.ForEach(func(clusterName string, clusterClient client.ClusterClient) error {
+		kps.sharedInformers[clusterName] = kps.setUpInformer(clusterClient)
+		return nil
 	})
 }
 
