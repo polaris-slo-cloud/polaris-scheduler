@@ -7,6 +7,9 @@ import (
 const (
 	// Default number of nodes to sample = 2%.
 	DefaultNodesToSampleBp uint32 = 200
+
+	// Default size of the incoming pods buffer.
+	DefaultIncomingPodsBufferSize uint32 = 1000
 )
 
 var (
@@ -40,6 +43,11 @@ type SchedulerConfig struct {
 	// Default: number of CPU cores.
 	ParallelDecisionPipelines uint32
 
+	// The size of the buffer used for incoming pods.
+	//
+	// Default: 1000
+	IncomingPodsBufferSize uint32
+
 	// The list of plugins for the scheduling pipeline.
 	Plugins PluginsList
 
@@ -62,5 +70,9 @@ func SetDefaultsSchedulerConfig(config *SchedulerConfig) {
 
 	if config.ParallelDecisionPipelines == 0 {
 		config.ParallelDecisionPipelines = DefaultParallelDecisionPipelines
+	}
+
+	if config.IncomingPodsBufferSize == 0 {
+		config.IncomingPodsBufferSize = DefaultIncomingPodsBufferSize
 	}
 }

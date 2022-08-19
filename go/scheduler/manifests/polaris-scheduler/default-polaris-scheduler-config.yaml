@@ -19,10 +19,18 @@ parallelNodeSamplers: 0
 # Default: 0 (number of CPU cores)
 parallelDecisionPipelines: 0
 
+# The size of the buffer used for incoming pods.
+# Default: 1000
+incomingPodsBufferSize: 1000
+
 # The list of plugins for the scheduling pipeline.
 plugins:
   # The Sort stage must be configured with a single plugin.
   sort:
+    name: ToDo
+
+  # The SampleNodes stage must be configured with a single plugin.
+  sampleNodes:
     name: ToDo
 
   preFilter:

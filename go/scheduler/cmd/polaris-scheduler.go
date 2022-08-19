@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -15,6 +16,8 @@ import (
 	"k8s.io/client-go/util/homedir"
 
 	"polaris-slo-cloud.github.io/polaris-scheduler/v2/framework/config"
+	"polaris-slo-cloud.github.io/polaris-scheduler/v2/framework/pipeline"
+	polarisRuntime "polaris-slo-cloud.github.io/polaris-scheduler/v2/framework/runtime"
 	"polaris-slo-cloud.github.io/polaris-scheduler/v2/scheduler/kubernetes"
 )
 
@@ -27,7 +30,7 @@ type commandLineArgs struct {
 }
 
 // Creates a new polaris-scheduler command.
-func NewPolarisSchedulerCmd() *cobra.Command {
+func NewPolarisSchedulerCmd(ctx context.Context, pluginsRegistry *pipeline.PluginsRegistry) *cobra.Command {
 	cmdLineArgs := commandLineArgs{}
 
 	logger := initLogger()
@@ -45,7 +48,7 @@ func NewPolarisSchedulerCmd() *cobra.Command {
 				os.Exit(1)
 			}
 
-			if err := runScheduler(schedConfig, logger, &cmdLineArgs); err != nil {
+			if err := runScheduler(ctx, schedConfig, pluginsRegistry, logger, &cmdLineArgs); err != nil {
 				logger.Error(err, "Error starting polaris-scheduler")
 				os.Exit(1)
 			}
@@ -157,7 +160,13 @@ func getKubeconfigPath(cmdLineFlagValue string) string {
 	return filepath.Join(home, ".kube", "config")
 }
 
-func runScheduler(schedConfig *config.SchedulerConfig, logger *logr.Logger, cmdLineArgs *commandLineArgs) error {
+func runScheduler(
+	ctx context.Context,
+	schedConfig *config.SchedulerConfig,
+	pluginsRegistry *pipeline.PluginsRegistry,
+	logger *logr.Logger,
+	cmdLineArgs *commandLineArgs,
+) error {
 	k8sConfig, err := loadKubeconfig(cmdLineArgs, logger)
 	if err != nil {
 		return err
@@ -172,9 +181,8 @@ func runScheduler(schedConfig *config.SchedulerConfig, logger *logr.Logger, cmdL
 		return err
 	}
 
-	// ToDo PodSource
+	podSource := kubernetes.NewKubernetesPodSource(clusterClientsMgr)
 
-	// ToDo Plugins (in separate files and registry creation in main.go)
-
-	return nil
+	polarisScheduler := polarisRuntime.NewDefaultPolarisScheduler(schedConfig, pluginsRegistry, podSource, clusterClientsMgr, logger)
+	return polarisScheduler.Start(ctx)
 }

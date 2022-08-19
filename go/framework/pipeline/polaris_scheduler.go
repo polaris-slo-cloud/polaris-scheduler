@@ -17,11 +17,11 @@ type PolarisScheduler interface {
 	// Gets the ClusterClientsManager for communicating with the node clusters.
 	ClusterClientsManager() client.ClusterClientsManager
 
-	// Starts the scheduling process and then returns nil
+	// Starts the scheduling goroutines and then returns nil
 	// or an error, if any occurred.
 	Start(ctx context.Context) error
 
-	// Stops the scheduling process.
+	// Stops the scheduling goroutines.
 	Stop() error
 
 	// Gets the logger used by this scheduler.

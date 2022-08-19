@@ -10,6 +10,7 @@ import (
 	"k8s.io/client-go/tools/cache"
 
 	"polaris-slo-cloud.github.io/polaris-scheduler/v2/framework/client"
+	"polaris-slo-cloud.github.io/polaris-scheduler/v2/framework/config"
 	"polaris-slo-cloud.github.io/polaris-scheduler/v2/framework/pipeline"
 )
 
@@ -17,22 +18,20 @@ var (
 	_ pipeline.PodSource = (*KubernetesPodSource)(nil)
 )
 
-const (
-	podsBufferSize = 1000
-)
-
 type KubernetesPodSource struct {
 	clientsMgr      client.ClusterClientsManager
 	incomingPods    chan *core.Pod
+	schedConfig     *config.SchedulerConfig
 	stopChan        chan struct{}
 	sharedInformers map[string]cache.SharedIndexInformer
 }
 
 // Creates a new KubernetesPodSource for all clusters in the specified ClusterClientsManager.
-func NewKubernetesPodSource(clusterClientsMgr client.ClusterClientsManager) *KubernetesPodSource {
+func NewKubernetesPodSource(clusterClientsMgr client.ClusterClientsManager, schedConfig *config.SchedulerConfig) *KubernetesPodSource {
 	kps := KubernetesPodSource{
 		clientsMgr:      clusterClientsMgr,
-		incomingPods:    make(chan *core.Pod, podsBufferSize),
+		incomingPods:    make(chan *core.Pod, schedConfig.IncomingPodsBufferSize),
+		schedConfig:     schedConfig,
 		sharedInformers: make(map[string]cache.SharedIndexInformer, clusterClientsMgr.ClustersCount()),
 	}
 	return &kps
@@ -129,7 +128,7 @@ func (kps *KubernetesPodSource) onDelete(pod *core.Pod) {
 }
 
 func (kps *KubernetesPodSource) publishPodIfUnscheduled(pod *core.Pod) {
-	if pod.Spec.NodeName == "" {
+	if pod.Spec.NodeName == "" && pod.Spec.SchedulerName == kps.schedConfig.SchedulerName {
 		kps.incomingPods <- pod
 	}
 }

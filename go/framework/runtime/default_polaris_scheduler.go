@@ -92,14 +92,18 @@ func NewDefaultPolarisScheduler(
 	return &scheduler
 }
 
+// Gets the scheduler configuration.
 func (ps *DefaultPolarisScheduler) Config() *config.SchedulerConfig {
 	return ps.config
 }
 
+// Gets the ClusterClientsManager for communicating with the node clusters.
 func (ps *DefaultPolarisScheduler) ClusterClientsManager() client.ClusterClientsManager {
 	return ps.clusterClientsMgr
 }
 
+// Starts the scheduling goroutines and then returns nil
+// or an error, if any occurred.
 func (ps *DefaultPolarisScheduler) Start(ctx context.Context) error {
 	if !atomic.CompareAndSwapInt32(&ps.state, pristine, started) {
 		state := atomic.LoadInt32(&ps.state)
@@ -144,6 +148,7 @@ func (ps *DefaultPolarisScheduler) Start(ctx context.Context) error {
 	return nil
 }
 
+// Stops the scheduling goroutines.
 func (ps *DefaultPolarisScheduler) Stop() error {
 	if atomic.CompareAndSwapInt32(&ps.state, started, stopped) {
 		close(ps.stopCh)
@@ -152,26 +157,33 @@ func (ps *DefaultPolarisScheduler) Stop() error {
 	return nil
 }
 
+// Gets the logger used by this scheduler.
 func (ps *DefaultPolarisScheduler) Logger() *logr.Logger {
 	return ps.logger
 }
 
+// Returns true if the scheduling process has been started.
 func (ps *DefaultPolarisScheduler) IsActive() bool {
 	return atomic.LoadInt32(&ps.state) == started
 }
 
+// Returns the number of queued pods.
 func (ps *DefaultPolarisScheduler) PodsInQueueCount() int {
 	return ps.schedQueue.Len()
 }
 
+// Returns the number of pods, for which nodes are currently being sampled.
 func (ps *DefaultPolarisScheduler) PodsInNodeSamplingCount() int {
 	return int(atomic.LoadInt32(&ps.podsInSampling))
 }
 
+// Returns the number of pods, for which nodes have been sampled, and which are
+// now waiting to enter the decision pipeline.
 func (ps *DefaultPolarisScheduler) PodsWaitingForDecisionPipelineCount() int {
 	return int(atomic.LoadInt32(&ps.podsWaitingForDecisionPipeline))
 }
 
+// Returns the number of pods currently in the decision pipeline.
 func (ps *DefaultPolarisScheduler) PodsInDecisionPipelineCount() int {
 	return int(atomic.LoadInt32(&ps.podsInDecisionPipeline))
 }
