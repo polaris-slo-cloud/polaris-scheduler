@@ -34,26 +34,26 @@ plugins:
     name: RandomNodesSampler
 
   preFilter:
-    - name: Plugin1
-    - name: Plugin2
+    - name: ResourcesFitPlugin
+    # - name: Plugin2
 
   filter:
-    - name: Plugin1
-    - name: Plugin2
+    - name: ResourcesFitPlugin
+    # - name: Plugin2
 
-  preScore:
-    - name: Plugin1
-    - name: Plugin2
+  # preScore:
+  #   - name: Plugin1
+  #   - name: Plugin2
 
-  score:
-    - name: Plugin1
-      weight: 1
-    - name: Plugin2
-      weight: 1
+  # score:
+  #   - name: Plugin1
+  #     weight: 1
+  #   - name: Plugin2
+  #     weight: 1
 
-  reserve:
-    - name: Plugin1
-    - name: Plugin2
+  # reserve:
+  #   - name: Plugin1
+  #   - name: Plugin2
 
 
 # (optional) Allows specifying configuration parameters for each plugin.

@@ -181,7 +181,7 @@ func runScheduler(
 		return err
 	}
 
-	podSource := kubernetes.NewKubernetesPodSource(clusterClientsMgr)
+	podSource := kubernetes.NewKubernetesPodSource(clusterClientsMgr, schedConfig)
 
 	polarisScheduler := polarisRuntime.NewDefaultPolarisScheduler(schedConfig, pluginsRegistry, podSource, clusterClientsMgr, logger)
 	return polarisScheduler.Start(ctx)

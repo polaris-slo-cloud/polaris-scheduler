@@ -13,6 +13,7 @@ import (
 	"polaris-slo-cloud.github.io/polaris-scheduler/v2/scheduler/cmd"
 	"polaris-slo-cloud.github.io/polaris-scheduler/v2/scheduler/plugins/prioritysort"
 	"polaris-slo-cloud.github.io/polaris-scheduler/v2/scheduler/plugins/randomsampler"
+	"polaris-slo-cloud.github.io/polaris-scheduler/v2/scheduler/plugins/resourcesfit"
 )
 
 func main() {
@@ -22,6 +23,7 @@ func main() {
 	pluginsRegistry := pipeline.NewPluginsRegistry(map[string]pipeline.PluginFactoryFunc{
 		prioritysort.PluginName:  prioritysort.NewPrioritySortPlugin,
 		randomsampler.PluginName: randomsampler.NewRandomNodesSamplerPlugin,
+		resourcesfit.PluginName:  resourcesfit.NewResourcesFitPlugin,
 	})
 
 	schedulerCmd := cmd.NewPolarisSchedulerCmd(ctx, pluginsRegistry)

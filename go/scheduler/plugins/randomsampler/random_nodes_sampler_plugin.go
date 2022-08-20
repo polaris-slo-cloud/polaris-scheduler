@@ -133,6 +133,7 @@ func (rsp *RandomNodesSamplerPlugin) sampleNodesFromCluster(clusterNodes []*core
 
 func createNodeInfo(node *core.Node) *pipeline.NodeInfo {
 	return &pipeline.NodeInfo{
-		Node: node,
+		Node:                 node,
+		AllocatableResources: util.NewResourcesFromList(node.Status.Allocatable),
 	}
 }
