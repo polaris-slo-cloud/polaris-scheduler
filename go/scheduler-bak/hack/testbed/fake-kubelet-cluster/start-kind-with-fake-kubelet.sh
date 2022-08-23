@@ -89,6 +89,7 @@ function deployFakeKubelet() {
         nodeTypeYaml=$(echo "${nodeTypeYaml}" | sed -e "s/{{ \.polarisTemplate\.fakeMemory }}/${fakeMemory}/" -)
         nodeTypeYaml=$(echo "${nodeTypeYaml}" | sed -e "s/{{ \.polarisTemplate\.extraNodeLabels }}/${extraLabels}/" -)
         nodeTypeYaml=$(echo "${nodeTypeYaml}" | sed -e "s/{{ \.polarisTemplate\.extendedResources }}/${extendedResourcesYaml}/" -)
+        nodeTypeYaml=$(echo "${nodeTypeYaml}" | sed -e "s/{{ \.fakeKubeletImageVersionTag }}/${fakeKubeletImageVersionTag}/" -)
         echo "${nodeTypeYaml}" | kubectl apply -f -
 
         totalNodes=$(($totalNodes + $fakeNodesCount))

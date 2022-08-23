@@ -194,7 +194,7 @@ spec:
     spec:
       containers:
         - name: fake-kubelet
-          image: ghcr.io/wzshiming/fake-kubelet/fake-kubelet:v0.6.0
+          image: ghcr.io/wzshiming/fake-kubelet/fake-kubelet:{{ .fakeKubeletImageVersionTag }}
           imagePullPolicy: IfNotPresent
           env:
             - name: NODE_NAME
