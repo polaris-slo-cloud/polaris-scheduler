@@ -4,9 +4,9 @@ go 1.19
 
 require (
 	github.com/go-logr/logr v1.2.2
-	k8s.io/api v0.24.3
-	k8s.io/apimachinery v0.24.3
-	k8s.io/client-go v0.24.3
+	k8s.io/api v0.24.4
+	k8s.io/apimachinery v0.24.4
+	k8s.io/client-go v0.24.4
 )
 
 require (

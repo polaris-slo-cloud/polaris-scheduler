@@ -1,1 +1,7 @@
-github.com/imdario/mergo v0.3.5 h1:JboBksRwiiAJWvIYJVo46AfV+IAIKZpfrSzVKj42R4Q=
+github.com/google/uuid v1.1.2 h1:EVhdT+1Kseyi1/pUmXKaFxYsDNy9RQYkMWRH68J/W7Y=
+k8s.io/api v0.24.4 h1:I5Y645gJ8zWKawyr78lVfDQkZrAViSbeRXsPZWTxmXk=
+k8s.io/api v0.24.4/go.mod h1:42pVfA0NRxrtJhZQOvRSyZcJihzAdU59WBtTjYcB0/M=
+k8s.io/apimachinery v0.24.4 h1:S0Ur3J/PbivTcL43EdSdPhqCqKla2NIuneNwZcTDeGQ=
+k8s.io/apimachinery v0.24.4/go.mod h1:82Bi4sCzVBdpYjyI4jY6aHX+YCUchUIrZrXKedjd2UM=
+k8s.io/client-go v0.24.4 h1:hIAIJZIPyaw46AkxwyR0FRfM/pRxpUNTd3ysYu9vyRg=
+k8s.io/client-go v0.24.4/go.mod h1:+AxlPWw/H6f+EJhRSjIeALaJT4tbeB/8g9BNvXGPd0Y=
