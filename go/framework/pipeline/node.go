@@ -13,6 +13,9 @@ type NodeInfo struct {
 
 	// The resources that are currently available for allocation on the node.
 	AllocatableResources *util.Resources
+
+	// The total amount of resources that are available on the node.
+	TotalResources *util.Resources
 }
 
 // NodeScore describes the score of a particular node.

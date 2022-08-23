@@ -10,7 +10,7 @@ var (
 )
 
 const (
-	stateKey = "ResourcesFitPlugin.state"
+	stateKey = PluginName + ".state"
 )
 
 type resourcesFitState struct {

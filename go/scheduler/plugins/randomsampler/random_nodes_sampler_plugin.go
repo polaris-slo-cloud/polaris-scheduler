@@ -135,5 +135,6 @@ func createNodeInfo(node *core.Node) *pipeline.NodeInfo {
 	return &pipeline.NodeInfo{
 		Node:                 node,
 		AllocatableResources: util.NewResourcesFromList(node.Status.Allocatable),
+		TotalResources:       util.NewResourcesFromList(node.Status.Capacity),
 	}
 }

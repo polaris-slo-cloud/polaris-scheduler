@@ -34,20 +34,20 @@ plugins:
     name: RandomNodesSampler
 
   preFilter:
-    - name: ResourcesFitPlugin
+    - name: ResourcesFit
     # - name: Plugin2
 
   filter:
-    - name: ResourcesFitPlugin
+    - name: ResourcesFit
     # - name: Plugin2
 
   # preScore:
   #   - name: Plugin1
   #   - name: Plugin2
 
-  # score:
-  #   - name: Plugin1
-  #     weight: 1
+  score:
+    - name: ResourcesFit
+      weight: 1
   #   - name: Plugin2
   #     weight: 1
 
