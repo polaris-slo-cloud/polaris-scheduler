@@ -77,7 +77,7 @@ func (*ResourcesFitPlugin) PreFilter(ctx pipeline.SchedulingContext, podInfo *pi
 	state := resourcesFitState{
 		reqResources: reqResources,
 	}
-	ctx.Write(stateKey, state)
+	ctx.Write(stateKey, &state)
 
 	return pipeline.NewSuccessStatus()
 }
