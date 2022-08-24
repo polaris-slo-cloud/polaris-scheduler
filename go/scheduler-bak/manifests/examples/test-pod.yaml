@@ -16,7 +16,7 @@ spec:
 apiVersion: v1
 kind: Pod
 metadata:
-  name: x-polaris-test-pod
+  name: polaris-test-pod-2
   labels:
     name: multischeduler-example
 spec:

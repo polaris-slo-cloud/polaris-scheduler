@@ -332,12 +332,27 @@ func (ps *DefaultPolarisScheduler) commitSchedulingDecision(schedCtx pipeline.Sc
 		return
 	}
 
-	go ps.savePod(schedCtx, clusterClient, pod)
+	binding := &core.Binding{
+		ObjectMeta: meta.ObjectMeta{
+			Namespace: pod.Namespace,
+			Name:      pod.Name,
+			UID:       pod.UID,
+		},
+		Target: core.ObjectReference{
+			Kind: "Node",
+			Name: decision.TargetNode.Node.Name,
+		},
+	}
+
+	go ps.savePodBinding(schedCtx, clusterClient, pod, binding)
 }
 
-func (ps *DefaultPolarisScheduler) savePod(schedCtx pipeline.SchedulingContext, clusterClient client.ClusterClient, pod *core.Pod) {
-	_, err := clusterClient.ClientSet().CoreV1().Pods(pod.Namespace).Update(schedCtx.Context(), pod, meta.UpdateOptions{})
+func (ps *DefaultPolarisScheduler) savePodBinding(schedCtx pipeline.SchedulingContext, clusterClient client.ClusterClient, pod *core.Pod, binding *core.Binding) {
+	err := clusterClient.ClientSet().CoreV1().Pods(pod.Namespace).Bind(schedCtx.Context(), binding, meta.CreateOptions{})
 	if err != nil {
-		ps.logger.Error(err, "could not update Pod", "pod", pod)
+		ps.logger.Error(err, "could not bind Pod", "pod", pod, "binding", binding)
 	}
+
+	fullyQualifiedPodName := pod.Namespace + "." + pod.Name
+	ps.logger.Info("PodScheduled", "pod", fullyQualifiedPodName, "cluster", clusterClient.ClusterName(), "node", binding.Target.Name)
 }
