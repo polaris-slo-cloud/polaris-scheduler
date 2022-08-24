@@ -62,10 +62,10 @@ local-image:
 release-image:
 	docker build -f ./build/scheduler/Dockerfile --build-arg RELEASE_VERSION="$(RELEASE_VERSION)" -t $(RELEASE_REGISTRY)/$(RELEASE_IMAGE) ..
 
-# .PHONY: debug-config
-# debug-config:
-# 	mkdir -p ./bin
-# 	sed -e "s/kubeconfig:.*/kubeconfig: '$(DEBUG_CONFIG_PATH)'/" manifests/polaris-scheduler/default-polaris-scheduler-config.yaml > bin/default-polaris-scheduler-config.yaml
+.PHONY: debug-config
+debug-config:
+	mkdir -p ./bin
+	cp scheduler/manifests/polaris-scheduler/default-polaris-scheduler-config.yaml bin/default-polaris-scheduler-config.yaml
 
 .PHONY: clean
 clean:
