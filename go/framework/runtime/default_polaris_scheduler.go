@@ -304,16 +304,20 @@ func (ps *DefaultPolarisScheduler) executeDecisionPipelinePump(id int, decisionP
 func (ps *DefaultPolarisScheduler) handleFailureStatus(stage string, plugin pipeline.Plugin, schedCtx pipeline.SchedulingContext, podInfo *pipeline.PodInfo, status pipeline.Status) error {
 	pod := podInfo.Pod
 
-	// ToDo: which cluster client should we get - the pod might not have been assigned to a cluster yet.
-	clusterClient, err := ps.clusterClientsMgr.GetClusterClient("ToDo")
-	if err != nil {
-		ps.logger.Error(err, "handleFailureStatus() could not obtain ClusterClient")
-		return err
-	}
-	eventRecorder := clusterClient.EventRecorder()
+	// ToDo: which cluster client should we get? - the pod might not have been assigned to a cluster yet.
+	// clusterClient, err := ps.clusterClientsMgr.GetClusterClient("ToDo")
+	// if err != nil {
+	// 	ps.logger.Error(err, "handleFailureStatus() could not obtain ClusterClient")
+	// 	return err
+	// }
+	// eventRecorder := clusterClient.EventRecorder()
+	//
+	// msg := status.Message()
+	// eventRecorder.Eventf(pod, core.EventTypeWarning, "FailedScheduling", "Scheduling", msg)
 
-	msg := status.Message()
-	eventRecorder.Eventf(pod, core.EventTypeWarning, "FailedScheduling", "Scheduling", msg)
+	fullyQualifiedPodName := pod.Namespace + "." + pod.Name
+	ps.logger.Info("FailedScheduling", "pod", fullyQualifiedPodName, "reason", status.Message())
+
 	return nil
 }
 
