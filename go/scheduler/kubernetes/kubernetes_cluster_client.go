@@ -22,12 +22,18 @@ var (
 
 // ClusterClient implementation for Kubernetes.
 type KubernetesClusterClient struct {
+	clusterName   string
 	k8sClientSet  *clientset.Clientset
 	eventRecorder record.EventRecorder
 }
 
 // Creates a new KubernetesClusterClient using the specified kubeconfig.
-func NewKubernetesClusterClient(kubeconfig *rest.Config, schedConfig *config.SchedulerConfig, logger *logr.Logger) (*KubernetesClusterClient, error) {
+func NewKubernetesClusterClient(
+	clusterName string,
+	kubeconfig *rest.Config,
+	schedConfig *config.SchedulerConfig,
+	logger *logr.Logger,
+) (*KubernetesClusterClient, error) {
 	k8sClientSet, err := clientset.NewForConfig(kubeconfig)
 	if err != nil {
 		return nil, err
@@ -45,11 +51,16 @@ func NewKubernetesClusterClient(kubeconfig *rest.Config, schedConfig *config.Sch
 	eventRecorder := eventBroadcaster.NewRecorder(scheme.Scheme, core.EventSource{Component: schedConfig.SchedulerName})
 
 	clusterClient := KubernetesClusterClient{
+		clusterName:   clusterName,
 		k8sClientSet:  k8sClientSet,
 		eventRecorder: eventRecorder,
 	}
 
 	return &clusterClient, nil
+}
+
+func (c *KubernetesClusterClient) ClusterName() string {
+	return c.clusterName
 }
 
 func (c *KubernetesClusterClient) ClientSet() clientset.Interface {

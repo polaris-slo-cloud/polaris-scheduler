@@ -58,16 +58,16 @@ func (rsp *RandomNodesSamplerPlugin) SampleNodes(ctx pipeline.SchedulingContext,
 	nodeInfos := make([]*pipeline.NodeInfo, requiredSamples)
 
 	nextSampleIndex := 0
-	for i, samplesFromCluster := range clusterSampleCounts {
-		rsp.sampleNodesFromCluster(allNodes[i], samplesFromCluster, nodeInfos, nextSampleIndex)
+	for clusterName, samplesFromCluster := range clusterSampleCounts {
+		rsp.sampleNodesFromCluster(clusterName, allNodes[clusterName], samplesFromCluster, nodeInfos, nextSampleIndex)
 		nextSampleIndex += samplesFromCluster
 	}
 
 	return nodeInfos, pipeline.NewSuccessStatus()
 }
 
-func (rsp *RandomNodesSamplerPlugin) getAllNodes(ctx pipeline.SchedulingContext) ([][]*core.Node, int, error) {
-	allNodes := make([][]*core.Node, 0, rsp.clusterMgr.ClustersCount())
+func (rsp *RandomNodesSamplerPlugin) getAllNodes(ctx pipeline.SchedulingContext) (map[string][]*core.Node, int, error) {
+	allNodes := make(map[string][]*core.Node, rsp.clusterMgr.ClustersCount())
 	totalNodesCount := 0
 
 	err := rsp.clusterMgr.ForEach(func(clusterName string, clusterClient client.ClusterClient) error {
@@ -75,7 +75,7 @@ func (rsp *RandomNodesSamplerPlugin) getAllNodes(ctx pipeline.SchedulingContext)
 		if err != nil {
 			return err
 		}
-		allNodes = append(allNodes, nodes)
+		allNodes[clusterName] = nodes
 		totalNodesCount += len(nodes)
 		return nil
 	})
@@ -99,41 +99,42 @@ func (rsp *RandomNodesSamplerPlugin) getClusterNodes(ctx pipeline.SchedulingCont
 	return ret, nil
 }
 
-func (rsp *RandomNodesSamplerPlugin) calculateClusterNodeCounts(allNodes [][]*core.Node, totalNodesCount int) ([]int, int) {
+func (rsp *RandomNodesSamplerPlugin) calculateClusterNodeCounts(allNodes map[string][]*core.Node, totalNodesCount int) (map[string]int, int) {
 	clustersCount := len(allNodes)
 	totalNodesFloat := float64(totalNodesCount)
 	totalSamples := math.Ceil(totalNodesFloat * rsp.percentageOfNodesToSample)
-	clusterNodeCounts := make([]int, clustersCount)
+	clusterNodeCounts := make(map[string]int, clustersCount)
 
 	// Due to the ceil operation for every cluster, the final number of total samples may be higher than the calculated totalSamples.
 	correctedTotalSamples := 0
 
-	for i, clusterNodes := range allNodes {
+	for clusterName, clusterNodes := range allNodes {
 		clusterPercentage := float64(len(clusterNodes)) / totalNodesFloat
 		samplesFromCluster := int(math.Ceil(clusterPercentage * totalSamples))
-		clusterNodeCounts[i] = samplesFromCluster
+		clusterNodeCounts[clusterName] = samplesFromCluster
 		correctedTotalSamples += samplesFromCluster
 	}
 
 	return clusterNodeCounts, correctedTotalSamples
 }
 
-func (rsp *RandomNodesSamplerPlugin) sampleNodesFromCluster(clusterNodes []*core.Node, count int, dest []*pipeline.NodeInfo, destStartIndex int) {
+func (rsp *RandomNodesSamplerPlugin) sampleNodesFromCluster(clusterName string, clusterNodes []*core.Node, count int, dest []*pipeline.NodeInfo, destStartIndex int) {
 	destIndex := destStartIndex
 	availNodesCount := len(clusterNodes)
 
 	for i := 0; i < count; i++ {
 		index := rsp.random.Intn(availNodesCount)
-		dest[destIndex] = createNodeInfo(clusterNodes[index])
+		dest[destIndex] = createNodeInfo(clusterName, clusterNodes[index])
 		destIndex++
 		availNodesCount--
 		util.Swap(clusterNodes, index, availNodesCount)
 	}
 }
 
-func createNodeInfo(node *core.Node) *pipeline.NodeInfo {
+func createNodeInfo(clusterName string, node *core.Node) *pipeline.NodeInfo {
 	return &pipeline.NodeInfo{
 		Node:                 node,
+		ClusterName:          clusterName,
 		AllocatableResources: util.NewResourcesFromList(node.Status.Allocatable),
 		TotalResources:       util.NewResourcesFromList(node.Status.Capacity),
 	}

@@ -7,6 +7,9 @@ import (
 
 // Represents a client for communicating with a single cluster.
 type ClusterClient interface {
+	// Gets the name of the cluster.
+	ClusterName() string
+
 	// Gets the ClientSet for communicating with a Kubernetes cluster.
 	ClientSet() clientset.Interface
 

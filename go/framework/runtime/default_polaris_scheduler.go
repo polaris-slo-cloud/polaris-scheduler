@@ -307,7 +307,7 @@ func (ps *DefaultPolarisScheduler) handleFailureStatus(stage string, plugin pipe
 	// ToDo: which cluster client should we get - the pod might not have been assigned to a cluster yet.
 	clusterClient, err := ps.clusterClientsMgr.GetClusterClient("ToDo")
 	if err != nil {
-		ps.logger.Error(err, "could not obtain ClusterClient")
+		ps.logger.Error(err, "handleFailureStatus() could not obtain ClusterClient")
 		return err
 	}
 	eventRecorder := clusterClient.EventRecorder()
@@ -322,10 +322,9 @@ func (ps *DefaultPolarisScheduler) commitSchedulingDecision(schedCtx pipeline.Sc
 	pod := decision.Pod.Pod
 	pod.Spec.NodeName = decision.TargetNode.Node.Name
 
-	// ToDo: get client for correct cluster.
-	clusterClient, err := ps.clusterClientsMgr.GetClusterClient("ToDo")
+	clusterClient, err := ps.clusterClientsMgr.GetClusterClient(decision.TargetNode.ClusterName)
 	if err != nil {
-		ps.logger.Error(err, "could not obtain ClusterClient")
+		ps.logger.Error(err, "commitSchedulingDecision() could not obtain ClusterClient")
 		return
 	}
 

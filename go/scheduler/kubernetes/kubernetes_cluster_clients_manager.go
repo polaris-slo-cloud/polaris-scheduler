@@ -26,7 +26,7 @@ func NewKubernetesClusterClientsManager(clusterConfigs map[string]*rest.Config, 
 	}
 
 	for clusterName, kubeconfig := range clusterConfigs {
-		client, err := NewKubernetesClusterClient(kubeconfig, schedConfig, logger)
+		client, err := NewKubernetesClusterClient(clusterName, kubeconfig, schedConfig, logger)
 		if err != nil {
 			return nil, err
 		}

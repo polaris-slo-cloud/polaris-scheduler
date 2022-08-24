@@ -11,6 +11,9 @@ type NodeInfo struct {
 	// The Node described by this NodeInfo.
 	Node *core.Node
 
+	// The name of the cluster that the node is part of.
+	ClusterName string
+
 	// The resources that are currently available for allocation on the node.
 	AllocatableResources *util.Resources
 
