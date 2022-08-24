@@ -1,7 +1,7 @@
 apiVersion: v1
 kind: Pod
 metadata:
-  name: rainbow-test-pod
+  name: polaris-test-pod
   labels:
     name: multischeduler-example
 spec:
@@ -11,12 +11,12 @@ spec:
     image: k8s.gcr.io/pause:2.0
     resources:
       limits:
-        rainbow-h2020.eu/fake-cpu: 2
+        polaris-slo-cloud.github.io/fake-cpu: 2
 ---
 apiVersion: v1
 kind: Pod
 metadata:
-  name: x-rainbow-test-pod
+  name: x-polaris-test-pod
   labels:
     name: multischeduler-example
 spec:
