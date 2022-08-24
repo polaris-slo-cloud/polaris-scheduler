@@ -24,35 +24,35 @@ var (
 type SchedulerConfig struct {
 
 	// The name of this scheduler.
-	SchedulerName string
+	SchedulerName string `yaml:"schedulerName"`
 
 	// The number of nodes to sample defined as basis points (bp) of the total number of nodes.
 	// 1 bp = 0.01%
 	//
 	// +kubebuilder:validation:Minimum=0
 	// +kubebuilder:validation:Maximum=10000
-	NodesToSampleBp uint32
+	NodesToSampleBp uint32 `yaml:"nodesToSampleBp"`
 
 	// The number of node samplers to run in parallel.
 	//
 	// Default: number of CPU cores.
-	ParallelNodeSamplers uint32
+	ParallelNodeSamplers uint32 `yaml:"parallelNodeSamplers"`
 
 	// The number of Scheduling Decision Pipelines to run in parallel.
 	//
 	// Default: number of CPU cores.
-	ParallelDecisionPipelines uint32
+	ParallelDecisionPipelines uint32 `yaml:"parallelDecisionPipelines"`
 
 	// The size of the buffer used for incoming pods.
 	//
 	// Default: 1000
-	IncomingPodsBufferSize uint32
+	IncomingPodsBufferSize uint32 `yaml:"incomingPodsBufferSize"`
 
 	// The list of plugins for the scheduling pipeline.
-	Plugins PluginsList
+	Plugins PluginsList `yaml:"plugins"`
 
 	// (optional) Allows specifying configuration parameters for each plugin.
-	PluginsConfig []*PluginsConfigListEntry
+	PluginsConfig []*PluginsConfigListEntry `yaml:"pluginsConfig"`
 }
 
 // Sets the default values in the SchedulerConfig for fields that are not set properly.

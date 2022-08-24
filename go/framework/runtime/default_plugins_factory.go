@@ -99,7 +99,7 @@ func (f *DefaultPluginsFactory) NewDecisionPipelinePlugins(scheduler pipeline.Po
 func findPluginConfig(pluginName string, schedulerConfig *config.SchedulerConfig) config.PluginConfig {
 	for _, conf := range schedulerConfig.PluginsConfig {
 		if conf.Name == pluginName {
-			return conf
+			return conf.Config
 		}
 	}
 	return nil

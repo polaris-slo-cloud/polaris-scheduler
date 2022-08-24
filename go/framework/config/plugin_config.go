@@ -1,42 +1,42 @@
 package config
 
 // The base interface for a plugin configuration.
-type PluginConfig interface{}
+type PluginConfig map[string]interface{}
 
 // A single entry in the PluginsList.
 type PluginListEntry struct {
 
 	// The name of the Plugin.
-	Name string
+	Name string `yaml:"name"`
 
 	// The weight of the plugin (applies only to Score plugins).
 	// Default: 1
-	Weight int32
+	Weight int32 `yaml:"weight"`
 }
 
 // Used to configure the plugins used in the scheduling pipeline.
 type PluginsList struct {
-	Sort *PluginListEntry
+	Sort *PluginListEntry `yaml:"sort"`
 
-	SampleNodes *PluginListEntry
+	SampleNodes *PluginListEntry `yaml:"sampleNodes"`
 
-	PreFilter []*PluginListEntry
+	PreFilter []*PluginListEntry `yaml:"preFilter"`
 
-	Filter []*PluginListEntry
+	Filter []*PluginListEntry `yaml:"filter"`
 
-	PreScore []*PluginListEntry
+	PreScore []*PluginListEntry `yaml:"preScore"`
 
-	Score []*PluginListEntry
+	Score []*PluginListEntry `yaml:"score"`
 
-	Reserve []*PluginListEntry
+	Reserve []*PluginListEntry `yaml:"reserve"`
 }
 
 // Stores configuration for a specific plugin in the PluginsList.
 type PluginsConfigListEntry struct {
 
 	// The name of the Plugin.
-	Name string
+	Name string `yaml:"name"`
 
 	// Configuration data for the plugin.
-	Config PluginConfig
+	Config PluginConfig `yaml:"config"`
 }

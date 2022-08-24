@@ -46,27 +46,21 @@ type ResourcesFitPlugin struct {
 	scoringFn scoringFn
 }
 
-func NewResourcesFitPlugin(config config.PluginConfig, scheduler pipeline.PolarisScheduler) (pipeline.Plugin, error) {
+func NewResourcesFitPlugin(configMap config.PluginConfig, scheduler pipeline.PolarisScheduler) (pipeline.Plugin, error) {
 	rf := ResourcesFitPlugin{
 		scheduler: scheduler,
-		scoringFn: nil,
+		scoringFn: calculateLeastAllocatedScore,
 	}
 
-	configMap, ok := config.(map[string]interface{})
-	if !ok {
-		return nil, fmt.Errorf("could not read PluginConfig")
-	}
-	if configMap != nil {
-		if scoringMode, ok := configMap[ScoringModeKey]; ok {
-			if typedScoringMode, ok := scoringMode.(ResourcesFitScoringMode); ok {
-				switch typedScoringMode {
-				case LeastAllocated:
-					rf.scoringFn = calculateLeastAllocatedScore
-				case MostAllocated:
-					rf.scoringFn = calculateMostAllocatedScore
-				default:
-					return nil, fmt.Errorf("invalid value for ResourcesFit.%s: %s", ScoringModeKey, typedScoringMode)
-				}
+	if scoringMode, ok := configMap[ScoringModeKey]; ok {
+		if typedScoringMode, ok := scoringMode.(ResourcesFitScoringMode); ok {
+			switch typedScoringMode {
+			case LeastAllocated:
+				rf.scoringFn = calculateLeastAllocatedScore
+			case MostAllocated:
+				rf.scoringFn = calculateMostAllocatedScore
+			default:
+				return nil, fmt.Errorf("invalid value for ResourcesFit.%s: %s", ScoringModeKey, typedScoringMode)
 			}
 		}
 	}
@@ -153,7 +147,7 @@ func calculateResourcesUsedPercentage(podResources *util.Resources, nodeInfo *pi
 		usedPercentagesSum += calculateResourceUsedPercentage(nodeTotalRes.EphemeralStorage, nodeAllocatableRes.EphemeralStorage)
 	}
 
-	for resType, _ := range podResources.ExtendedResources {
+	for resType := range podResources.ExtendedResources {
 		resourceTypesCount++
 		usedPercentagesSum += calculateResourceUsedPercentage(nodeTotalRes.ExtendedResources[resType], nodeAllocatableRes.ExtendedResources[resType])
 	}

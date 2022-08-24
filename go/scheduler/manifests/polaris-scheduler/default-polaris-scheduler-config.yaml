@@ -58,7 +58,13 @@ plugins:
 
 # (optional) Allows specifying configuration parameters for each plugin.
 pluginsConfig:
+  - name: ResourcesFit
+    config:
+      scoringMode: LeastAllocated
+
   - name: Plugin1
     config:
       keyA: valueA
-      keyB: valueB
+      nestedObj:
+        keyB: valueB
+        keyC: 1
