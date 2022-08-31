@@ -1,6 +1,6 @@
 # Polaris Scheduler
 
-Polaris-Scheduler is an SLO-aware Kubernetes scheduler.
+Polaris Scheduler is an SLO-aware Kubernetes scheduler.
 
 
 ## Documentation
@@ -31,6 +31,15 @@ This deploys the following components:
 * polaris-scheduler
 * Service Graph CRD
 * Node Topology CRDs
+
+
+## Experiments
+
+This repository contains the following experiments for benchmarking Polaris Scheduler:
+
+1. [Traffic Hazard Detection](./go/scheduler/hack/testbed/experiments/scenario-01/)
+2. [Traffic Monitoring and Hazard Detection](./go/scheduler/hack/testbed/experiments/scenario-02/)
+
 
 ## Acknowledgement
 
