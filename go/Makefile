@@ -44,7 +44,7 @@ DEBUG_CONFIG_PATH=$(shell echo "$(shell pwd)/$(DEBUG_CONFIG)" | sed -e "s|\/|\\\
 all: build
 
 .PHONY: build
-build: build-scheduler
+build: build-scheduler build-node-sampler
 
 .PHONY: build-scheduler
 build-scheduler:
@@ -53,6 +53,14 @@ build-scheduler:
 .PHONY: build-scheduler-debug
 build-scheduler-debug: debug-config
 	$(COMMONENVVAR) $(BUILDENVVAR) go build -gcflags="all=-N -l" -ldflags '-X k8s.io/component-base/version.gitVersion=$(VERSION)' -o bin/polaris-scheduler scheduler/main.go
+
+.PHONY: build-node-sampler
+build-node-sampler:
+	$(COMMONENVVAR) $(BUILDENVVAR) go build -ldflags '-X k8s.io/component-base/version.gitVersion=$(VERSION) -w' -o bin/polaris-node-sampler node-sampler/main.go
+
+.PHONY: build-node-sampler-debug
+build-node-sampler-debug:
+	$(COMMONENVVAR) $(BUILDENVVAR) go build -gcflags="all=-N -l" -ldflags '-X k8s.io/component-base/version.gitVersion=$(VERSION)' -o bin/polaris-node-sampler node-sampler/main.go
 
 .PHONY: local-image
 local-image:

@@ -4,9 +4,14 @@
     "version": "2.0.0",
     "tasks": [
         {
-            "label": "build-debug",
+            "label": "build-scheduler-debug",
             "type": "shell",
             "command": "make build-scheduler-debug"
+        },
+        {
+            "label": "build-node-sampler-debug",
+            "type": "shell",
+            "command": "make build-node-sampler-debug"
         }
     ]
 }

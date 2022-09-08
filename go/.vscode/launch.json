@@ -4,7 +4,7 @@
             // Runs the scheduler on the local machine in debug mode, using the configuration in bin/config/kubernetes.
             "name": "Local: Debug Scheduler",
             "type": "go",
-            "preLaunchTask": "build-debug",
+            "preLaunchTask": "build-scheduler-debug",
             "request": "launch",
             "mode": "exec",
             "program": "${workspaceFolder}/bin/polaris-scheduler",
@@ -12,6 +12,15 @@
                 "--config=${workspaceFolder}/bin/default-polaris-scheduler-config.yaml",
                 // "--v=4"
             ]
+        },
+        {
+            // Runs the node-sampler on the local machine in debug mode.
+            "name": "Local: Debug Node Sampler",
+            "type": "go",
+            "preLaunchTask": "build-node-sampler-debug",
+            "request": "launch",
+            "mode": "exec",
+            "program": "${workspaceFolder}/bin/polaris-node-sampler"
         }
     ]
 }
