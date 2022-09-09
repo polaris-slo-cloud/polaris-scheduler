@@ -1,15 +1,13 @@
 package main
 
 import (
-	"context"
 	"fmt"
 	"math/rand"
 	"os"
-	"os/signal"
-	"syscall"
 	"time"
 
 	"polaris-slo-cloud.github.io/polaris-scheduler/v2/framework/pipeline"
+	"polaris-slo-cloud.github.io/polaris-scheduler/v2/framework/util"
 	"polaris-slo-cloud.github.io/polaris-scheduler/v2/scheduler/cmd"
 	"polaris-slo-cloud.github.io/polaris-scheduler/v2/scheduler/plugins/prioritysort"
 	"polaris-slo-cloud.github.io/polaris-scheduler/v2/scheduler/plugins/randomsampler"
@@ -18,7 +16,7 @@ import (
 
 func main() {
 	rand.Seed(time.Now().UnixNano())
-	ctx := setupSignalHandlingContext()
+	ctx := util.SetupSignalHandlingContext()
 
 	pluginsRegistry := pipeline.NewPluginsRegistry(map[string]pipeline.PluginFactoryFunc{
 		prioritysort.PluginName:  prioritysort.NewPrioritySortPlugin,
@@ -33,20 +31,4 @@ func main() {
 	}
 
 	<-ctx.Done()
-}
-
-func setupSignalHandlingContext() context.Context {
-	ctx, cancel := context.WithCancel(context.Background())
-
-	signalHandler := make(chan os.Signal, 2)
-	signal.Notify(signalHandler, os.Interrupt, syscall.SIGTERM)
-
-	go func() {
-		<-signalHandler
-		cancel()
-		<-signalHandler
-		os.Exit(1) // Exit immediately if we receive a second signal.
-	}()
-
-	return ctx
 }
