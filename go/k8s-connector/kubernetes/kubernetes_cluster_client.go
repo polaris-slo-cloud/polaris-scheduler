@@ -13,7 +13,6 @@ import (
 	"k8s.io/client-go/tools/record"
 
 	"polaris-slo-cloud.github.io/polaris-scheduler/v2/framework/client"
-	"polaris-slo-cloud.github.io/polaris-scheduler/v2/framework/config"
 )
 
 var (
@@ -28,10 +27,15 @@ type KubernetesClusterClient struct {
 }
 
 // Creates a new KubernetesClusterClient using the specified kubeconfig.
+//
+// - clusterName is the name of the cluster to connect to
+// - kubeconfig is the respective kubeconfig
+// - parentComponentName is the name of the component that creates this client (this is used as the source name in the event recorder)
+// - logger the Logger that should be used for logging
 func NewKubernetesClusterClient(
 	clusterName string,
 	kubeconfig *rest.Config,
-	schedConfig *config.SchedulerConfig,
+	parentComponentName string,
 	logger *logr.Logger,
 ) (*KubernetesClusterClient, error) {
 	k8sClientSet, err := clientset.NewForConfig(kubeconfig)
@@ -48,7 +52,7 @@ func NewKubernetesClusterClient(
 		},
 	)
 	eventBroadcaster.StartRecordingToSink(&eventSink)
-	eventRecorder := eventBroadcaster.NewRecorder(scheme.Scheme, core.EventSource{Component: schedConfig.SchedulerName})
+	eventRecorder := eventBroadcaster.NewRecorder(scheme.Scheme, core.EventSource{Component: parentComponentName})
 
 	clusterClient := KubernetesClusterClient{
 		clusterName:   clusterName,

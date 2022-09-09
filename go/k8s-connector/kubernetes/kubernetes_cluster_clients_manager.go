@@ -7,7 +7,6 @@ import (
 	"k8s.io/client-go/rest"
 
 	"polaris-slo-cloud.github.io/polaris-scheduler/v2/framework/client"
-	"polaris-slo-cloud.github.io/polaris-scheduler/v2/framework/config"
 )
 
 var (
@@ -20,13 +19,13 @@ type KubernetesClusterClientsManager struct {
 }
 
 // Creates a new KubernetesClusterClientsManager and initializes it with clients for the specified cluster configurations.
-func NewKubernetesClusterClientsManager(clusterConfigs map[string]*rest.Config, schedConfig *config.SchedulerConfig, logger *logr.Logger) (*KubernetesClusterClientsManager, error) {
+func NewKubernetesClusterClientsManager(clusterConfigs map[string]*rest.Config, parentComponentName string, logger *logr.Logger) (*KubernetesClusterClientsManager, error) {
 	mgr := KubernetesClusterClientsManager{
 		clients: make(map[string]client.ClusterClient, len(clusterConfigs)),
 	}
 
 	for clusterName, kubeconfig := range clusterConfigs {
-		client, err := NewKubernetesClusterClient(clusterName, kubeconfig, schedConfig, logger)
+		client, err := NewKubernetesClusterClient(clusterName, kubeconfig, parentComponentName, logger)
 		if err != nil {
 			return nil, err
 		}

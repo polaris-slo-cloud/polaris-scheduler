@@ -129,7 +129,7 @@ func runScheduler(
 		k8sConfig.ServerName: k8sConfig,
 	}
 
-	clusterClientsMgr, err := kubernetes.NewKubernetesClusterClientsManager(k8sConfigs, schedConfig, logger)
+	clusterClientsMgr, err := kubernetes.NewKubernetesClusterClientsManager(k8sConfigs, schedConfig.SchedulerName, logger)
 	if err != nil {
 		return err
 	}
