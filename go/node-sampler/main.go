@@ -1,21 +1,24 @@
 package main
 
 import (
+	"fmt"
 	"math/rand"
-	"net/http"
+	"os"
 	"time"
 
-	"github.com/gin-gonic/gin"
+	"polaris-slo-cloud.github.io/polaris-scheduler/v2/framework/util"
+	"polaris-slo-cloud.github.io/polaris-scheduler/v2/node-sampler/cmd"
 )
 
 func main() {
 	rand.Seed(time.Now().UnixNano())
+	ctx := util.SetupSignalHandlingContext()
 
-	r := gin.Default()
-	r.GET("/ping", func(c *gin.Context) {
-		c.JSON(http.StatusOK, gin.H{
-			"message": "pong",
-		})
-	})
-	r.Run() // listen and serve on 0.0.0.0:8080
+	nodeSamplerCmd := cmd.NewPolarisNodeSamplerCmd(ctx)
+	if err := nodeSamplerCmd.Execute(); err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+
+	<-ctx.Done()
 }
