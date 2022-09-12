@@ -7,11 +7,11 @@ import (
 	"time"
 
 	"polaris-slo-cloud.github.io/polaris-scheduler/v2/framework/pipeline"
+	"polaris-slo-cloud.github.io/polaris-scheduler/v2/framework/plugins/prioritysort"
+	"polaris-slo-cloud.github.io/polaris-scheduler/v2/framework/plugins/resourcesfit"
 	"polaris-slo-cloud.github.io/polaris-scheduler/v2/framework/util"
 	"polaris-slo-cloud.github.io/polaris-scheduler/v2/scheduler/cmd"
-	"polaris-slo-cloud.github.io/polaris-scheduler/v2/scheduler/plugins/prioritysort"
 	"polaris-slo-cloud.github.io/polaris-scheduler/v2/scheduler/plugins/randomsampler"
-	"polaris-slo-cloud.github.io/polaris-scheduler/v2/scheduler/plugins/resourcesfit"
 )
 
 func main() {
