@@ -2,20 +2,24 @@ package cmd
 
 import (
 	"context"
-	"net/http"
 	"os"
 
-	"github.com/gin-gonic/gin"
 	"github.com/go-logr/logr"
 	"github.com/go-logr/stdr"
 	"github.com/spf13/cobra"
 
 	"k8s.io/client-go/rest"
 
+	"polaris-slo-cloud.github.io/polaris-scheduler/v2/framework/util"
 	"polaris-slo-cloud.github.io/polaris-scheduler/v2/k8s-connector/kubernetes"
+	"polaris-slo-cloud.github.io/polaris-scheduler/v2/node-sampler/config"
+	"polaris-slo-cloud.github.io/polaris-scheduler/v2/node-sampler/runtime"
 )
 
 type commandLineArgs struct {
+	// The path to the sampler config.
+	config string
+
 	// The path to the KUBECONFIG file.
 	kubeconfig string
 }
@@ -33,13 +37,21 @@ func NewPolarisNodeSamplerCmd(ctx context.Context) *cobra.Command {
 		Run: func(cmd *cobra.Command, args []string) {
 			logger.Info("polaris-node-sampler")
 
-			if err := runNodeSampler(ctx, logger, &cmdLineArgs); err != nil {
+			samplerConfig, err := loadConfigWithDefaults(cmdLineArgs.config, logger)
+			if err != nil {
+				logger.Error(err, "Error loading config.")
+				os.Exit(1)
+			}
+
+			if err := runNodeSampler(ctx, samplerConfig, logger, &cmdLineArgs); err != nil {
 				logger.Error(err, "Error starting polaris-node-sampler")
 				os.Exit(1)
 			}
 		},
 	}
 
+	cmd.PersistentFlags().StringVarP(&cmdLineArgs.config, "config", "c", "", "The path to the polaris-node-sampler configuration file.")
+	cmd.MarkFlagFilename("config")
 	cmd.PersistentFlags().StringVar(&cmdLineArgs.kubeconfig, "kubeconfig", "", "The path to the KUBECONFIG file.")
 	cmd.MarkFlagFilename("kubeconfig")
 
@@ -51,8 +63,23 @@ func initLogger() *logr.Logger {
 	return &logger
 }
 
+// Loads the NodeSamplerConfig from the specified path and fills empty fields with default values.
+func loadConfigWithDefaults(configPath string, logger *logr.Logger) (*config.NodeSamplerConfig, error) {
+	samplerConfig := &config.NodeSamplerConfig{}
+
+	if configPath != "" {
+		if err := util.ParseYamlFile(configPath, samplerConfig); err != nil {
+			return nil, err
+		}
+	}
+
+	config.SetDefaultsNodeSamplerConfig(samplerConfig)
+	return samplerConfig, nil
+}
+
 func runNodeSampler(
 	ctx context.Context,
+	samplerConfig *config.NodeSamplerConfig,
 	logger *logr.Logger,
 	cmdLineArgs *commandLineArgs,
 ) error {
@@ -71,20 +98,11 @@ func runNodeSampler(
 		return err
 	}
 
-	_ = clusterClientsMgr
-	r := gin.Default()
-	r.SetTrustedProxies(nil)
+	clusterClient, err := clusterClientsMgr.GetClusterClient(k8sConfig.ServerName)
+	if err != nil {
+		return err
+	}
 
-	r.GET("/ping", func(c *gin.Context) {
-		c.JSON(http.StatusOK, gin.H{
-			"message": "pong",
-		})
-	})
-
-	go func() {
-		if err := r.Run(); err != nil { // listen and serve on 0.0.0.0:8080
-			logger.Error(err, "Error executing HTTP server.")
-		}
-	}()
-	return nil
+	nodeSampler := runtime.NewDefaultPolarisNodeSampler(samplerConfig, clusterClient, logger)
+	return nodeSampler.Start(ctx)
 }
