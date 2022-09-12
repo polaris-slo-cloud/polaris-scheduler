@@ -2,19 +2,18 @@ package cmd
 
 import (
 	"context"
-	"fmt"
 	"os"
 
 	"github.com/go-logr/logr"
 	"github.com/go-logr/stdr"
 	"github.com/spf13/cobra"
-	"gopkg.in/yaml.v3"
 
 	"k8s.io/client-go/rest"
 
 	"polaris-slo-cloud.github.io/polaris-scheduler/v2/framework/config"
 	"polaris-slo-cloud.github.io/polaris-scheduler/v2/framework/pipeline"
 	polarisRuntime "polaris-slo-cloud.github.io/polaris-scheduler/v2/framework/runtime"
+	"polaris-slo-cloud.github.io/polaris-scheduler/v2/framework/util"
 	"polaris-slo-cloud.github.io/polaris-scheduler/v2/k8s-connector/kubernetes"
 )
 
@@ -67,50 +66,16 @@ func initLogger() *logr.Logger {
 
 // Loads the SchedulerConfig from the specified path and fills empty fields with default values.
 func loadConfigWithDefaults(configPath string, logger *logr.Logger) (*config.SchedulerConfig, error) {
-	schedConfig, err := loadConfig(configPath, logger)
-	if err != nil {
-		return nil, err
-	}
-	fillConfigWithDefaults(schedConfig)
-	return schedConfig, nil
-}
-
-// Loads the SchedulerConfig from the specified path or returns an empty config, if configPath is empty.
-func loadConfig(configPath string, logger *logr.Logger) (*config.SchedulerConfig, error) {
 	schedConfig := &config.SchedulerConfig{}
 
-	if configPath == "" {
-		return schedConfig, nil
+	if configPath != "" {
+		if err := util.ParseYamlFile(configPath, schedConfig); err != nil {
+			return nil, err
+		}
 	}
 
-	logger.Info("Loading configuration file", "configPath", configPath)
-
-	fileInfo, err := os.Stat(configPath)
-	if err != nil {
-		return nil, err
-	}
-
-	if fileInfo.IsDir() {
-		return nil, fmt.Errorf("the specified path is not a file, but a directory: %s", configPath)
-	}
-
-	file, err := os.Open(configPath)
-	if err != nil {
-		return nil, err
-	}
-	defer file.Close()
-
-	decoder := yaml.NewDecoder(file)
-	if err := decoder.Decode(schedConfig); err != nil {
-		return nil, err
-	}
-
-	return schedConfig, nil
-}
-
-// Fills empty fields in the SchedulerConfig with default values.
-func fillConfigWithDefaults(schedConfig *config.SchedulerConfig) {
 	config.SetDefaultsSchedulerConfig(schedConfig)
+	return schedConfig, nil
 }
 
 func runScheduler(
