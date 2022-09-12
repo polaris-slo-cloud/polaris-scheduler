@@ -9,16 +9,16 @@ import (
 type NodeInfo struct {
 
 	// The Node described by this NodeInfo.
-	Node *core.Node
+	Node *core.Node `json:"node" yaml:"node"`
 
 	// The name of the cluster that the node is part of.
-	ClusterName string
+	ClusterName string `json:"clusterName" yaml:"clusterName"`
 
 	// The resources that are currently available for allocation on the node.
-	AllocatableResources *util.Resources
+	AllocatableResources *util.Resources `json:"allocatableResources" yaml:"allocatableResources"`
 
 	// The total amount of resources that are available on the node.
-	TotalResources *util.Resources
+	TotalResources *util.Resources `json:"totalResources" yaml:"totalResources"`
 }
 
 // NodeScore describes the score of a particular node.

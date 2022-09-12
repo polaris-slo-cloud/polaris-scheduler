@@ -7,10 +7,10 @@ import (
 
 // Represents a set of resources requested or consumed by a Pod.
 type Resources struct {
-	MilliCPU          int64
-	MemoryBytes       int64
-	EphemeralStorage  int64
-	ExtendedResources map[core.ResourceName]int64
+	MilliCPU          int64                       `json:"milliCpu" yaml:"milliCpu"`
+	MemoryBytes       int64                       `json:"memoryBytes" yaml:"memoryBytes"`
+	EphemeralStorage  int64                       `json:"ephemeralStorage" yaml:"ephemeralStorage"`
+	ExtendedResources map[core.ResourceName]int64 `json:"extendedResources" yaml:"extendedResources"`
 }
 
 // Creates a new, empty Resources object.

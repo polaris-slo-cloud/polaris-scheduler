@@ -10,7 +10,7 @@ import (
 type PodInfo struct {
 
 	// The Pod to be scheduled.
-	Pod *core.Pod
+	Pod *core.Pod `json:"pod" yaml:"pod"`
 }
 
 // Represents information about a queued pod.
