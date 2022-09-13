@@ -11,7 +11,7 @@ type NodeSamplerConfig struct {
 	// the format "<IP>:<PORT>"
 	//
 	// Default: [ "0.0.0.0:8080" ]
-	ListenOn []string `yaml:"listenOn"`
+	ListenOn []string `json:"listenOn" yaml:"listenOn"`
 }
 
 // Sets the default values in the NodeSamplerConfig for fields that are not set properly.
