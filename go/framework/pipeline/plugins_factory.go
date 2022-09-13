@@ -5,7 +5,7 @@ import (
 )
 
 // Defines a factory function for creating Polaris scheduling pipeline plugins.
-type PluginFactoryFunc func(config config.PluginConfig, scheduler PolarisScheduler) (Plugin, error)
+type PluginFactoryFunc func(pluginConfig config.PluginConfig, scheduler PolarisScheduler) (Plugin, error)
 
 // Combines a ScorePlugin with its ScoreExtensions.
 type ScorePluginWithExtensions struct {
