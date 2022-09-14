@@ -20,6 +20,10 @@ type HeapMap[K ~int | ~string, V any] interface {
 	// Returns the item with the specified key.
 	GetByKey(key K) (V, bool)
 
+	// Removes the item with the specified key from the heap and returns it.
+	// If there is no item in the heap with that key, the second return value is false.
+	RemoveByKey(key K) (V, bool)
+
 	// Gets the number of items currently in the heap.
 	Len() int
 }

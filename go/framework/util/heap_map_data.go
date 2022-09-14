@@ -34,9 +34,6 @@ type heapMapData[K ~int | ~string, V any] struct {
 	// Stores the items by their key to allow looking up items in the heap by key.
 	itemsByKey map[K]*heapMapItem[K, V]
 
-	// Used to extract the key from a value.
-	keyFn KeyFunc[K, V]
-
 	// Used to determine the precedence between two items for establishing the heap property
 	lessFn LessFunc[V]
 }
@@ -125,7 +122,7 @@ func (h *heapMapData[K, V]) exists(key K) bool {
 }
 
 // Updates the item in the heap and then reestablishes the heap property.
-// Returns true if the update was successful or false if no item with the keyFn(x) exists in the heap.
+// Returns true if the update was successful or false if no item with the key exists in the heap.
 func (h *heapMapData[K, V]) updateItem(key K, value V) bool {
 	item, ok := h.itemsByKey[key]
 	if ok {

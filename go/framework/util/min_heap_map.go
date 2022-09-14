@@ -65,3 +65,12 @@ func (mh *MinHeapMap[K, V]) GetByKey(key K) (V, bool) {
 	}
 	return mh.nilValue, false
 }
+
+func (mh *MinHeapMap[K, V]) RemoveByKey(key K) (V, bool) {
+	item, ok := mh.data.getByKey(key)
+	if !ok {
+		return mh.nilValue, false
+	}
+	heap.Remove(mh.data, item.index)
+	return item.value, true
+}
