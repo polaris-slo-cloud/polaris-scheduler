@@ -1,7 +1,11 @@
-package util
+package collections
 
 import (
 	"container/list"
+)
+
+var (
+	_ LessFunc[string] = StringLessFn
 )
 
 // Defines a comparison function that returns true iff itemA is less than itemB, otherwise false.
@@ -33,4 +37,9 @@ func Swap[T any](slice []T, i int, j int) {
 	temp := slice[j]
 	slice[j] = slice[i]
 	slice[i] = temp
+}
+
+// LessFunc implementation for strings.
+func StringLessFn(itemA string, itemB string) bool {
+	return itemA < itemB
 }

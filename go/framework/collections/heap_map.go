@@ -1,4 +1,4 @@
-package util
+package collections
 
 // Defines the interface for a Heap data structure that establishes the
 // heap property based on the item values, but allows accessing items also through keys,

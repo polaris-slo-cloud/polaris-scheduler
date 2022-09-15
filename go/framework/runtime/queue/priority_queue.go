@@ -3,8 +3,8 @@ package queue
 import (
 	"sync"
 
+	"polaris-slo-cloud.github.io/polaris-scheduler/v2/framework/collections"
 	"polaris-slo-cloud.github.io/polaris-scheduler/v2/framework/pipeline"
-	"polaris-slo-cloud.github.io/polaris-scheduler/v2/framework/util"
 )
 
 var (
@@ -14,15 +14,15 @@ var (
 // Implements a priority queue version of the SchedulingQueue.
 // All methods are thread-safe.
 type PrioritySchedulingQueue struct {
-	heapMap  util.HeapMap[string, *pipeline.QueuedPodInfo]
+	heapMap  collections.HeapMap[string, *pipeline.QueuedPodInfo]
 	isClosed bool
 	mutex    sync.RWMutex
 	cond     *sync.Cond
 }
 
-func NewPrioritySchedulingQueue(lessFn util.LessFunc[*pipeline.QueuedPodInfo]) *PrioritySchedulingQueue {
+func NewPrioritySchedulingQueue(lessFn collections.LessFunc[*pipeline.QueuedPodInfo]) *PrioritySchedulingQueue {
 	priorityQueue := PrioritySchedulingQueue{
-		heapMap:  util.NewMinHeapMap[string](lessFn, nil),
+		heapMap:  collections.NewMinHeapMap[string](lessFn, nil),
 		isClosed: false,
 		mutex:    sync.RWMutex{},
 	}

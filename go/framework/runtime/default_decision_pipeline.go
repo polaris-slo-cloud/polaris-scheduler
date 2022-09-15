@@ -6,8 +6,8 @@ import (
 	"sort"
 	"time"
 
+	"polaris-slo-cloud.github.io/polaris-scheduler/v2/framework/collections"
 	"polaris-slo-cloud.github.io/polaris-scheduler/v2/framework/pipeline"
-	"polaris-slo-cloud.github.io/polaris-scheduler/v2/framework/util"
 )
 
 var (
@@ -41,13 +41,13 @@ func (dp *DefaultDecisionPipeline) SchedulePod(podInfo *pipeline.SampledPodInfo)
 		return nil, status
 	}
 
-	candidateNodesList := util.ConvertToLinkedList(podInfo.SampledNodes)
+	candidateNodesList := collections.ConvertToLinkedList(podInfo.SampledNodes)
 	podInfo.SampledNodes = nil // Allow reclaiming memory.
 	status = dp.runFilterPlugins(schedCtx, podInfo.PodInfo, candidateNodesList)
 	if !pipeline.IsSuccessStatus(status) {
 		return nil, status
 	}
-	eligibleNodes := util.ConvertToSlice[*pipeline.NodeInfo](candidateNodesList)
+	eligibleNodes := collections.ConvertToSlice[*pipeline.NodeInfo](candidateNodesList)
 	candidateNodesList = nil
 
 	status = dp.runPreScorePlugins(schedCtx, podInfo.PodInfo, eligibleNodes)
