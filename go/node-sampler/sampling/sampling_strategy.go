@@ -16,3 +16,6 @@ type SamplingStrategy interface {
 	// Important: This method may be called concurrently on multiple goroutines, so its implementation must be thread-safe.
 	SampleNodes(request *remotesampling.RemoteNodesSamplerRequest) (*remotesampling.RemoteNodesSamplerResponse, error)
 }
+
+// Creates a new instance of a sampling strategy.
+type SamplingStrategyFactoryFunc func(polarisNodeSampler PolarisNodeSampler) (SamplingStrategy, error)

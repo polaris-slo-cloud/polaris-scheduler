@@ -26,7 +26,7 @@ type commandLineArgs struct {
 }
 
 // Creates a new polaris-node-sampler command.
-func NewPolarisNodeSamplerCmd(ctx context.Context, samplingStrategies []sampling.SamplingStrategy) *cobra.Command {
+func NewPolarisNodeSamplerCmd(ctx context.Context, samplingStrategies []sampling.SamplingStrategyFactoryFunc) *cobra.Command {
 	cmdLineArgs := commandLineArgs{}
 
 	logger := initLogger()
@@ -81,7 +81,7 @@ func loadConfigWithDefaults(configPath string, logger *logr.Logger) (*config.Nod
 func runNodeSampler(
 	ctx context.Context,
 	samplerConfig *config.NodeSamplerConfig,
-	samplingStrategies []sampling.SamplingStrategy,
+	samplingStrategies []sampling.SamplingStrategyFactoryFunc,
 	logger *logr.Logger,
 	cmdLineArgs *commandLineArgs,
 ) error {
