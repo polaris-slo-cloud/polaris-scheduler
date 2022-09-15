@@ -22,7 +22,7 @@ const (
 )
 
 var (
-	_ PolarisNodeSampler = (*DefaultPolarisNodeSampler)(nil)
+	_ sampling.PolarisNodeSampler = (*DefaultPolarisNodeSampler)(nil)
 )
 
 // Default implementation of the PolarisNodeSampler.
