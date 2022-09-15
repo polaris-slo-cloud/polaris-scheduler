@@ -14,6 +14,7 @@ import (
 	"polaris-slo-cloud.github.io/polaris-scheduler/v2/k8s-connector/kubernetes"
 	"polaris-slo-cloud.github.io/polaris-scheduler/v2/node-sampler/config"
 	"polaris-slo-cloud.github.io/polaris-scheduler/v2/node-sampler/runtime"
+	"polaris-slo-cloud.github.io/polaris-scheduler/v2/node-sampler/sampling"
 )
 
 type commandLineArgs struct {
@@ -25,7 +26,7 @@ type commandLineArgs struct {
 }
 
 // Creates a new polaris-node-sampler command.
-func NewPolarisNodeSamplerCmd(ctx context.Context) *cobra.Command {
+func NewPolarisNodeSamplerCmd(ctx context.Context, samplingStrategies []sampling.SamplingStrategy) *cobra.Command {
 	cmdLineArgs := commandLineArgs{}
 
 	logger := initLogger()
@@ -43,7 +44,7 @@ func NewPolarisNodeSamplerCmd(ctx context.Context) *cobra.Command {
 				os.Exit(1)
 			}
 
-			if err := runNodeSampler(ctx, samplerConfig, logger, &cmdLineArgs); err != nil {
+			if err := runNodeSampler(ctx, samplerConfig, samplingStrategies, logger, &cmdLineArgs); err != nil {
 				logger.Error(err, "Error starting polaris-node-sampler")
 				os.Exit(1)
 			}
@@ -80,6 +81,7 @@ func loadConfigWithDefaults(configPath string, logger *logr.Logger) (*config.Nod
 func runNodeSampler(
 	ctx context.Context,
 	samplerConfig *config.NodeSamplerConfig,
+	samplingStrategies []sampling.SamplingStrategy,
 	logger *logr.Logger,
 	cmdLineArgs *commandLineArgs,
 ) error {
@@ -103,6 +105,6 @@ func runNodeSampler(
 		return err
 	}
 
-	nodeSampler := runtime.NewDefaultPolarisNodeSampler(samplerConfig, clusterClient, logger)
+	nodeSampler := runtime.NewDefaultPolarisNodeSampler(samplerConfig, clusterClient, samplingStrategies, logger)
 	return nodeSampler.Start(ctx)
 }

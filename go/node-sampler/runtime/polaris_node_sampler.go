@@ -6,6 +6,7 @@ import (
 	"github.com/go-logr/logr"
 	"polaris-slo-cloud.github.io/polaris-scheduler/v2/framework/client"
 	"polaris-slo-cloud.github.io/polaris-scheduler/v2/node-sampler/config"
+	"polaris-slo-cloud.github.io/polaris-scheduler/v2/node-sampler/sampling"
 )
 
 // Main service that is responsible for sampling nodes.
@@ -27,6 +28,9 @@ type PolarisNodeSampler interface {
 
 	// The nodes cache used by this sampler.
 	NodesCache() client.NodesCache
+
+	// Gets the sampling strategies available in this sampler.
+	SamplingStrategies() []sampling.SamplingStrategy
 
 	// Gets the logger used by this sampler.
 	Logger() *logr.Logger
