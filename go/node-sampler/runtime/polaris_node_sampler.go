@@ -25,6 +25,9 @@ type PolarisNodeSampler interface {
 	// Gets the ClusterClient used by this sampler.
 	ClusterClient() client.ClusterClient
 
+	// The nodes cache used by this sampler.
+	NodesCache() client.NodesCache
+
 	// Gets the logger used by this sampler.
 	Logger() *logr.Logger
 }
