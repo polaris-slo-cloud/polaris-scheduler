@@ -8,13 +8,18 @@ import (
 
 	"polaris-slo-cloud.github.io/polaris-scheduler/v2/framework/util"
 	"polaris-slo-cloud.github.io/polaris-scheduler/v2/node-sampler/cmd"
+	"polaris-slo-cloud.github.io/polaris-scheduler/v2/node-sampler/sampling"
 )
 
 func main() {
 	rand.Seed(time.Now().UnixNano())
 	ctx := util.SetupSignalHandlingContext()
 
-	nodeSamplerCmd := cmd.NewPolarisNodeSamplerCmd(ctx)
+	samplingStrategies := []sampling.SamplingStrategyFactoryFunc{
+		sampling.NewRandomSamplingStrategy,
+	}
+
+	nodeSamplerCmd := cmd.NewPolarisNodeSamplerCmd(ctx, samplingStrategies)
 	if err := nodeSamplerCmd.Execute(); err != nil {
 		fmt.Println(err)
 		os.Exit(1)

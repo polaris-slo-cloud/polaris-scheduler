@@ -26,3 +26,13 @@ type NodeScore struct {
 	Node  *NodeInfo
 	Score int64
 }
+
+// Creates a new NodeInfo object and computes its resources.
+func NewNodeInfo(clusterName string, node *core.Node) *NodeInfo {
+	return &NodeInfo{
+		Node:                 node,
+		ClusterName:          clusterName,
+		AllocatableResources: util.NewResourcesFromList(node.Status.Allocatable),
+		TotalResources:       util.NewResourcesFromList(node.Status.Capacity),
+	}
+}

@@ -9,9 +9,9 @@ import (
 	meta "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"polaris-slo-cloud.github.io/polaris-scheduler/v2/framework/client"
+	"polaris-slo-cloud.github.io/polaris-scheduler/v2/framework/collections"
 	"polaris-slo-cloud.github.io/polaris-scheduler/v2/framework/config"
 	"polaris-slo-cloud.github.io/polaris-scheduler/v2/framework/pipeline"
-	"polaris-slo-cloud.github.io/polaris-scheduler/v2/framework/util"
 )
 
 var (
@@ -124,18 +124,9 @@ func (rsp *RandomNodesSamplerPlugin) sampleNodesFromCluster(clusterName string, 
 
 	for i := 0; i < count; i++ {
 		index := rsp.random.Intn(availNodesCount)
-		dest[destIndex] = createNodeInfo(clusterName, clusterNodes[index])
+		dest[destIndex] = pipeline.NewNodeInfo(clusterName, clusterNodes[index])
 		destIndex++
 		availNodesCount--
-		util.Swap(clusterNodes, index, availNodesCount)
-	}
-}
-
-func createNodeInfo(clusterName string, node *core.Node) *pipeline.NodeInfo {
-	return &pipeline.NodeInfo{
-		Node:                 node,
-		ClusterName:          clusterName,
-		AllocatableResources: util.NewResourcesFromList(node.Status.Allocatable),
-		TotalResources:       util.NewResourcesFromList(node.Status.Capacity),
+		collections.Swap(clusterNodes, index, availNodesCount)
 	}
 }
