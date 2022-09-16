@@ -17,6 +17,7 @@ func main() {
 
 	samplingStrategies := []sampling.SamplingStrategyFactoryFunc{
 		sampling.NewRandomSamplingStrategy,
+		sampling.NewRoundRobinSamplingStrategy,
 	}
 
 	nodeSamplerCmd := cmd.NewPolarisNodeSamplerCmd(ctx, samplingStrategies)
