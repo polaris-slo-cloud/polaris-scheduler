@@ -10,11 +10,11 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/go-logr/logr"
 
+	"polaris-slo-cloud.github.io/polaris-scheduler/v2/cluster-broker/config"
+	"polaris-slo-cloud.github.io/polaris-scheduler/v2/cluster-broker/sampling"
 	"polaris-slo-cloud.github.io/polaris-scheduler/v2/framework/client"
 	"polaris-slo-cloud.github.io/polaris-scheduler/v2/framework/remotesampling"
 	"polaris-slo-cloud.github.io/polaris-scheduler/v2/k8s-connector/kubernetes"
-	"polaris-slo-cloud.github.io/polaris-scheduler/v2/node-sampler/config"
-	"polaris-slo-cloud.github.io/polaris-scheduler/v2/node-sampler/sampling"
 )
 
 const (
@@ -28,7 +28,7 @@ var (
 // Default implementation of the PolarisNodeSampler.
 type DefaultPolarisNodeSampler struct {
 	ctx                       context.Context
-	config                    *config.NodeSamplerConfig
+	config                    *config.ClusterBrokerConfig
 	clusterClient             client.ClusterClient
 	samplingStrategyFactories []sampling.SamplingStrategyFactoryFunc
 	samplingStrategies        []sampling.SamplingStrategy
@@ -44,28 +44,28 @@ type defaultPolarisNodeSamplerStatus struct {
 }
 
 func NewDefaultPolarisNodeSampler(
-	nodeSamplerConfig *config.NodeSamplerConfig,
+	clusterBrokerConfig *config.ClusterBrokerConfig,
 	clusterClient client.ClusterClient,
 	samplingStrategyFactories []sampling.SamplingStrategyFactoryFunc,
 	logger *logr.Logger,
 ) *DefaultPolarisNodeSampler {
-	updateInterval, err := time.ParseDuration(fmt.Sprintf("%vms", nodeSamplerConfig.NodesCacheUpdateIntervalMs))
+	updateInterval, err := time.ParseDuration(fmt.Sprintf("%vms", clusterBrokerConfig.NodesCacheUpdateIntervalMs))
 	if err != nil {
 		panic(err)
 	}
 
 	sampler := &DefaultPolarisNodeSampler{
-		config:                    nodeSamplerConfig,
+		config:                    clusterBrokerConfig,
 		clusterClient:             clusterClient,
 		samplingStrategyFactories: samplingStrategyFactories,
 		samplingStrategies:        make([]sampling.SamplingStrategy, 0, len(samplingStrategyFactories)),
-		nodesCache:                kubernetes.NewKubernetesNodesCache(clusterClient, updateInterval, int(nodeSamplerConfig.NodesCacheUpdateQueueSize)),
+		nodesCache:                kubernetes.NewKubernetesNodesCache(clusterClient, updateInterval, int(clusterBrokerConfig.NodesCacheUpdateQueueSize)),
 		logger:                    logger,
 	}
 	return sampler
 }
 
-func (sampler *DefaultPolarisNodeSampler) Config() *config.NodeSamplerConfig {
+func (sampler *DefaultPolarisNodeSampler) Config() *config.ClusterBrokerConfig {
 	return sampler.config
 }
 

@@ -1,8 +1,8 @@
 go 1.19
 
 use (
+	./cluster-broker
 	./framework
 	./k8s-connector
-	./node-sampler
 	./scheduler
 )

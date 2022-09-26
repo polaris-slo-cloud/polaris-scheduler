@@ -44,7 +44,7 @@ DEBUG_CONFIG_PATH=$(shell echo "$(shell pwd)/$(DEBUG_CONFIG)" | sed -e "s|\/|\\\
 all: build
 
 .PHONY: build
-build: build-scheduler build-node-sampler
+build: build-scheduler build-cluster-broker
 
 .PHONY: build-scheduler
 build-scheduler:
@@ -54,13 +54,13 @@ build-scheduler:
 build-scheduler-debug: debug-config
 	$(COMMONENVVAR) $(BUILDENVVAR) go build -gcflags="all=-N -l" -ldflags '-X k8s.io/component-base/version.gitVersion=$(VERSION)' -o bin/polaris-scheduler scheduler/main.go
 
-.PHONY: build-node-sampler
-build-node-sampler:
-	$(COMMONENVVAR) $(BUILDENVVAR) go build -ldflags '-X k8s.io/component-base/version.gitVersion=$(VERSION) -w' -o bin/polaris-node-sampler node-sampler/main.go
+.PHONY: build-cluster-broker
+build-cluster-broker:
+	$(COMMONENVVAR) $(BUILDENVVAR) go build -ldflags '-X k8s.io/component-base/version.gitVersion=$(VERSION) -w' -o bin/polaris-cluster-broker cluster-broker/main.go
 
-.PHONY: build-node-sampler-debug
-build-node-sampler-debug:
-	$(COMMONENVVAR) $(BUILDENVVAR) go build -gcflags="all=-N -l" -ldflags '-X k8s.io/component-base/version.gitVersion=$(VERSION)' -o bin/polaris-node-sampler node-sampler/main.go
+.PHONY: build-cluster-broker-debug
+build-cluster-broker-debug:
+	$(COMMONENVVAR) $(BUILDENVVAR) go build -gcflags="all=-N -l" -ldflags '-X k8s.io/component-base/version.gitVersion=$(VERSION)' -o bin/polaris-cluster-broker cluster-broker/main.go
 
 .PHONY: local-image
 local-image:

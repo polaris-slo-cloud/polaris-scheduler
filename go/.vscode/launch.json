@@ -14,13 +14,13 @@
             ]
         },
         {
-            // Runs the node-sampler on the local machine in debug mode.
-            "name": "Local: Debug Node Sampler",
+            // Runs the cluster-broker on the local machine in debug mode.
+            "name": "Local: Debug Cluster Broker",
             "type": "go",
-            "preLaunchTask": "build-node-sampler-debug",
+            "preLaunchTask": "build-cluster-broker-debug",
             "request": "launch",
             "mode": "exec",
-            "program": "${workspaceFolder}/bin/polaris-node-sampler"
+            "program": "${workspaceFolder}/bin/polaris-cluster-broker"
         }
     ]
 }

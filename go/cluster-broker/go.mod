@@ -1,4 +1,4 @@
-module polaris-slo-cloud.github.io/polaris-scheduler/v2/node-sampler
+module polaris-slo-cloud.github.io/polaris-scheduler/v2/cluster-broker
 
 go 1.19
 

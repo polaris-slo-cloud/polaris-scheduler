@@ -5,8 +5,8 @@ import (
 
 	"github.com/go-logr/logr"
 
+	"polaris-slo-cloud.github.io/polaris-scheduler/v2/cluster-broker/config"
 	"polaris-slo-cloud.github.io/polaris-scheduler/v2/framework/client"
-	"polaris-slo-cloud.github.io/polaris-scheduler/v2/node-sampler/config"
 )
 
 // Main service that is responsible for sampling nodes.
@@ -21,7 +21,7 @@ type PolarisNodeSampler interface {
 	Start(ctx context.Context) error
 
 	// Gets the config used by this sampler.
-	Config() *config.NodeSamplerConfig
+	Config() *config.ClusterBrokerConfig
 
 	// Gets the ClusterClient used by this sampler.
 	ClusterClient() client.ClusterClient

@@ -10,33 +10,33 @@ import (
 
 	"k8s.io/client-go/rest"
 
+	"polaris-slo-cloud.github.io/polaris-scheduler/v2/cluster-broker/config"
+	"polaris-slo-cloud.github.io/polaris-scheduler/v2/cluster-broker/runtime"
+	"polaris-slo-cloud.github.io/polaris-scheduler/v2/cluster-broker/sampling"
 	"polaris-slo-cloud.github.io/polaris-scheduler/v2/framework/util"
 	"polaris-slo-cloud.github.io/polaris-scheduler/v2/k8s-connector/kubernetes"
-	"polaris-slo-cloud.github.io/polaris-scheduler/v2/node-sampler/config"
-	"polaris-slo-cloud.github.io/polaris-scheduler/v2/node-sampler/runtime"
-	"polaris-slo-cloud.github.io/polaris-scheduler/v2/node-sampler/sampling"
 )
 
 type commandLineArgs struct {
-	// The path to the sampler config.
+	// The path to the cluster-broker config.
 	config string
 
 	// The path to the KUBECONFIG file.
 	kubeconfig string
 }
 
-// Creates a new polaris-node-sampler command.
-func NewPolarisNodeSamplerCmd(ctx context.Context, samplingStrategies []sampling.SamplingStrategyFactoryFunc) *cobra.Command {
+// Creates a new polaris-cluster-broker command.
+func NewPolarisClusterBrokerCmd(ctx context.Context, samplingStrategies []sampling.SamplingStrategyFactoryFunc) *cobra.Command {
 	cmdLineArgs := commandLineArgs{}
 
 	logger := initLogger()
 
 	cmd := cobra.Command{
-		Use: "polaris-node-sampler",
+		Use: "polaris-cluster-broker",
 		// ToDo: Extend long description.
-		Long: "The Polaris Node Sampler is a component of the Polaris Scheduler that allows sampling nodes from a cluster.",
+		Long: "The Polaris Cluster Broker is a component of the Polaris Scheduler that allows the scheduler to interact with the local cluster. Brokers in multiple clusters allow interaction with multiple clusters.",
 		Run: func(cmd *cobra.Command, args []string) {
-			logger.Info("polaris-node-sampler")
+			logger.Info("polaris-cluster-broker")
 
 			samplerConfig, err := loadConfigWithDefaults(cmdLineArgs.config, logger)
 			if err != nil {
@@ -45,13 +45,13 @@ func NewPolarisNodeSamplerCmd(ctx context.Context, samplingStrategies []sampling
 			}
 
 			if err := runNodeSampler(ctx, samplerConfig, samplingStrategies, logger, &cmdLineArgs); err != nil {
-				logger.Error(err, "Error starting polaris-node-sampler")
+				logger.Error(err, "Error starting polaris-cluster-broker")
 				os.Exit(1)
 			}
 		},
 	}
 
-	cmd.PersistentFlags().StringVarP(&cmdLineArgs.config, "config", "c", "", "The path to the polaris-node-sampler configuration file.")
+	cmd.PersistentFlags().StringVarP(&cmdLineArgs.config, "config", "c", "", "The path to the polaris-cluster-broker configuration file.")
 	cmd.MarkFlagFilename("config")
 	cmd.PersistentFlags().StringVar(&cmdLineArgs.kubeconfig, "kubeconfig", "", "The path to the KUBECONFIG file.")
 	cmd.MarkFlagFilename("kubeconfig")
@@ -64,9 +64,9 @@ func initLogger() *logr.Logger {
 	return &logger
 }
 
-// Loads the NodeSamplerConfig from the specified path and fills empty fields with default values.
-func loadConfigWithDefaults(configPath string, logger *logr.Logger) (*config.NodeSamplerConfig, error) {
-	samplerConfig := &config.NodeSamplerConfig{}
+// Loads the ClusterBrokerConfig from the specified path and fills empty fields with default values.
+func loadConfigWithDefaults(configPath string, logger *logr.Logger) (*config.ClusterBrokerConfig, error) {
+	samplerConfig := &config.ClusterBrokerConfig{}
 
 	if configPath != "" {
 		if err := util.ParseYamlFile(configPath, samplerConfig); err != nil {
@@ -74,13 +74,13 @@ func loadConfigWithDefaults(configPath string, logger *logr.Logger) (*config.Nod
 		}
 	}
 
-	config.SetDefaultsNodeSamplerConfig(samplerConfig)
+	config.SetDefaultsClusterBrokerConfig(samplerConfig)
 	return samplerConfig, nil
 }
 
 func runNodeSampler(
 	ctx context.Context,
-	samplerConfig *config.NodeSamplerConfig,
+	samplerConfig *config.ClusterBrokerConfig,
 	samplingStrategies []sampling.SamplingStrategyFactoryFunc,
 	logger *logr.Logger,
 	cmdLineArgs *commandLineArgs,
@@ -95,7 +95,7 @@ func runNodeSampler(
 	}
 
 	// We only need a single cluster client in the sampler, but we reuse the ClusterClientsManager abstraction.
-	clusterClientsMgr, err := kubernetes.NewKubernetesClusterClientsManager(k8sConfigs, "polaris-node-sampler", logger)
+	clusterClientsMgr, err := kubernetes.NewKubernetesClusterClientsManager(k8sConfigs, "polaris-cluster-broker", logger)
 	if err != nil {
 		return err
 	}

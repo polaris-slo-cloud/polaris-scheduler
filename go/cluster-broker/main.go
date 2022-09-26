@@ -6,9 +6,9 @@ import (
 	"os"
 	"time"
 
+	"polaris-slo-cloud.github.io/polaris-scheduler/v2/cluster-broker/cmd"
+	"polaris-slo-cloud.github.io/polaris-scheduler/v2/cluster-broker/sampling"
 	"polaris-slo-cloud.github.io/polaris-scheduler/v2/framework/util"
-	"polaris-slo-cloud.github.io/polaris-scheduler/v2/node-sampler/cmd"
-	"polaris-slo-cloud.github.io/polaris-scheduler/v2/node-sampler/sampling"
 )
 
 func main() {
@@ -20,7 +20,7 @@ func main() {
 		sampling.NewRoundRobinSamplingStrategy,
 	}
 
-	nodeSamplerCmd := cmd.NewPolarisNodeSamplerCmd(ctx, samplingStrategies)
+	nodeSamplerCmd := cmd.NewPolarisClusterBrokerCmd(ctx, samplingStrategies)
 	if err := nodeSamplerCmd.Execute(); err != nil {
 		fmt.Println(err)
 		os.Exit(1)
