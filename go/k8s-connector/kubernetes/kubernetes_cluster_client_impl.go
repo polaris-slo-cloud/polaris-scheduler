@@ -18,29 +18,29 @@ import (
 )
 
 var (
-	_ client.ClusterClient = (*KubernetesClusterClient)(nil)
+	_ client.ClusterClient = (*KubernetesClusterClientImpl)(nil)
 )
 
 // ClusterClient implementation for Kubernetes.
-type KubernetesClusterClient struct {
+type KubernetesClusterClientImpl struct {
 	clusterName   string
 	k8sClientSet  *clientset.Clientset
 	eventRecorder record.EventRecorder
 	logger        *logr.Logger
 }
 
-// Creates a new KubernetesClusterClient using the specified kubeconfig.
+// Creates a new KubernetesClusterClientImpl using the specified kubeconfig.
 //
 // - clusterName is the name of the cluster to connect to
 // - kubeconfig is the respective kubeconfig
 // - parentComponentName is the name of the component that creates this client (this is used as the source name in the event recorder)
 // - logger the Logger that should be used for logging
-func NewKubernetesClusterClient(
+func NewKubernetesClusterClientImpl(
 	clusterName string,
 	kubeconfig *rest.Config,
 	parentComponentName string,
 	logger *logr.Logger,
-) (*KubernetesClusterClient, error) {
+) (*KubernetesClusterClientImpl, error) {
 	k8sClientSet, err := clientset.NewForConfig(kubeconfig)
 	if err != nil {
 		return nil, err
@@ -57,7 +57,7 @@ func NewKubernetesClusterClient(
 	eventBroadcaster.StartRecordingToSink(&eventSink)
 	eventRecorder := eventBroadcaster.NewRecorder(scheme.Scheme, core.EventSource{Component: parentComponentName})
 
-	clusterClient := KubernetesClusterClient{
+	clusterClient := KubernetesClusterClientImpl{
 		clusterName:   clusterName,
 		k8sClientSet:  k8sClientSet,
 		eventRecorder: eventRecorder,
@@ -67,19 +67,19 @@ func NewKubernetesClusterClient(
 	return &clusterClient, nil
 }
 
-func (c *KubernetesClusterClient) ClusterName() string {
+func (c *KubernetesClusterClientImpl) ClusterName() string {
 	return c.clusterName
 }
 
-func (c *KubernetesClusterClient) ClientSet() clientset.Interface {
+func (c *KubernetesClusterClientImpl) ClientSet() clientset.Interface {
 	return c.k8sClientSet
 }
 
-func (c *KubernetesClusterClient) EventRecorder() record.EventRecorder {
+func (c *KubernetesClusterClientImpl) EventRecorder() record.EventRecorder {
 	return c.eventRecorder
 }
 
-func (c *KubernetesClusterClient) CommitSchedulingDecision(ctx context.Context, pod *core.Pod, binding *core.Binding) error {
+func (c *KubernetesClusterClientImpl) CommitSchedulingDecision(ctx context.Context, pod *core.Pod, binding *core.Binding) error {
 	err := c.k8sClientSet.CoreV1().Pods(pod.Namespace).Bind(ctx, binding, meta.CreateOptions{})
 	if err != nil {
 		c.logger.Error(err, "could not bind Pod", "pod", pod, "binding", binding)
