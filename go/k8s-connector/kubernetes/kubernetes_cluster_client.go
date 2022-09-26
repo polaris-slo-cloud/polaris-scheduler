@@ -1,11 +1,13 @@
 package kubernetes
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/go-logr/logr"
 
 	core "k8s.io/api/core/v1"
+	meta "k8s.io/apimachinery/pkg/apis/meta/v1"
 	clientset "k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/kubernetes/scheme"
 	coreclient "k8s.io/client-go/kubernetes/typed/core/v1"
@@ -24,6 +26,7 @@ type KubernetesClusterClient struct {
 	clusterName   string
 	k8sClientSet  *clientset.Clientset
 	eventRecorder record.EventRecorder
+	logger        *logr.Logger
 }
 
 // Creates a new KubernetesClusterClient using the specified kubeconfig.
@@ -58,6 +61,7 @@ func NewKubernetesClusterClient(
 		clusterName:   clusterName,
 		k8sClientSet:  k8sClientSet,
 		eventRecorder: eventRecorder,
+		logger:        logger,
 	}
 
 	return &clusterClient, nil
@@ -73,4 +77,17 @@ func (c *KubernetesClusterClient) ClientSet() clientset.Interface {
 
 func (c *KubernetesClusterClient) EventRecorder() record.EventRecorder {
 	return c.eventRecorder
+}
+
+func (c *KubernetesClusterClient) CommitSchedulingDecision(ctx context.Context, pod *core.Pod, binding *core.Binding) error {
+	err := c.k8sClientSet.CoreV1().Pods(pod.Namespace).Bind(ctx, binding, meta.CreateOptions{})
+	if err != nil {
+		c.logger.Error(err, "could not bind Pod", "pod", pod, "binding", binding)
+		c.eventRecorder.Eventf(pod, "Error", "Could not bind Pod", "Could not bind pod to node %s", &binding.Target.Name)
+		return err
+	}
+
+	fullyQualifiedPodName := pod.Namespace + "." + pod.Name
+	c.logger.Info("PodScheduled", "pod", fullyQualifiedPodName, "cluster", c.clusterName, "node", binding.Target.Name)
+	return nil
 }

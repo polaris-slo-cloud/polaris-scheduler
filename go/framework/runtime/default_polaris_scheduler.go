@@ -79,7 +79,7 @@ func NewDefaultPolarisScheduler(
 	config.SetDefaultsSchedulerConfig(conf)
 	log := logger.WithName("DefaultPolarisScheduler")
 
-	scheduler := DefaultPolarisScheduler{
+	scheduler := &DefaultPolarisScheduler{
 		config:                conf,
 		clusterClientsMgr:     clusterClientsMgr,
 		pluginsFactory:        NewDefaultPluginsFactory(pluginsRegistry),
@@ -89,7 +89,8 @@ func NewDefaultPolarisScheduler(
 		state:                 pristine,
 		logger:                &log,
 	}
-	return &scheduler
+
+	return scheduler
 }
 
 // Gets the scheduler configuration.
@@ -344,15 +345,5 @@ func (ps *DefaultPolarisScheduler) commitSchedulingDecision(schedCtx pipeline.Sc
 		},
 	}
 
-	go ps.savePodBinding(schedCtx, clusterClient, pod, binding)
-}
-
-func (ps *DefaultPolarisScheduler) savePodBinding(schedCtx pipeline.SchedulingContext, clusterClient client.ClusterClient, pod *core.Pod, binding *core.Binding) {
-	err := clusterClient.ClientSet().CoreV1().Pods(pod.Namespace).Bind(schedCtx.Context(), binding, meta.CreateOptions{})
-	if err != nil {
-		ps.logger.Error(err, "could not bind Pod", "pod", pod, "binding", binding)
-	}
-
-	fullyQualifiedPodName := pod.Namespace + "." + pod.Name
-	ps.logger.Info("PodScheduled", "pod", fullyQualifiedPodName, "cluster", clusterClient.ClusterName(), "node", binding.Target.Name)
+	go clusterClient.CommitSchedulingDecision(schedCtx.Context(), pod, binding)
 }

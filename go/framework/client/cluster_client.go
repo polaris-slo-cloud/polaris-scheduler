@@ -1,14 +1,22 @@
 package client
 
 import (
+	"context"
+
+	core "k8s.io/api/core/v1"
 	clientset "k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/record"
 )
 
 // Represents a client for communicating with a single cluster.
+//
+// ToDo: Add generic methods for accessing arbitrary cluster objects? or at least a defined subset?
 type ClusterClient interface {
 	// Gets the name of the cluster.
 	ClusterName() string
+
+	// Commits the scheduling decision to the cluster.
+	CommitSchedulingDecision(ctx context.Context, pod *core.Pod, binding *core.Binding) error
 
 	// Gets the ClientSet for communicating with a Kubernetes cluster.
 	ClientSet() clientset.Interface
