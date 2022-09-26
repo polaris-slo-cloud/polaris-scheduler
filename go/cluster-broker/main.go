@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"polaris-slo-cloud.github.io/polaris-scheduler/v2/cluster-broker/cmd"
-	"polaris-slo-cloud.github.io/polaris-scheduler/v2/cluster-broker/sampling"
+	"polaris-slo-cloud.github.io/polaris-scheduler/v2/framework/sampling"
 	"polaris-slo-cloud.github.io/polaris-scheduler/v2/framework/util"
 )
 

@@ -1,20 +1,17 @@
-package runtime
+package sampling
 
 import (
 	"context"
 	"fmt"
 	"net/http"
 	"net/url"
-	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/go-logr/logr"
 
-	"polaris-slo-cloud.github.io/polaris-scheduler/v2/cluster-broker/config"
-	"polaris-slo-cloud.github.io/polaris-scheduler/v2/cluster-broker/sampling"
 	"polaris-slo-cloud.github.io/polaris-scheduler/v2/framework/client"
+	"polaris-slo-cloud.github.io/polaris-scheduler/v2/framework/config"
 	"polaris-slo-cloud.github.io/polaris-scheduler/v2/framework/remotesampling"
-	"polaris-slo-cloud.github.io/polaris-scheduler/v2/k8s-connector/kubernetes"
 )
 
 const (
@@ -22,16 +19,20 @@ const (
 )
 
 var (
-	_ sampling.PolarisNodeSampler = (*DefaultPolarisNodeSampler)(nil)
+	_ PolarisNodeSampler = (*DefaultPolarisNodeSampler)(nil)
 )
 
 // Default implementation of the PolarisNodeSampler.
+//
+// This implementation relies on Gin for providing a REST interface.
+// Since the Gin engine can be shared among multiple services, it must be started
+// by the owner of this object after calling Start().
 type DefaultPolarisNodeSampler struct {
 	ctx                       context.Context
 	config                    *config.ClusterBrokerConfig
-	clusterClient             kubernetes.KubernetesClusterClient
-	samplingStrategyFactories []sampling.SamplingStrategyFactoryFunc
-	samplingStrategies        []sampling.SamplingStrategy
+	clusterClient             client.ClusterClient
+	samplingStrategyFactories []SamplingStrategyFactoryFunc
+	samplingStrategies        []SamplingStrategy
 	nodesCache                client.NodesCache
 	ginEngine                 *gin.Engine
 	logger                    *logr.Logger
@@ -45,21 +46,19 @@ type defaultPolarisNodeSamplerStatus struct {
 
 func NewDefaultPolarisNodeSampler(
 	clusterBrokerConfig *config.ClusterBrokerConfig,
-	clusterClient kubernetes.KubernetesClusterClient,
-	samplingStrategyFactories []sampling.SamplingStrategyFactoryFunc,
+	ginEngine *gin.Engine,
+	clusterClient client.ClusterClient,
+	nodesCache client.NodesCache,
+	samplingStrategyFactories []SamplingStrategyFactoryFunc,
 	logger *logr.Logger,
 ) *DefaultPolarisNodeSampler {
-	updateInterval, err := time.ParseDuration(fmt.Sprintf("%vms", clusterBrokerConfig.NodesCacheUpdateIntervalMs))
-	if err != nil {
-		panic(err)
-	}
-
 	sampler := &DefaultPolarisNodeSampler{
 		config:                    clusterBrokerConfig,
+		ginEngine:                 ginEngine,
 		clusterClient:             clusterClient,
 		samplingStrategyFactories: samplingStrategyFactories,
-		samplingStrategies:        make([]sampling.SamplingStrategy, 0, len(samplingStrategyFactories)),
-		nodesCache:                kubernetes.NewKubernetesNodesCache(clusterClient, updateInterval, int(clusterBrokerConfig.NodesCacheUpdateQueueSize)),
+		samplingStrategies:        make([]SamplingStrategy, 0, len(samplingStrategyFactories)),
+		nodesCache:                nodesCache,
 		logger:                    logger,
 	}
 	return sampler
@@ -77,7 +76,7 @@ func (sampler *DefaultPolarisNodeSampler) NodesCache() client.NodesCache {
 	return sampler.nodesCache
 }
 
-func (sampler *DefaultPolarisNodeSampler) SamplingStrategies() []sampling.SamplingStrategy {
+func (sampler *DefaultPolarisNodeSampler) SamplingStrategies() []SamplingStrategy {
 	return sampler.samplingStrategies
 }
 
@@ -96,24 +95,16 @@ func (sampler *DefaultPolarisNodeSampler) Start(ctx context.Context) error {
 	}
 	sampler.logger.Info("Successfully populated the nodes cache", "nodes", sampler.getNodesCount())
 
-	sampler.ginEngine = gin.Default()
-	sampler.ginEngine.SetTrustedProxies(nil)
-
 	for _, factoryFunc := range sampler.samplingStrategyFactories {
 		if err := sampler.createAndRegisterSamplingStrategy(factoryFunc); err != nil {
 			return err
 		}
 	}
 
-	sampler.ginEngine.GET("/status", func(c *gin.Context) {
+	sampler.ginEngine.GET("/samples/status", func(c *gin.Context) {
 		sampler.handleStatusRequest(c)
 	})
 
-	go func() {
-		if err := sampler.ginEngine.Run(sampler.config.ListenOn...); err != nil {
-			sampler.logger.Error(err, "Error executing HTTP server.")
-		}
-	}()
 	return nil
 }
 
@@ -123,7 +114,7 @@ func (sampler *DefaultPolarisNodeSampler) getNodesCount() int {
 	return reader.Len()
 }
 
-func (sampler *DefaultPolarisNodeSampler) createAndRegisterSamplingStrategy(factoryFunc sampling.SamplingStrategyFactoryFunc) error {
+func (sampler *DefaultPolarisNodeSampler) createAndRegisterSamplingStrategy(factoryFunc SamplingStrategyFactoryFunc) error {
 	strategy, err := factoryFunc(sampler)
 	if err != nil {
 		return err
@@ -142,7 +133,7 @@ func (sampler *DefaultPolarisNodeSampler) createAndRegisterSamplingStrategy(fact
 	return nil
 }
 
-func (sampler *DefaultPolarisNodeSampler) handleSamplingRequest(c *gin.Context, strategy sampling.SamplingStrategy) {
+func (sampler *DefaultPolarisNodeSampler) handleSamplingRequest(c *gin.Context, strategy SamplingStrategy) {
 	var samplingReq remotesampling.RemoteNodesSamplerRequest
 
 	if err := c.ShouldBind(&samplingReq); err != nil {

@@ -2,17 +2,20 @@ package cmd
 
 import (
 	"context"
+	"fmt"
 	"os"
+	"time"
 
+	"github.com/gin-gonic/gin"
 	"github.com/go-logr/logr"
 	"github.com/go-logr/stdr"
 	"github.com/spf13/cobra"
 
 	"k8s.io/client-go/rest"
 
-	"polaris-slo-cloud.github.io/polaris-scheduler/v2/cluster-broker/config"
-	"polaris-slo-cloud.github.io/polaris-scheduler/v2/cluster-broker/runtime"
-	"polaris-slo-cloud.github.io/polaris-scheduler/v2/cluster-broker/sampling"
+	"polaris-slo-cloud.github.io/polaris-scheduler/v2/framework/client"
+	"polaris-slo-cloud.github.io/polaris-scheduler/v2/framework/config"
+	"polaris-slo-cloud.github.io/polaris-scheduler/v2/framework/sampling"
 	"polaris-slo-cloud.github.io/polaris-scheduler/v2/framework/util"
 	"polaris-slo-cloud.github.io/polaris-scheduler/v2/k8s-connector/kubernetes"
 )
@@ -66,21 +69,31 @@ func initLogger() *logr.Logger {
 
 // Loads the ClusterBrokerConfig from the specified path and fills empty fields with default values.
 func loadConfigWithDefaults(configPath string, logger *logr.Logger) (*config.ClusterBrokerConfig, error) {
-	samplerConfig := &config.ClusterBrokerConfig{}
+	clusterBrokerConfig := &config.ClusterBrokerConfig{}
 
 	if configPath != "" {
-		if err := util.ParseYamlFile(configPath, samplerConfig); err != nil {
+		if err := util.ParseYamlFile(configPath, clusterBrokerConfig); err != nil {
 			return nil, err
 		}
 	}
 
-	config.SetDefaultsClusterBrokerConfig(samplerConfig)
-	return samplerConfig, nil
+	config.SetDefaultsClusterBrokerConfig(clusterBrokerConfig)
+	return clusterBrokerConfig, nil
+}
+
+func setUpNodesCache(clusterBrokerConfig *config.ClusterBrokerConfig, clusterClient kubernetes.KubernetesClusterClient) (client.NodesCache, error) {
+	updateInterval, err := time.ParseDuration(fmt.Sprintf("%vms", clusterBrokerConfig.NodesCacheUpdateIntervalMs))
+	if err != nil {
+		return nil, fmt.Errorf("error parsing nodesCacheUpdateIntervalMs: %v", err)
+	}
+
+	nodesCache := kubernetes.NewKubernetesNodesCache(clusterClient, updateInterval, int(clusterBrokerConfig.NodesCacheUpdateQueueSize))
+	return nodesCache, nil
 }
 
 func runNodeSampler(
 	ctx context.Context,
-	samplerConfig *config.ClusterBrokerConfig,
+	clusterBrokerConfig *config.ClusterBrokerConfig,
 	samplingStrategies []sampling.SamplingStrategyFactoryFunc,
 	logger *logr.Logger,
 	cmdLineArgs *commandLineArgs,
@@ -109,6 +122,24 @@ func runNodeSampler(
 		panic("KubernetesClusterClientsManager does not return KubernetesClusterClients")
 	}
 
-	nodeSampler := runtime.NewDefaultPolarisNodeSampler(samplerConfig, k8sClusterClient, samplingStrategies, logger)
-	return nodeSampler.Start(ctx)
+	nodesCache, err := setUpNodesCache(clusterBrokerConfig, k8sClusterClient)
+	if err != nil {
+		return err
+	}
+
+	ginEngine := gin.Default()
+	ginEngine.SetTrustedProxies(nil)
+
+	nodeSampler := sampling.NewDefaultPolarisNodeSampler(clusterBrokerConfig, ginEngine, k8sClusterClient, nodesCache, samplingStrategies, logger)
+	err = nodeSampler.Start(ctx)
+	if err != nil {
+		return err
+	}
+
+	go func() {
+		if err := ginEngine.Run(clusterBrokerConfig.ListenOn...); err != nil {
+			logger.Error(err, "Error executing HTTP server.")
+		}
+	}()
+	return nil
 }
