@@ -12,7 +12,6 @@ import (
 
 	"k8s.io/client-go/rest"
 
-	"polaris-slo-cloud.github.io/polaris-scheduler/v2/framework/client"
 	"polaris-slo-cloud.github.io/polaris-scheduler/v2/framework/config"
 	"polaris-slo-cloud.github.io/polaris-scheduler/v2/framework/pipeline"
 	"polaris-slo-cloud.github.io/polaris-scheduler/v2/framework/podsubmission"
@@ -82,7 +81,7 @@ func loadConfigWithDefaults(configPath string, logger *logr.Logger) (*config.Sch
 	return schedConfig, nil
 }
 
-func setUpPodSource(schedConfig *config.SchedulerConfig, clusterClientsMgr client.ClusterClientsManager, logger *logr.Logger) (pipeline.PodSource, error) {
+func setUpPodSource(schedConfig *config.SchedulerConfig, clusterClientsMgr *kubernetes.KubernetesClusterClientsManager, logger *logr.Logger) (pipeline.PodSource, error) {
 	switch schedConfig.OperatingMode {
 	case config.SingleCluster:
 		return setUpLocalClusterPodSource(schedConfig, clusterClientsMgr, logger)
@@ -93,7 +92,7 @@ func setUpPodSource(schedConfig *config.SchedulerConfig, clusterClientsMgr clien
 	}
 }
 
-func setUpLocalClusterPodSource(schedConfig *config.SchedulerConfig, clusterClientsMgr client.ClusterClientsManager, logger *logr.Logger) (pipeline.PodSource, error) {
+func setUpLocalClusterPodSource(schedConfig *config.SchedulerConfig, clusterClientsMgr *kubernetes.KubernetesClusterClientsManager, logger *logr.Logger) (pipeline.PodSource, error) {
 	logger.Info("Setting up local cluster PodSource.")
 
 	podSource := kubernetes.NewKubernetesPodSource(clusterClientsMgr, schedConfig)

@@ -19,7 +19,7 @@ var (
 )
 
 type KubernetesPodSource struct {
-	clientsMgr      client.ClusterClientsManager
+	clientsMgr      *KubernetesClusterClientsManager
 	incomingPods    chan *core.Pod
 	schedConfig     *config.SchedulerConfig
 	stopChan        chan struct{}
@@ -27,7 +27,7 @@ type KubernetesPodSource struct {
 }
 
 // Creates a new KubernetesPodSource for all clusters in the specified ClusterClientsManager.
-func NewKubernetesPodSource(clusterClientsMgr client.ClusterClientsManager, schedConfig *config.SchedulerConfig) *KubernetesPodSource {
+func NewKubernetesPodSource(clusterClientsMgr *KubernetesClusterClientsManager, schedConfig *config.SchedulerConfig) *KubernetesPodSource {
 	kps := KubernetesPodSource{
 		clientsMgr:      clusterClientsMgr,
 		incomingPods:    make(chan *core.Pod, schedConfig.IncomingPodsBufferSize),
@@ -75,12 +75,16 @@ func (kps *KubernetesPodSource) IncomingPods() chan *core.Pod {
 
 func (kps *KubernetesPodSource) setUpInformers() {
 	kps.clientsMgr.ForEach(func(clusterName string, clusterClient client.ClusterClient) error {
-		kps.sharedInformers[clusterName] = kps.setUpInformer(clusterClient)
+		k8sClusterClient, ok := clusterClient.(KubernetesClusterClient)
+		if !ok {
+			return fmt.Errorf("clusterClient is not a KubernetesClusterClient")
+		}
+		kps.sharedInformers[clusterName] = kps.setUpInformer(k8sClusterClient)
 		return nil
 	})
 }
 
-func (kps *KubernetesPodSource) setUpInformer(clusterClient client.ClusterClient) cache.SharedIndexInformer {
+func (kps *KubernetesPodSource) setUpInformer(clusterClient KubernetesClusterClient) cache.SharedIndexInformer {
 	factory := informers.NewSharedInformerFactory(clusterClient.ClientSet(), 0)
 	podInformer := factory.Core().V1().Pods()
 	sharedInformer := podInformer.Informer()

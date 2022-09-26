@@ -40,12 +40,12 @@ type KubernetesNodesCache struct {
 	updateInterval time.Duration
 	updateQueue    chan *nodesCacheUpdate
 
-	clusterClient client.ClusterClient
+	clusterClient KubernetesClusterClient
 	informer      cache.SharedIndexInformer
 }
 
 func NewKubernetesNodesCache(
-	clusterClient client.ClusterClient,
+	clusterClient KubernetesClusterClient,
 	updateInterval time.Duration,
 	queueSize int,
 ) *KubernetesNodesCache {
@@ -74,7 +74,7 @@ func (knc *KubernetesNodesCache) StartWatch(ctx context.Context) error {
 	return knc.startInformerAndDoInitialSync(knc.informer)
 }
 
-func (knc *KubernetesNodesCache) setUpInformer(clusterClient client.ClusterClient) cache.SharedIndexInformer {
+func (knc *KubernetesNodesCache) setUpInformer(clusterClient KubernetesClusterClient) cache.SharedIndexInformer {
 	factory := informers.NewSharedInformerFactory(clusterClient.ClientSet(), 0)
 	nodesInformer := factory.Core().V1().Nodes()
 	sharedInformer := nodesInformer.Informer()

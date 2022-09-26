@@ -15,13 +15,13 @@ var (
 
 // ClusterClientsManager for Kubernetes.
 type KubernetesClusterClientsManager struct {
-	clients map[string]client.ClusterClient
+	clients map[string]KubernetesClusterClient
 }
 
 // Creates a new KubernetesClusterClientsManager and initializes it with clients for the specified cluster configurations.
 func NewKubernetesClusterClientsManager(clusterConfigs map[string]*rest.Config, parentComponentName string, logger *logr.Logger) (*KubernetesClusterClientsManager, error) {
 	mgr := KubernetesClusterClientsManager{
-		clients: make(map[string]client.ClusterClient, len(clusterConfigs)),
+		clients: make(map[string]KubernetesClusterClient, len(clusterConfigs)),
 	}
 
 	for clusterName, kubeconfig := range clusterConfigs {

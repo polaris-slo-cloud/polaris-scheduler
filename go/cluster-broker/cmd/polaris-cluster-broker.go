@@ -104,7 +104,11 @@ func runNodeSampler(
 	if err != nil {
 		return err
 	}
+	k8sClusterClient, ok := clusterClient.(kubernetes.KubernetesClusterClient)
+	if !ok {
+		panic("KubernetesClusterClientsManager does not return KubernetesClusterClients")
+	}
 
-	nodeSampler := runtime.NewDefaultPolarisNodeSampler(samplerConfig, clusterClient, samplingStrategies, logger)
+	nodeSampler := runtime.NewDefaultPolarisNodeSampler(samplerConfig, k8sClusterClient, samplingStrategies, logger)
 	return nodeSampler.Start(ctx)
 }

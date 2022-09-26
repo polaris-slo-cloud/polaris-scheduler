@@ -29,7 +29,7 @@ var (
 type DefaultPolarisNodeSampler struct {
 	ctx                       context.Context
 	config                    *config.ClusterBrokerConfig
-	clusterClient             client.ClusterClient
+	clusterClient             kubernetes.KubernetesClusterClient
 	samplingStrategyFactories []sampling.SamplingStrategyFactoryFunc
 	samplingStrategies        []sampling.SamplingStrategy
 	nodesCache                client.NodesCache
@@ -45,7 +45,7 @@ type defaultPolarisNodeSamplerStatus struct {
 
 func NewDefaultPolarisNodeSampler(
 	clusterBrokerConfig *config.ClusterBrokerConfig,
-	clusterClient client.ClusterClient,
+	clusterClient kubernetes.KubernetesClusterClient,
 	samplingStrategyFactories []sampling.SamplingStrategyFactoryFunc,
 	logger *logr.Logger,
 ) *DefaultPolarisNodeSampler {

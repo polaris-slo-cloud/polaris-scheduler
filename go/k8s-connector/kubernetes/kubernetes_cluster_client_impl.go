@@ -13,15 +13,13 @@ import (
 	coreclient "k8s.io/client-go/kubernetes/typed/core/v1"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/record"
-
-	"polaris-slo-cloud.github.io/polaris-scheduler/v2/framework/client"
 )
 
 var (
-	_ client.ClusterClient = (*KubernetesClusterClientImpl)(nil)
+	_ KubernetesClusterClient = (*KubernetesClusterClientImpl)(nil)
 )
 
-// ClusterClient implementation for Kubernetes.
+// Default KubernetesClusterClient implementation.
 type KubernetesClusterClientImpl struct {
 	clusterName   string
 	k8sClientSet  *clientset.Clientset
