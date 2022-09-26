@@ -1,7 +1,7 @@
 package config
 
 const (
-	DefaultListenAddress             = "0.0.0.0:8080"
+	DefaultListenAddress             = "0.0.0.0:8081"
 	DefaultNodesCacheUpdateInterval  = 200
 	DefaultNodesCacheUpdateQueueSize = 1000
 )
@@ -12,7 +12,7 @@ type NodeSamplerConfig struct {
 	// The list of addresses and ports to listen on in
 	// the format "<IP>:<PORT>"
 	//
-	// Default: [ "0.0.0.0:8080" ]
+	// Default: [ "0.0.0.0:8081" ]
 	ListenOn []string `json:"listenOn" yaml:"listenOn"`
 
 	// The update interval for the nodes cache in milliseconds.

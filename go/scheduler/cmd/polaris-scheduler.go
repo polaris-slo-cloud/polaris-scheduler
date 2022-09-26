@@ -2,16 +2,20 @@ package cmd
 
 import (
 	"context"
+	"fmt"
 	"os"
 
+	"github.com/gin-gonic/gin"
 	"github.com/go-logr/logr"
 	"github.com/go-logr/stdr"
 	"github.com/spf13/cobra"
 
 	"k8s.io/client-go/rest"
 
+	"polaris-slo-cloud.github.io/polaris-scheduler/v2/framework/client"
 	"polaris-slo-cloud.github.io/polaris-scheduler/v2/framework/config"
 	"polaris-slo-cloud.github.io/polaris-scheduler/v2/framework/pipeline"
+	"polaris-slo-cloud.github.io/polaris-scheduler/v2/framework/podsubmission"
 	polarisRuntime "polaris-slo-cloud.github.io/polaris-scheduler/v2/framework/runtime"
 	"polaris-slo-cloud.github.io/polaris-scheduler/v2/framework/util"
 	"polaris-slo-cloud.github.io/polaris-scheduler/v2/k8s-connector/kubernetes"
@@ -78,6 +82,51 @@ func loadConfigWithDefaults(configPath string, logger *logr.Logger) (*config.Sch
 	return schedConfig, nil
 }
 
+func setUpPodSource(schedConfig *config.SchedulerConfig, clusterClientsMgr client.ClusterClientsManager, logger *logr.Logger) (pipeline.PodSource, error) {
+	switch schedConfig.OperatingMode {
+	case config.SingleCluster:
+		return setUpLocalClusterPodSource(schedConfig, clusterClientsMgr, logger)
+	case config.MultiCluster:
+		return setUpSubmitPodApiPodSource(schedConfig, logger)
+	default:
+		return nil, fmt.Errorf("invalid \"operatingMode\": %s", schedConfig.OperatingMode)
+	}
+}
+
+func setUpLocalClusterPodSource(schedConfig *config.SchedulerConfig, clusterClientsMgr client.ClusterClientsManager, logger *logr.Logger) (pipeline.PodSource, error) {
+	logger.Info("Setting up local cluster PodSource.")
+
+	podSource := kubernetes.NewKubernetesPodSource(clusterClientsMgr, schedConfig)
+	if err := podSource.StartWatching(); err != nil {
+		return nil, err
+	}
+	return podSource, nil
+}
+
+func setUpSubmitPodApiPodSource(schedConfig *config.SchedulerConfig, logger *logr.Logger) (pipeline.PodSource, error) {
+	logger.Info("Setting up Submit Pod API PodSource.")
+	ginEngine := gin.Default()
+	ginEngine.SetTrustedProxies(nil)
+
+	// ToDo: Add status endpoint
+	// ginEngine.GET("/status", func(c *gin.Context) {
+	// 	sampler.handleStatusRequest(c)
+	// })
+
+	submitPodApi := podsubmission.NewPodSubmissionApi(schedConfig)
+	if err := submitPodApi.RegisterSubmitPodEndpoint("/pods", ginEngine); err != nil {
+		return nil, err
+	}
+
+	go func() {
+		if err := ginEngine.Run(schedConfig.SubmitPodListenOn...); err != nil {
+			logger.Error(err, "Error executing HTTP server.")
+		}
+	}()
+
+	return submitPodApi, nil
+}
+
 func runScheduler(
 	ctx context.Context,
 	schedConfig *config.SchedulerConfig,
@@ -99,8 +148,8 @@ func runScheduler(
 		return err
 	}
 
-	podSource := kubernetes.NewKubernetesPodSource(clusterClientsMgr, schedConfig)
-	if err := podSource.StartWatching(); err != nil {
+	podSource, err := setUpPodSource(schedConfig, clusterClientsMgr, logger)
+	if err != nil {
 		return err
 	}
 
