@@ -6,6 +6,7 @@ import (
 	"sync"
 
 	"github.com/go-logr/logr"
+	"polaris-slo-cloud.github.io/polaris-scheduler/v2/framework/config"
 )
 
 var (
@@ -51,10 +52,15 @@ func newSamplingContext(ctx context.Context, request *RemoteNodesSamplerRequest,
 	return samplingCtx
 }
 
-func NewDefaultRemoteSamplerClientsManager(remoteSamplerURIs map[string]string, samplingStrategy string, maxConcurrentRequests int, logger *logr.Logger) *DefaultRemoteSamplerClientsManager {
-	remoteSamplers := make(map[string]RemoteSamplerClient, len(remoteSamplerURIs))
-	for clusterName, uri := range remoteSamplerURIs {
-		remoteSamplers[clusterName] = NewDefaultRemoteSamplerClient(clusterName, uri, samplingStrategy, logger)
+func NewDefaultRemoteSamplerClientsManager(
+	remoteClusters map[string]*config.RemoteClusterConfig,
+	samplingStrategy string,
+	maxConcurrentRequests int,
+	logger *logr.Logger,
+) *DefaultRemoteSamplerClientsManager {
+	remoteSamplers := make(map[string]RemoteSamplerClient, len(remoteClusters))
+	for clusterName, clusterConfig := range remoteClusters {
+		remoteSamplers[clusterName] = NewDefaultRemoteSamplerClient(clusterName, clusterConfig.BaseURI, samplingStrategy, logger)
 	}
 
 	scm := &DefaultRemoteSamplerClientsManager{

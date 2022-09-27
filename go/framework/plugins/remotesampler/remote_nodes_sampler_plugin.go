@@ -3,7 +3,6 @@ package remotesampler
 import (
 	"fmt"
 
-	"polaris-slo-cloud.github.io/polaris-scheduler/v2/framework/client"
 	"polaris-slo-cloud.github.io/polaris-scheduler/v2/framework/config"
 	"polaris-slo-cloud.github.io/polaris-scheduler/v2/framework/pipeline"
 	"polaris-slo-cloud.github.io/polaris-scheduler/v2/framework/remotesampling"
@@ -25,14 +24,14 @@ type RemoteNodesSamplerPlugin struct {
 }
 
 func NewRemoteNodesSamplerPlugin(pluginConfig config.PluginConfig, scheduler pipeline.PolarisScheduler) (pipeline.Plugin, error) {
-	clusterClientsMgr := scheduler.ClusterClientsManager()
-	parsedConfig, err := parseAndValidateConfig(pluginConfig, clusterClientsMgr)
+	schedulerConfig := scheduler.Config()
+	parsedConfig, err := parseAndValidateConfig(pluginConfig, schedulerConfig)
 	if err != nil {
 		return nil, err
 	}
 
 	remoteSamplersMgr := remotesampling.NewDefaultRemoteSamplerClientsManager(
-		parsedConfig.RemoteSamplers,
+		schedulerConfig.RemoteClusters,
 		parsedConfig.SamplingStrategy,
 		int(parsedConfig.MaxConcurrentRequestsPerInstance),
 		scheduler.Logger(),
@@ -40,7 +39,7 @@ func NewRemoteNodesSamplerPlugin(pluginConfig config.PluginConfig, scheduler pip
 
 	plugin := &RemoteNodesSamplerPlugin{
 		remoteSamplersMgr: remoteSamplersMgr,
-		nodesToSampleBp:   scheduler.Config().NodesToSampleBp,
+		nodesToSampleBp:   schedulerConfig.NodesToSampleBp,
 	}
 
 	return plugin, nil
@@ -79,7 +78,7 @@ func (rs *RemoteNodesSamplerPlugin) SampleNodes(ctx pipeline.SchedulingContext, 
 	return nodes, pipeline.NewSuccessStatus()
 }
 
-func parseAndValidateConfig(rawConfig config.PluginConfig, clusterClientsMgr client.ClusterClientsManager) (*RemoteNodesSamplerPluginConfig, error) {
+func parseAndValidateConfig(rawConfig config.PluginConfig, schedulerConfig *config.SchedulerConfig) (*RemoteNodesSamplerPluginConfig, error) {
 	pluginConfig := &RemoteNodesSamplerPluginConfig{}
 
 	if strategy, err := config.ReadStringFromPluginConfig(rawConfig, "samplingStrategy"); err == nil {
@@ -88,20 +87,8 @@ func parseAndValidateConfig(rawConfig config.PluginConfig, clusterClientsMgr cli
 		return nil, err
 	}
 
-	if uris, err := config.ReadStringMapFromPluginConfig(rawConfig, "remoteSamplers"); err == nil {
-		pluginConfig.RemoteSamplers = uris
-	} else {
-		return nil, err
-	}
-
-	err := clusterClientsMgr.ForEach(func(clusterName string, clusterClient client.ClusterClient) error {
-		if uri, ok := pluginConfig.RemoteSamplers[clusterName]; !ok || uri == "" {
-			return fmt.Errorf("no remote sampler URI found for cluster %s", clusterName)
-		}
-		return nil
-	})
-	if err != nil {
-		return nil, err
+	if len(schedulerConfig.RemoteClusters) == 0 {
+		return nil, fmt.Errorf("no remote clusters configured")
 	}
 
 	if _, ok := rawConfig["maxConcurrentRequestsPerInstance"]; ok {

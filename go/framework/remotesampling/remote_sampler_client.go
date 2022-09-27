@@ -15,6 +15,9 @@ type RemoteNodesSamplerResult struct {
 }
 
 // A client for obtaining node samples from a remote sampler.
+//
+// This is intentionally not part of the ClusterClient interface, because ClusterClient
+// architecturally resides at a lower level.
 type RemoteSamplerClient interface {
 
 	// The name of the cluster, where the remote sampler is running.

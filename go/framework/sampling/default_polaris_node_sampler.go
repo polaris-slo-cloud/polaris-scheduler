@@ -15,7 +15,7 @@ import (
 )
 
 const (
-	samplingEndpointsPrefix = "samples"
+	SamplingEndpointsPrefix = "samples"
 )
 
 var (
@@ -121,7 +121,7 @@ func (sampler *DefaultPolarisNodeSampler) createAndRegisterSamplingStrategy(fact
 	}
 	sampler.samplingStrategies = append(sampler.samplingStrategies, strategy)
 
-	apiPath, err := url.JoinPath(samplingEndpointsPrefix, strategy.Name())
+	apiPath, err := url.JoinPath(SamplingEndpointsPrefix, strategy.Name())
 	if err != nil {
 		panic(err)
 	}

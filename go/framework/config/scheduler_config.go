@@ -86,6 +86,16 @@ type SchedulerConfig struct {
 	// Default: [ "0.0.0.0:8080" ]
 	SubmitPodListenOn []string `json:"submitPodListenOn" yaml:"submitPodListenOn"`
 
+	// The map of remote clusters - only needed if "operatingMode" is "multiCluster".
+	//
+	// The key of each item has to be the cluster name.
+	// Example:
+	// {
+	//    "clusterA": { "baseUri": "http://sampler.cluster-a:8081/v1" },
+	//    "clusterB": { "baseUri": "https://sampler.cluster-b:8888/v1" }
+	// }
+	RemoteClusters map[string]*RemoteClusterConfig `json:"remoteClusters" yaml:"remoteClusters"`
+
 	// The list of plugins for the scheduling pipeline.
 	Plugins PluginsList `json:"plugins" yaml:"plugins"`
 

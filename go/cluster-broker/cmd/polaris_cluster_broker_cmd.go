@@ -13,6 +13,7 @@ import (
 
 	"k8s.io/client-go/rest"
 
+	"polaris-slo-cloud.github.io/polaris-scheduler/v2/framework/broker"
 	"polaris-slo-cloud.github.io/polaris-scheduler/v2/framework/client"
 	"polaris-slo-cloud.github.io/polaris-scheduler/v2/framework/config"
 	"polaris-slo-cloud.github.io/polaris-scheduler/v2/framework/sampling"
@@ -81,6 +82,29 @@ func loadConfigWithDefaults(configPath string, logger *logr.Logger) (*config.Clu
 	return clusterBrokerConfig, nil
 }
 
+func setUpClusterClient(k8sConfig *rest.Config, logger *logr.Logger) (kubernetes.KubernetesClusterClient, error) {
+	k8sConfigs := map[string]*rest.Config{
+		k8sConfig.ServerName: k8sConfig,
+	}
+
+	// We only need a single cluster client in the sampler, but we reuse the ClusterClientsManager abstraction.
+	clusterClientsMgr, err := kubernetes.NewKubernetesClusterClientsManager(k8sConfigs, "polaris-cluster-broker", logger)
+	if err != nil {
+		return nil, err
+	}
+
+	clusterClient, err := clusterClientsMgr.GetClusterClient(k8sConfig.ServerName)
+	if err != nil {
+		return nil, err
+	}
+	k8sClusterClient, ok := clusterClient.(kubernetes.KubernetesClusterClient)
+	if !ok {
+		return nil, fmt.Errorf("KubernetesClusterClientsManager does not return KubernetesClusterClients")
+	}
+
+	return k8sClusterClient, nil
+}
+
 func setUpNodesCache(clusterBrokerConfig *config.ClusterBrokerConfig, clusterClient kubernetes.KubernetesClusterClient) (client.NodesCache, error) {
 	updateInterval, err := time.ParseDuration(fmt.Sprintf("%vms", clusterBrokerConfig.NodesCacheUpdateIntervalMs))
 	if err != nil {
@@ -89,6 +113,44 @@ func setUpNodesCache(clusterBrokerConfig *config.ClusterBrokerConfig, clusterCli
 
 	nodesCache := kubernetes.NewKubernetesNodesCache(clusterClient, updateInterval, int(clusterBrokerConfig.NodesCacheUpdateQueueSize))
 	return nodesCache, nil
+}
+
+func startNodeSampler(
+	ctx context.Context,
+	clusterBrokerConfig *config.ClusterBrokerConfig,
+	k8sClusterClient kubernetes.KubernetesClusterClient,
+	ginEngine *gin.Engine,
+	samplingStrategies []sampling.SamplingStrategyFactoryFunc,
+	logger *logr.Logger,
+) (sampling.PolarisNodeSampler, error) {
+	nodesCache, err := setUpNodesCache(clusterBrokerConfig, k8sClusterClient)
+	if err != nil {
+		return nil, err
+	}
+
+	nodeSampler := sampling.NewDefaultPolarisNodeSampler(clusterBrokerConfig, ginEngine, k8sClusterClient, nodesCache, samplingStrategies, logger)
+	err = nodeSampler.Start(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	return nodeSampler, nil
+}
+
+func startClusterBroker(
+	ctx context.Context,
+	clusterBrokerConfig *config.ClusterBrokerConfig,
+	k8sClusterClient kubernetes.KubernetesClusterClient,
+	ginEngine *gin.Engine,
+	logger *logr.Logger,
+) (broker.PolarisClusterBroker, error) {
+	clusterBroker := broker.NewDefaultPolarisClusterBroker(clusterBrokerConfig, ginEngine, k8sClusterClient, logger)
+
+	if err := clusterBroker.Start(ctx); err != nil {
+		return nil, err
+	}
+
+	return clusterBroker, nil
 }
 
 func runNodeSampler(
@@ -102,27 +164,7 @@ func runNodeSampler(
 	if err != nil {
 		return err
 	}
-
-	k8sConfigs := map[string]*rest.Config{
-		k8sConfig.ServerName: k8sConfig,
-	}
-
-	// We only need a single cluster client in the sampler, but we reuse the ClusterClientsManager abstraction.
-	clusterClientsMgr, err := kubernetes.NewKubernetesClusterClientsManager(k8sConfigs, "polaris-cluster-broker", logger)
-	if err != nil {
-		return err
-	}
-
-	clusterClient, err := clusterClientsMgr.GetClusterClient(k8sConfig.ServerName)
-	if err != nil {
-		return err
-	}
-	k8sClusterClient, ok := clusterClient.(kubernetes.KubernetesClusterClient)
-	if !ok {
-		panic("KubernetesClusterClientsManager does not return KubernetesClusterClients")
-	}
-
-	nodesCache, err := setUpNodesCache(clusterBrokerConfig, k8sClusterClient)
+	k8sClusterClient, err := setUpClusterClient(k8sConfig, logger)
 	if err != nil {
 		return err
 	}
@@ -130,9 +172,11 @@ func runNodeSampler(
 	ginEngine := gin.Default()
 	ginEngine.SetTrustedProxies(nil)
 
-	nodeSampler := sampling.NewDefaultPolarisNodeSampler(clusterBrokerConfig, ginEngine, k8sClusterClient, nodesCache, samplingStrategies, logger)
-	err = nodeSampler.Start(ctx)
-	if err != nil {
+	if _, err := startNodeSampler(ctx, clusterBrokerConfig, k8sClusterClient, ginEngine, samplingStrategies, logger); err != nil {
+		return err
+	}
+
+	if _, err := startClusterBroker(ctx, clusterBrokerConfig, k8sClusterClient, ginEngine, logger); err != nil {
 		return err
 	}
 

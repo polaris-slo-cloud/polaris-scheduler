@@ -23,6 +23,40 @@ parallelDecisionPipelines: 0
 # Default: 1000
 incomingPodsBufferSize: 1000
 
+# Defines the mode ("singleCluster" or "multiCluster") in which to operate the scheduler.
+#
+#   - In "singleCluster" mode, the scheduler connects directly interacts with cluster's orchestrator to
+#     get incoming pods and to assign them to nodes.
+#   - In "multiCluster" mode, the scheduler can handle multiple clusters (possibly operated by multiple orchestrators)
+#     In this mode polaris-scheduler accepts pods through an external API and submits scheduling decisions to the polaris-scheduler-broker
+#     running in each cluster.
+#
+# Default: "multiCluster"
+operatingMode: multiCluster
+
+# The list of addresses and ports that the submit pod API should listen on in
+# the format "<IP>:<PORT>"
+# This setting applies only if "operatingMode" is set to "multiCluster".
+#
+# Default: [ "0.0.0.0:8080" ]
+submitPodListenOn:
+  - "0.0.0.0:8080"
+
+# The map of remote clusters - only needed if "operatingMode" is "multiCluster".
+#
+# The key of each item has to be the cluster name.
+# Example:
+# remoteClusters:
+#   clusterA:
+#     baseUri: "http://sampler.cluster-a:8081/v1"
+#   clusterB":
+#     baseUri: "https://sampler.cluster-b:8888/v1"
+remoteClusters:
+  clusterA:
+    baseUri: "http://sampler.cluster-a:8081/v1"
+  clusterB":
+    baseUri: "https://sampler.cluster-b:8888/v1"
+
 # The list of plugins for the scheduling pipeline.
 plugins:
   # The Sort stage must be configured with a single plugin.
@@ -31,7 +65,7 @@ plugins:
 
   # The SampleNodes stage must be configured with a single plugin.
   sampleNodes:
-    name: RandomNodesSampler
+    name: RemoteNodesSampler
 
   preFilter:
     - name: ResourcesFit
@@ -61,6 +95,12 @@ pluginsConfig:
   - name: ResourcesFit
     config:
       scoringMode: LeastAllocated
+
+  - name: RemoteNodesSampler
+    config:
+      samplingStrategy: random
+      # These requests apply to each instance of the RemoteNodesSampler plugin (see parallelNodeSamplers).
+      maxConcurrentRequestsPerInstance: 50
 
   - name: Plugin1
     config:
