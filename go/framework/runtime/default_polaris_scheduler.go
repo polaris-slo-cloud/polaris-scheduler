@@ -7,7 +7,6 @@ import (
 
 	"github.com/go-logr/logr"
 	core "k8s.io/api/core/v1"
-	meta "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"polaris-slo-cloud.github.io/polaris-scheduler/v2/framework/client"
 	"polaris-slo-cloud.github.io/polaris-scheduler/v2/framework/config"
@@ -304,18 +303,6 @@ func (ps *DefaultPolarisScheduler) executeDecisionPipelinePump(id int, decisionP
 
 func (ps *DefaultPolarisScheduler) handleFailureStatus(stage string, plugin pipeline.Plugin, schedCtx pipeline.SchedulingContext, podInfo *pipeline.PodInfo, status pipeline.Status) error {
 	pod := podInfo.Pod
-
-	// ToDo: which cluster client should we get? - the pod might not have been assigned to a cluster yet.
-	// clusterClient, err := ps.clusterClientsMgr.GetClusterClient("ToDo")
-	// if err != nil {
-	// 	ps.logger.Error(err, "handleFailureStatus() could not obtain ClusterClient")
-	// 	return err
-	// }
-	// eventRecorder := clusterClient.EventRecorder()
-	//
-	// msg := status.Message()
-	// eventRecorder.Eventf(pod, core.EventTypeWarning, "FailedScheduling", "Scheduling", msg)
-
 	fullyQualifiedPodName := pod.Namespace + "." + pod.Name
 	ps.logger.Info("FailedScheduling", "pod", fullyQualifiedPodName, "reason", status.Message())
 
@@ -324,26 +311,16 @@ func (ps *DefaultPolarisScheduler) handleFailureStatus(stage string, plugin pipe
 
 // Commits the decision of the scheduling pipeline to the orchestrator.
 func (ps *DefaultPolarisScheduler) commitSchedulingDecision(schedCtx pipeline.SchedulingContext, decision *pipeline.SchedulingDecision) {
-	pod := decision.Pod.Pod
-	pod.Spec.NodeName = decision.TargetNode.Node.Name
-
 	clusterClient, err := ps.clusterClientsMgr.GetClusterClient(decision.TargetNode.ClusterName)
 	if err != nil {
 		ps.logger.Error(err, "commitSchedulingDecision() could not obtain ClusterClient")
 		return
 	}
 
-	binding := &core.Binding{
-		ObjectMeta: meta.ObjectMeta{
-			Namespace: pod.Namespace,
-			Name:      pod.Name,
-			UID:       pod.UID,
-		},
-		Target: core.ObjectReference{
-			Kind: "Node",
-			Name: decision.TargetNode.Node.Name,
-		},
+	clusterSchedDecision := &client.ClusterSchedulingDecision{
+		Pod:      decision.Pod.Pod,
+		NodeName: decision.TargetNode.Node.Name,
 	}
 
-	go clusterClient.CommitSchedulingDecision(schedCtx.Context(), pod, binding)
+	go clusterClient.CommitSchedulingDecision(schedCtx.Context(), clusterSchedDecision)
 }

@@ -13,6 +13,8 @@ import (
 	coreclient "k8s.io/client-go/kubernetes/typed/core/v1"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/record"
+
+	"polaris-slo-cloud.github.io/polaris-scheduler/v2/framework/client"
 )
 
 var (
@@ -77,11 +79,24 @@ func (c *KubernetesClusterClientImpl) EventRecorder() record.EventRecorder {
 	return c.eventRecorder
 }
 
-func (c *KubernetesClusterClientImpl) CommitSchedulingDecision(ctx context.Context, pod *core.Pod, binding *core.Binding) error {
+func (c *KubernetesClusterClientImpl) CommitSchedulingDecision(ctx context.Context, schedulingDecision *client.ClusterSchedulingDecision) error {
+	pod := schedulingDecision.Pod
+	binding := &core.Binding{
+		ObjectMeta: meta.ObjectMeta{
+			Namespace: pod.Namespace,
+			Name:      pod.Name,
+			UID:       pod.UID,
+		},
+		Target: core.ObjectReference{
+			Kind: "Node",
+			Name: schedulingDecision.NodeName,
+		},
+	}
+
 	err := c.k8sClientSet.CoreV1().Pods(pod.Namespace).Bind(ctx, binding, meta.CreateOptions{})
 	if err != nil {
 		c.logger.Error(err, "could not bind Pod", "pod", pod, "binding", binding)
-		c.eventRecorder.Eventf(pod, "Error", "Could not bind Pod", "Could not bind pod to node %s", &binding.Target.Name)
+		c.eventRecorder.Eventf(pod, core.EventTypeWarning, "FailedScheduling", "Could not bind pod to node %s", &binding.Target.Name)
 		return err
 	}
 

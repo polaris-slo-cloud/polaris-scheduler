@@ -2,8 +2,6 @@ package client
 
 import (
 	"context"
-
-	core "k8s.io/api/core/v1"
 )
 
 // Represents a client for communicating with a single cluster.
@@ -12,7 +10,7 @@ type ClusterClient interface {
 	ClusterName() string
 
 	// Commits the scheduling decision to the cluster.
-	CommitSchedulingDecision(ctx context.Context, pod *core.Pod, binding *core.Binding) error
+	CommitSchedulingDecision(ctx context.Context, schedulingDecision *ClusterSchedulingDecision) error
 
 	// ToDo: Add generic methods for accessing arbitrary cluster objects? or at least a defined subset?
 }
