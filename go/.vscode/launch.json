@@ -20,7 +20,10 @@
             "preLaunchTask": "build-cluster-broker-debug",
             "request": "launch",
             "mode": "exec",
-            "program": "${workspaceFolder}/bin/polaris-cluster-broker"
+            "program": "${workspaceFolder}/bin/polaris-cluster-broker",
+            "args": [
+                "--config=${workspaceFolder}/bin/default-polaris-cluster-broker-config.yaml"
+            ]
         }
     ]
 }

@@ -1,0 +1,20 @@
+# polaris-cluster-broker-config.yaml
+
+# The list of addresses and ports that the cluster broker should listen on
+# in the format "<IP>:<PORT>"
+# This setting applies only if "operatingMode" is set to "multiCluster".
+#
+# Default: [ "0.0.0.0:8081" ]
+submitPodListenOn:
+  - "0.0.0.0:8081"
+
+# The update interval for the nodes cache in milliseconds.
+#
+# Default: 200
+nodesCacheUpdateIntervalMs: 200
+
+# The size of the update queue in the nodes cache.
+# The update queue caches watch events that arrive between the update intervals.
+#
+# Default: 1000
+nodesCacheUpdateQueueSize: 1000

@@ -19,16 +19,14 @@ BUILDENVVAR=CGO_ENABLED=0
 
 PROJECT_VERSION=2.0.0-beta.0
 
-LOCAL_REGISTRY=localhost:5000/polarissloc
-LOCAL_IMAGE=polaris-scheduler:latest
-
 # RELEASE_REGISTRY is the container registry to push
 # into. The default is to push to the staging
 # registry, not production(k8s.gcr.io).
 RELEASE_REGISTRY?=polarissloc
 RELEASE_VERSION?=$(shell date +%Y%m%d%H%M)-v$(PROJECT_VERSION)
 # RELEASE_VERSION?=v$(shell date +%Y%m%d)-$(shell git describe --tags --match "v*")
-RELEASE_IMAGE:=polaris-scheduler:$(RELEASE_VERSION)
+SCHEDULER_RELEASE_IMAGE:=polaris-scheduler:$(RELEASE_VERSION)
+CLUSTER_BROKER_RELEASE_IMAGE:=polaris-cluster-broker:$(RELEASE_VERSION)
 
 # VERSION is the scheduler's version
 #
@@ -46,13 +44,38 @@ all: build
 .PHONY: build
 build: build-scheduler build-cluster-broker
 
+.PHONY: clean
+clean:
+	rm -rf ./bin
+	rm -rf ./vendor
+
+
+###########################################
+# polaris-scheduler
+###########################################
+
 .PHONY: build-scheduler
 build-scheduler:
 	$(COMMONENVVAR) $(BUILDENVVAR) go build -ldflags '-X k8s.io/component-base/version.gitVersion=$(VERSION) -w' -o bin/polaris-scheduler scheduler/main.go
 
 .PHONY: build-scheduler-debug
-build-scheduler-debug: debug-config
+build-scheduler-debug: scheduler-debug-config
 	$(COMMONENVVAR) $(BUILDENVVAR) go build -gcflags="all=-N -l" -ldflags '-X k8s.io/component-base/version.gitVersion=$(VERSION)' -o bin/polaris-scheduler scheduler/main.go
+
+.PHONY: scheduler-debug-config
+scheduler-debug-config:
+	mkdir -p ./bin
+	cp scheduler/manifests/polaris-scheduler/default-polaris-scheduler-config.yaml bin/default-polaris-scheduler-config.yaml
+
+.PHONY: scheduler-release-image
+scheduler-release-image:
+	docker build -f ./scheduler/Dockerfile --build-arg RELEASE_VERSION="$(RELEASE_VERSION)" -t $(RELEASE_REGISTRY)/$(SCHEDULER_RELEASE_IMAGE) .
+
+
+
+###########################################
+# polaris-cluster-broker
+###########################################
 
 .PHONY: build-cluster-broker
 build-cluster-broker:
@@ -62,20 +85,11 @@ build-cluster-broker:
 build-cluster-broker-debug:
 	$(COMMONENVVAR) $(BUILDENVVAR) go build -gcflags="all=-N -l" -ldflags '-X k8s.io/component-base/version.gitVersion=$(VERSION)' -o bin/polaris-cluster-broker cluster-broker/main.go
 
-.PHONY: local-image
-local-image:
-	docker build -f ./build/scheduler/Dockerfile --build-arg RELEASE_VERSION="$(RELEASE_VERSION)" -t $(LOCAL_REGISTRY)/$(LOCAL_IMAGE) ..
-
-.PHONY: release-image
-release-image:
-	docker build -f ./build/scheduler/Dockerfile --build-arg RELEASE_VERSION="$(RELEASE_VERSION)" -t $(RELEASE_REGISTRY)/$(RELEASE_IMAGE) ..
-
-.PHONY: debug-config
-debug-config:
+.PHONY: cluster-broker-debug-config
+cluster-broker-debug-config:
 	mkdir -p ./bin
-	cp scheduler/manifests/polaris-scheduler/default-polaris-scheduler-config.yaml bin/default-polaris-scheduler-config.yaml
+	cp cluster-broker/manifests/default-polaris-cluster-broker-config.yaml bin/default-polaris-cluster-broker-config.yaml
 
-.PHONY: clean
-clean:
-	rm -rf ./bin
-	rm -rf ./vendor
+.PHONY: cluster-broker-release-image
+cluster-broker-release-image:
+	docker build -f ./cluster-broker/Dockerfile --build-arg RELEASE_VERSION="$(RELEASE_VERSION)" -t $(RELEASE_REGISTRY)/$(CLUSTER_BROKER_RELEASE_IMAGE) .
