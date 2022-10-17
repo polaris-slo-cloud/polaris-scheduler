@@ -24,5 +24,5 @@ source "${SCRIPT_ROOT}/hack/lib/init.sh"
 
 # TODO: make args customizable.
 go test -mod=vendor \
-  k8s.rainbow-h2020.eu/rainbow/scheduler/cmd/... \
-  k8s.rainbow-h2020.eu/rainbow/scheduler/pkg/...
+  polaris-slo-cloud.github.io/polaris-scheduler/v1/scheduler/cmd/... \
+  polaris-slo-cloud.github.io/polaris-scheduler/v1/scheduler/pkg/...

@@ -13,7 +13,7 @@ import (
 
 	"k8s.rainbow-h2020.eu/rainbow/orchestration/pkg/kubeutil"
 	"k8s.rainbow-h2020.eu/rainbow/orchestration/pkg/services/servicegraphmanager"
-	"k8s.rainbow-h2020.eu/rainbow/scheduler/internal/util"
+	"polaris-slo-cloud.github.io/polaris-scheduler/v1/scheduler/internal/util"
 )
 
 const (
@@ -38,13 +38,13 @@ var (
 // ServiceGraphPlugin handles all managerial operations related to the ServiceGraph.
 //
 // Specifically, its tasks are:
-// - QueueSort: Loads the ServiceGraph CRD and sort pods according to their position in the service graph.
-// - PreFilter: Store the ServiceGraphState in the CycleState.
-// - PostFilter: Release the ServiceGraphState if no suitable K8s node was found.
-// - Reserve: Record the selected K8s node in the ServiceGraphState.
-// - Permit: Release the ServiceGraphState.
-//   Important: Note that the ServiceGraphPlugin should be configured as the last Permit plugin in the scheduler configuration,
-//   because it will release the ServiceGraphState.
+//   - QueueSort: Loads the ServiceGraph CRD and sort pods according to their position in the service graph.
+//   - PreFilter: Store the ServiceGraphState in the CycleState.
+//   - PostFilter: Release the ServiceGraphState if no suitable K8s node was found.
+//   - Reserve: Record the selected K8s node in the ServiceGraphState.
+//   - Permit: Release the ServiceGraphState.
+//     Important: Note that the ServiceGraphPlugin should be configured as the last Permit plugin in the scheduler configuration,
+//     because it will release the ServiceGraphState.
 type ServiceGraphPlugin struct {
 	// The original kube-scheduler sorting plugin, which we use after our ServiceGraph node sorting.
 	origQueueSort *kubequeuesort.PrioritySort

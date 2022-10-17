@@ -9,7 +9,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	framework "k8s.io/kubernetes/pkg/scheduler/framework"
 
-	"k8s.rainbow-h2020.eu/rainbow/scheduler/internal/util"
+	"polaris-slo-cloud.github.io/polaris-scheduler/v1/scheduler/internal/util"
 )
 
 const (

@@ -10,7 +10,7 @@ import (
 
 	"k8s.rainbow-h2020.eu/rainbow/orchestration/pkg/kubeutil"
 	"k8s.rainbow-h2020.eu/rainbow/orchestration/pkg/services/servicegraphmanager"
-	"k8s.rainbow-h2020.eu/rainbow/scheduler/internal/util"
+	"polaris-slo-cloud.github.io/polaris-scheduler/v1/scheduler/internal/util"
 )
 
 const (

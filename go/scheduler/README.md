@@ -1,18 +1,9 @@
-# RAINBOW Fog-aware Kubernetes Scheduler
-
-## Node Roles
-
-This scheduler assumes existence of the following node roles, i.e., `rainbow-h2020.eu/<role>` labels:
-
-* `fog-node`: a fog node.
-* `cloud-node`: a cloud node.
-
-**ToDo**: Maybe we can relax this assumption to not require any fog or cloud labels?
-
+# Polaris SLO-aware Kubernetes Scheduler
 
 ## Application Components
 
-This scheduler relies on each pod being associated with a ServiceGraph through the labels `rainbow-h2020.eu/service-graph` and `rainbow-h2020.eu/service-graph-node`.
+This scheduler relies on the ServiceGraph abstraction (see [orchestration components](../orchestration/README.md)), developed by the [RAINBOW project](https://rainbow-h2020.eu) (from which Polaris Scheduler has been forked).
+Each pod needs to be associated with a ServiceGraph through the labels `rainbow-h2020.eu/service-graph` and `rainbow-h2020.eu/service-graph-node`.
 Pods that do not have these labels will still be scheduled, but they cannot benefit from the optimizations brought by this scheduler.
 
 

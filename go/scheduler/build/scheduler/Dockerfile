@@ -17,17 +17,17 @@ FROM golang:1.16
 # Important: The Docker context's root directory is not the `go/scheduler` directory,
 # but the `go` directory instead, because the scheduler depends on the orchestrator module.
 
-WORKDIR /go/src/k8s.rainbow-h2020.eu/rainbow
+WORKDIR /go/src/polaris-slo-cloud.github.io/polaris-scheduler
 COPY . .
 
-WORKDIR /go/src/k8s.rainbow-h2020.eu/rainbow/scheduler
+WORKDIR /go/src/polaris-slo-cloud.github.io/polaris-scheduler/scheduler
 ARG RELEASE_VERSION
 RUN RELEASE_VERSION=${RELEASE_VERSION} make build-scheduler
 
 FROM alpine:3.15
 
 COPY ./scheduler/manifests/polaris-scheduler/default-polaris-scheduler-config.yaml /etc/polaris-scheduler/default-polaris-scheduler-config.yaml
-COPY --from=0 /go/src/k8s.rainbow-h2020.eu/rainbow/scheduler/bin/polaris-scheduler /bin/polaris-scheduler
+COPY --from=0 /go/src/polaris-slo-cloud.github.io/polaris-scheduler/scheduler/bin/polaris-scheduler /bin/polaris-scheduler
 
 WORKDIR /bin
 CMD ["polaris-scheduler"]

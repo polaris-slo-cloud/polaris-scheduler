@@ -33,12 +33,12 @@ import (
 	"k8s.rainbow-h2020.eu/rainbow/orchestration/pkg/services/regionmanager"
 	"k8s.rainbow-h2020.eu/rainbow/orchestration/pkg/services/servicegraphmanager"
 
-	"k8s.rainbow-h2020.eu/rainbow/scheduler/pkg/schedulerplugins/atomicdeployment"
-	"k8s.rainbow-h2020.eu/rainbow/scheduler/pkg/schedulerplugins/networkqos"
-	"k8s.rainbow-h2020.eu/rainbow/scheduler/pkg/schedulerplugins/nodecost"
-	"k8s.rainbow-h2020.eu/rainbow/scheduler/pkg/schedulerplugins/podspernode"
-	"k8s.rainbow-h2020.eu/rainbow/scheduler/pkg/schedulerplugins/servicegraph"
-	"k8s.rainbow-h2020.eu/rainbow/scheduler/pkg/schedulerplugins/workloadtype"
+	"polaris-slo-cloud.github.io/polaris-scheduler/v1/scheduler/pkg/schedulerplugins/atomicdeployment"
+	"polaris-slo-cloud.github.io/polaris-scheduler/v1/scheduler/pkg/schedulerplugins/networkqos"
+	"polaris-slo-cloud.github.io/polaris-scheduler/v1/scheduler/pkg/schedulerplugins/nodecost"
+	"polaris-slo-cloud.github.io/polaris-scheduler/v1/scheduler/pkg/schedulerplugins/podspernode"
+	"polaris-slo-cloud.github.io/polaris-scheduler/v1/scheduler/pkg/schedulerplugins/servicegraph"
+	"polaris-slo-cloud.github.io/polaris-scheduler/v1/scheduler/pkg/schedulerplugins/workloadtype"
 )
 
 var (
