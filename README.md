@@ -44,3 +44,7 @@ This repository contains the following experiments for benchmarking Polaris Sche
 ## Acknowledgement
 
 Polaris-scheduler is a fork of the rainbow-scheduler and corresponding CRDs from the [orchestration repository](https://gitlab.com/rainbow-project1/rainbow-orchestration) of the [RAINBOW](https://rainbow-h2020.eu/) project.
+
+
+
+[![DOI](https://zenodo.org/badge/449036242.svg)](https://zenodo.org/badge/latestdoi/449036242)
