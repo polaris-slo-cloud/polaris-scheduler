@@ -3,7 +3,7 @@ package util
 import (
 	"k8s.io/kubernetes/pkg/scheduler/framework"
 	"k8s.rainbow-h2020.eu/rainbow/orchestration/pkg/services/servicegraphmanager"
-	"k8s.rainbow-h2020.eu/rainbow/scheduler/internal/schedulerstate"
+	"polaris-slo-cloud.github.io/polaris-scheduler/v1/scheduler/internal/schedulerstate"
 )
 
 // Gets the ServiceGraphState of the specified pod's application from the CycleState.

@@ -19,7 +19,7 @@ import (
 	"k8s.rainbow-h2020.eu/rainbow/orchestration/pkg/serviceplacement"
 	"k8s.rainbow-h2020.eu/rainbow/orchestration/pkg/services/regionmanager"
 	"k8s.rainbow-h2020.eu/rainbow/orchestration/pkg/services/servicegraphmanager"
-	"k8s.rainbow-h2020.eu/rainbow/scheduler/internal/util"
+	"polaris-slo-cloud.github.io/polaris-scheduler/v1/scheduler/internal/util"
 )
 
 const (
@@ -97,11 +97,11 @@ func (me *NetworkQosPlugin) PreFilterExtensions() framework.PreFilterExtensions 
 // If the node does not meet the requirements, Filter() returns an unschedulable status.
 //
 // Filter() performs the following operations:
-// 1. Check if the candidate K8s node's network links support the minNetworkRequirements.
-// 2. FOR EACH incoming service link:
-//    2.1. Compute the shortest paths (latency-wise) from all SRC nodes (see PreFilter) to the candidate K8s node.
-//    2.2. Pick shortest path that meets the network QoS requirements of the Service Link. If there is none, the candidate node is not suitable.
-//    2.3. If the candidate node is suitable, store the path’s highest bandwidth and latency variance values in the networkQosStateData.
+//  1. Check if the candidate K8s node's network links support the minNetworkRequirements.
+//  2. FOR EACH incoming service link:
+//     2.1. Compute the shortest paths (latency-wise) from all SRC nodes (see PreFilter) to the candidate K8s node.
+//     2.2. Pick shortest path that meets the network QoS requirements of the Service Link. If there is none, the candidate node is not suitable.
+//     2.3. If the candidate node is suitable, store the path’s highest bandwidth and latency variance values in the networkQosStateData.
 func (me *NetworkQosPlugin) Filter(ctx context.Context, cycleState *framework.CycleState, pod *core.Pod, candidateK8sNodeInfo *framework.NodeInfo) *framework.Status {
 	qosState, noSvcGraphStatus := getNetworkQosStateDataOrStatus(cycleState)
 	if noSvcGraphStatus != nil {

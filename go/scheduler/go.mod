@@ -1,4 +1,4 @@
-module k8s.rainbow-h2020.eu/rainbow/scheduler
+module polaris-slo-cloud.github.io/polaris-scheduler/v1/scheduler
 
 go 1.16
 
