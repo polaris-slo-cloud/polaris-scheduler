@@ -14,15 +14,15 @@
             ]
         },
         {
-            // Runs the cluster-broker on the local machine in debug mode.
-            "name": "Local: Debug Cluster Broker",
+            // Runs the cluster-agent on the local machine in debug mode.
+            "name": "Local: Debug Cluster Agent",
             "type": "go",
-            "preLaunchTask": "build-cluster-broker-debug",
+            "preLaunchTask": "build-cluster-agent-debug",
             "request": "launch",
             "mode": "exec",
-            "program": "${workspaceFolder}/bin/polaris-cluster-broker",
+            "program": "${workspaceFolder}/bin/polaris-cluster-agent",
             "args": [
-                "--config=${workspaceFolder}/bin/default-polaris-cluster-broker-config.yaml"
+                "--config=${workspaceFolder}/bin/default-polaris-cluster-agent-config.yaml"
             ]
         }
     ]

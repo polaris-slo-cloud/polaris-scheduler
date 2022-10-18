@@ -3,7 +3,7 @@ WORKDIR /usr/src/polaris-scheduler
 
 # Copy the Go Modules manifests
 COPY go.work go.work.sum ./
-COPY ./cluster-broker/go.mod ./cluster-broker/go.sum ./cluster-broker/
+COPY ./cluster-agent/go.mod ./cluster-agent/go.sum ./cluster-agent/
 COPY ./framework/go.mod ./framework/go.sum ./framework/
 COPY ./k8s-connector/go.mod ./k8s-connector/go.sum ./k8s-connector/
 COPY ./scheduler/go.mod ./scheduler/go.sum ./scheduler/
@@ -15,17 +15,17 @@ RUN go mod download
 # Copy the source code
 COPY ./ ./
 
-# Build the cluster-broker
-RUN make build-cluster-broker
+# Build the cluster-agent
+RUN make build-cluster-agent
 
 
 FROM alpine:3.16
-WORKDIR /usr/apps/polaris-cluster-broker
+WORKDIR /usr/apps/polaris-cluster-agent
 
 # Copy the default config
-COPY --from=builder /usr/src/polaris-scheduler/cluster-broker/manifests/default-polaris-cluster-broker-config.yaml /etc/polaris-cluster-broker/polaris-cluster-broker-config.yaml
+COPY --from=builder /usr/src/polaris-scheduler/cluster-agent/manifests/default-polaris-cluster-agent-config.yaml /etc/polaris-cluster-agent/polaris-cluster-agent-config.yaml
 
 # Copy the build output
-COPY --from=builder /usr/src/polaris-scheduler/bin/polaris-cluster-broker ./
+COPY --from=builder /usr/src/polaris-scheduler/bin/polaris-cluster-agent ./
 
-CMD [ "./polaris-cluster-broker", "--config", "/etc/polaris-cluster-broker/polaris-cluster-broker-config.yaml" ]
+CMD [ "./polaris-cluster-agent", "--config", "/etc/polaris-cluster-agent/polaris-cluster-agent-config.yaml" ]

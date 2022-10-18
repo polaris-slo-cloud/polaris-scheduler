@@ -1,13 +1,13 @@
 package config
 
 const (
-	DefaultClusterBrokerListenAddress = "0.0.0.0:8081"
-	DefaultNodesCacheUpdateInterval   = 200
-	DefaultNodesCacheUpdateQueueSize  = 1000
+	DefaultClusterAgentListenAddress = "0.0.0.0:8081"
+	DefaultNodesCacheUpdateInterval  = 200
+	DefaultNodesCacheUpdateQueueSize = 1000
 )
 
-// Represents the configuration of a polaris-cluster-broker instance.
-type ClusterBrokerConfig struct {
+// Represents the configuration of a polaris-cluster-agent instance.
+type ClusterAgentConfig struct {
 
 	// The list of addresses and ports to listen on in
 	// the format "<IP>:<PORT>"
@@ -27,10 +27,10 @@ type ClusterBrokerConfig struct {
 	NodesCacheUpdateQueueSize uint32 `json:"nodesCacheUpdateQueueSize" yaml:"nodesCacheUpdateQueueSize"`
 }
 
-// Sets the default values in the ClusterBrokerConfig for fields that are not set properly.
-func SetDefaultsClusterBrokerConfig(config *ClusterBrokerConfig) {
+// Sets the default values in the ClusterAgentConfig for fields that are not set properly.
+func SetDefaultsClusterAgentConfig(config *ClusterAgentConfig) {
 	if config.ListenOn == nil || len(config.ListenOn) == 0 {
-		config.ListenOn = []string{DefaultClusterBrokerListenAddress}
+		config.ListenOn = []string{DefaultClusterAgentListenAddress}
 	}
 	if config.NodesCacheUpdateIntervalMs == 0 {
 		config.NodesCacheUpdateIntervalMs = DefaultNodesCacheUpdateInterval

@@ -1,6 +1,6 @@
-# polaris-cluster-broker-config.yaml
+# polaris-cluster-agent-config.yaml
 
-# The list of addresses and ports that the cluster broker should listen on
+# The list of addresses and ports that the cluster-agent should listen on
 # in the format "<IP>:<PORT>"
 # This setting applies only if "operatingMode" is set to "multiCluster".
 #

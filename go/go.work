@@ -1,7 +1,7 @@
 go 1.19
 
 use (
-	./cluster-broker
+	./cluster-agent
 	./framework
 	./k8s-connector
 	./scheduler

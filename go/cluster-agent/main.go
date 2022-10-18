@@ -6,7 +6,7 @@ import (
 	"os"
 	"time"
 
-	"polaris-slo-cloud.github.io/polaris-scheduler/v2/cluster-broker/cmd"
+	"polaris-slo-cloud.github.io/polaris-scheduler/v2/cluster-agent/cmd"
 	"polaris-slo-cloud.github.io/polaris-scheduler/v2/framework/sampling"
 	"polaris-slo-cloud.github.io/polaris-scheduler/v2/framework/util"
 )
@@ -20,7 +20,7 @@ func main() {
 		sampling.NewRoundRobinSamplingStrategy,
 	}
 
-	nodeSamplerCmd := cmd.NewPolarisClusterBrokerCmd(ctx, samplingStrategies)
+	nodeSamplerCmd := cmd.NewPolarisClusterAgentCmd(ctx, samplingStrategies)
 	if err := nodeSamplerCmd.Execute(); err != nil {
 		fmt.Println(err)
 		os.Exit(1)

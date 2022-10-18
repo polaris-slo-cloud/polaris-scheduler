@@ -1,4 +1,4 @@
-package broker
+package clusteragent
 
 import (
 	"bytes"
@@ -14,11 +14,11 @@ import (
 )
 
 var (
-	_ client.ClusterClient = (*RemoteClusterBrokerClient)(nil)
+	_ client.ClusterClient = (*RemoteClusterAgentClient)(nil)
 )
 
-// ClusterClient implementation that connects via REST to a remote PolarisClusterBroker.
-type RemoteClusterBrokerClient struct {
+// ClusterClient implementation that connects via REST to a remote PolarisClusterAgent.
+type RemoteClusterAgentClient struct {
 	clusterName   string
 	clusterConfig *config.RemoteClusterConfig
 	httpClient    *http.Client
@@ -27,17 +27,17 @@ type RemoteClusterBrokerClient struct {
 	commitSchedulingDecisionURI string
 }
 
-func NewRemoteClusterBrokerClient(clusterName string, clusterConfig *config.RemoteClusterConfig, logger *logr.Logger) *RemoteClusterBrokerClient {
+func NewRemoteClusterAgentClient(clusterName string, clusterConfig *config.RemoteClusterConfig, logger *logr.Logger) *RemoteClusterAgentClient {
 	var err error
 
-	cbc := &RemoteClusterBrokerClient{
+	cbc := &RemoteClusterAgentClient{
 		clusterName:   clusterName,
 		clusterConfig: clusterConfig,
 		httpClient:    &http.Client{},
 		logger:        logger,
 	}
 
-	cbc.commitSchedulingDecisionURI, err = url.JoinPath(clusterConfig.BaseURI, BrokerEndpointsPrefix, CommitSchedulingDecisionEndpoint)
+	cbc.commitSchedulingDecisionURI, err = url.JoinPath(clusterConfig.BaseURI, ClusterAgentEndpointsPrefix, CommitSchedulingDecisionEndpoint)
 	if err != nil {
 		panic(err)
 	}
@@ -45,11 +45,11 @@ func NewRemoteClusterBrokerClient(clusterName string, clusterConfig *config.Remo
 	return cbc
 }
 
-func (cbc *RemoteClusterBrokerClient) ClusterName() string {
+func (cbc *RemoteClusterAgentClient) ClusterName() string {
 	return cbc.clusterName
 }
 
-func (cbc *RemoteClusterBrokerClient) CommitSchedulingDecision(ctx context.Context, schedulingDecision *client.ClusterSchedulingDecision) error {
+func (cbc *RemoteClusterAgentClient) CommitSchedulingDecision(ctx context.Context, schedulingDecision *client.ClusterSchedulingDecision) error {
 	httpReq, err := cbc.createPostRequest(ctx, cbc.commitSchedulingDecisionURI, schedulingDecision)
 	if err != nil {
 		return err
@@ -66,15 +66,15 @@ func (cbc *RemoteClusterBrokerClient) CommitSchedulingDecision(ctx context.Conte
 	if httpResp.StatusCode == http.StatusCreated {
 		return nil
 	} else {
-		if brokerError, err := parseErrorResponseBody(httpResp); err == nil {
-			return brokerError.Error
+		if agentError, err := parseErrorResponseBody(httpResp); err == nil {
+			return agentError.Error
 		} else {
 			return err
 		}
 	}
 }
 
-func (cbc *RemoteClusterBrokerClient) createPostRequest(ctx context.Context, requestURI string, bodyObj any) (*http.Request, error) {
+func (cbc *RemoteClusterAgentClient) createPostRequest(ctx context.Context, requestURI string, bodyObj any) (*http.Request, error) {
 	body, err := json.Marshal(bodyObj)
 	if err != nil {
 		return nil, err
@@ -92,16 +92,16 @@ func (cbc *RemoteClusterBrokerClient) createPostRequest(ctx context.Context, req
 	return httpReq, nil
 }
 
-func parseErrorResponseBody(httpResp *http.Response) (*PolarisClusterBrokerError, error) {
+func parseErrorResponseBody(httpResp *http.Response) (*PolarisClusterAgentError, error) {
 	body, err := io.ReadAll(httpResp.Body)
 	if err != nil {
 		return nil, err
 	}
 
-	brokerError := PolarisClusterBrokerError{}
-	if err := json.Unmarshal(body, &brokerError); err != nil {
+	agentError := PolarisClusterAgentError{}
+	if err := json.Unmarshal(body, &agentError); err != nil {
 		return nil, err
 	}
 
-	return &brokerError, nil
+	return &agentError, nil
 }

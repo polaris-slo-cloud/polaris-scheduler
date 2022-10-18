@@ -26,7 +26,7 @@ RELEASE_REGISTRY?=polarissloc
 RELEASE_VERSION?=$(shell date +%Y%m%d%H%M)-v$(PROJECT_VERSION)
 # RELEASE_VERSION?=v$(shell date +%Y%m%d)-$(shell git describe --tags --match "v*")
 SCHEDULER_RELEASE_IMAGE:=polaris-scheduler:$(RELEASE_VERSION)
-CLUSTER_BROKER_RELEASE_IMAGE:=polaris-cluster-broker:$(RELEASE_VERSION)
+CLUSTER_AGENT_RELEASE_IMAGE:=polaris-cluster-agent:$(RELEASE_VERSION)
 
 # VERSION is the scheduler's version
 #
@@ -42,7 +42,7 @@ DEBUG_CONFIG_PATH=$(shell echo "$(shell pwd)/$(DEBUG_CONFIG)" | sed -e "s|\/|\\\
 all: build
 
 .PHONY: build
-build: build-scheduler build-cluster-broker
+build: build-scheduler build-cluster-agent
 
 .PHONY: clean
 clean:
@@ -74,22 +74,22 @@ scheduler-release-image:
 
 
 ###########################################
-# polaris-cluster-broker
+# polaris-cluster-agent
 ###########################################
 
-.PHONY: build-cluster-broker
-build-cluster-broker:
-	$(COMMONENVVAR) $(BUILDENVVAR) go build -ldflags '-X k8s.io/component-base/version.gitVersion=$(VERSION) -w' -o bin/polaris-cluster-broker cluster-broker/main.go
+.PHONY: build-cluster-agent
+build-cluster-agent:
+	$(COMMONENVVAR) $(BUILDENVVAR) go build -ldflags '-X k8s.io/component-base/version.gitVersion=$(VERSION) -w' -o bin/polaris-cluster-agent cluster-agent/main.go
 
-.PHONY: build-cluster-broker-debug
-build-cluster-broker-debug:
-	$(COMMONENVVAR) $(BUILDENVVAR) go build -gcflags="all=-N -l" -ldflags '-X k8s.io/component-base/version.gitVersion=$(VERSION)' -o bin/polaris-cluster-broker cluster-broker/main.go
+.PHONY: build-cluster-agent-debug
+build-cluster-agent-debug:
+	$(COMMONENVVAR) $(BUILDENVVAR) go build -gcflags="all=-N -l" -ldflags '-X k8s.io/component-base/version.gitVersion=$(VERSION)' -o bin/polaris-cluster-agent cluster-agent/main.go
 
-.PHONY: cluster-broker-debug-config
-cluster-broker-debug-config:
+.PHONY: cluster-agent-debug-config
+cluster-agent-debug-config:
 	mkdir -p ./bin
-	cp cluster-broker/manifests/default-polaris-cluster-broker-config.yaml bin/default-polaris-cluster-broker-config.yaml
+	cp cluster-agent/manifests/default-polaris-cluster-agent-config.yaml bin/default-polaris-cluster-agent-config.yaml
 
-.PHONY: cluster-broker-release-image
-cluster-broker-release-image:
-	docker build -f ./cluster-broker/Dockerfile --build-arg RELEASE_VERSION="$(RELEASE_VERSION)" -t $(RELEASE_REGISTRY)/$(CLUSTER_BROKER_RELEASE_IMAGE) .
+.PHONY: cluster-agent-release-image
+cluster-agent-release-image:
+	docker build -f ./cluster-agent/Dockerfile --build-arg RELEASE_VERSION="$(RELEASE_VERSION)" -t $(RELEASE_REGISTRY)/$(CLUSTER_AGENT_RELEASE_IMAGE) .

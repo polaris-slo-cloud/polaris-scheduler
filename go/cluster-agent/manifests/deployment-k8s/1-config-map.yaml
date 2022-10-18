@@ -6,13 +6,13 @@ metadata:
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: polaris-cluster-broker-config
+  name: polaris-cluster-agent-config
   namespace: polaris
 data:
-  default-polaris-cluster-broker-config.yaml: |
-    # polaris-cluster-broker-config.yaml
+  default-polaris-cluster-agent-config.yaml: |
+    # polaris-cluster-agent-config.yaml
 
-    # The list of addresses and ports that the cluster broker should listen on
+    # The list of addresses and ports that the cluster-agent should listen on
     # in the format "<IP>:<PORT>"
     # This setting applies only if "operatingMode" is set to "multiCluster".
     #

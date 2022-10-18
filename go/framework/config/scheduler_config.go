@@ -9,7 +9,7 @@ import (
 //   - In "singleCluster" mode, the scheduler connects directly interacts with cluster's orchestrator to
 //     get incoming pods and to assign them to nodes.
 //   - In "multiCluster" mode, the scheduler can handle multiple clusters (possibly operated by multiple orchestrators)
-//     In this mode polaris-scheduler accepts pods through an external API and submits scheduling decisions to the polaris-scheduler-broker
+//     In this mode polaris-scheduler accepts pods through an external API and submits scheduling decisions to the polaris-scheduler-agent
 //     running in each cluster.
 type SchedulerOperatingMode string
 
@@ -73,7 +73,7 @@ type SchedulerConfig struct {
 	//   - In "singleCluster" mode, the scheduler connects directly interacts with cluster's orchestrator to
 	//     get incoming pods and to assign them to nodes.
 	//   - In "multiCluster" mode, the scheduler can handle multiple clusters (possibly operated by multiple orchestrators)
-	//     In this mode polaris-scheduler accepts pods through an external API and submits scheduling decisions to the polaris-scheduler-broker
+	//     In this mode polaris-scheduler accepts pods through an external API and submits scheduling decisions to the polaris-scheduler-agent
 	//     running in each cluster.
 	//
 	// Default: "multiCluster"

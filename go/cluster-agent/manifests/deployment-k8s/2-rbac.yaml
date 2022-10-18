@@ -1,17 +1,17 @@
 apiVersion: v1
 kind: ServiceAccount
 metadata:
-  name: polaris-cluster-broker
+  name: polaris-cluster-agent
   namespace: polaris
 ---
-# Give the polaris-cluster-broker scheduler permissions
+# Give the polaris-cluster-agent scheduler permissions
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
-  name: polaris-cluster-broker-as-kube-scheduler
+  name: polaris-cluster-agent-as-kube-scheduler
 subjects:
   - kind: ServiceAccount
-    name: polaris-cluster-broker
+    name: polaris-cluster-agent
     namespace: polaris
 roleRef:
   kind: ClusterRole
@@ -21,10 +21,10 @@ roleRef:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
-  name: polaris-cluster-broker-as-volume-scheduler
+  name: polaris-cluster-agent-as-volume-scheduler
 subjects:
   - kind: ServiceAccount
-    name: polaris-cluster-broker
+    name: polaris-cluster-agent
     namespace: polaris
 roleRef:
   kind: ClusterRole
@@ -34,11 +34,11 @@ roleRef:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
 metadata:
-  name: polaris-cluster-broker-authentication-reader
+  name: polaris-cluster-agent-authentication-reader
   namespace: polaris
 subjects:
   - kind: ServiceAccount
-    name: polaris-cluster-broker
+    name: polaris-cluster-agent
     namespace: polaris
 roleRef:
   kind: Role

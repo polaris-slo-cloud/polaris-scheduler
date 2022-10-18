@@ -1,4 +1,4 @@
-module polaris-slo-cloud.github.io/polaris-scheduler/v2/cluster-broker
+module polaris-slo-cloud.github.io/polaris-scheduler/v2/cluster-agent
 
 go 1.19
 

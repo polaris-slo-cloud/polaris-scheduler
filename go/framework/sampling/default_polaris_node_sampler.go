@@ -29,7 +29,7 @@ var (
 // by the owner of this object after calling Start().
 type DefaultPolarisNodeSampler struct {
 	ctx                       context.Context
-	config                    *config.ClusterBrokerConfig
+	config                    *config.ClusterAgentConfig
 	clusterClient             client.ClusterClient
 	samplingStrategyFactories []SamplingStrategyFactoryFunc
 	samplingStrategies        []SamplingStrategy
@@ -45,7 +45,7 @@ type defaultPolarisNodeSamplerStatus struct {
 }
 
 func NewDefaultPolarisNodeSampler(
-	clusterBrokerConfig *config.ClusterBrokerConfig,
+	clusterAgentConfig *config.ClusterAgentConfig,
 	ginEngine *gin.Engine,
 	clusterClient client.ClusterClient,
 	nodesCache client.NodesCache,
@@ -53,7 +53,7 @@ func NewDefaultPolarisNodeSampler(
 	logger *logr.Logger,
 ) *DefaultPolarisNodeSampler {
 	sampler := &DefaultPolarisNodeSampler{
-		config:                    clusterBrokerConfig,
+		config:                    clusterAgentConfig,
 		ginEngine:                 ginEngine,
 		clusterClient:             clusterClient,
 		samplingStrategyFactories: samplingStrategyFactories,
@@ -64,7 +64,7 @@ func NewDefaultPolarisNodeSampler(
 	return sampler
 }
 
-func (sampler *DefaultPolarisNodeSampler) Config() *config.ClusterBrokerConfig {
+func (sampler *DefaultPolarisNodeSampler) Config() *config.ClusterAgentConfig {
 	return sampler.config
 }
 

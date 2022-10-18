@@ -24,7 +24,7 @@ type PolarisNodeSampler interface {
 	Start(ctx context.Context) error
 
 	// Gets the config used by this sampler.
-	Config() *config.ClusterBrokerConfig
+	Config() *config.ClusterAgentConfig
 
 	// Gets the ClusterClient used by this sampler.
 	ClusterClient() client.ClusterClient
