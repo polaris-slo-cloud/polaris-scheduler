@@ -4,6 +4,7 @@ const (
 	DefaultClusterAgentListenAddress = "0.0.0.0:8081"
 	DefaultNodesCacheUpdateInterval  = 200
 	DefaultNodesCacheUpdateQueueSize = 1000
+	DefaultParallelSamplingPipelines = 100
 )
 
 // Represents the configuration of a polaris-cluster-agent instance.
@@ -25,6 +26,17 @@ type ClusterAgentConfig struct {
 	//
 	// Default: 1000
 	NodesCacheUpdateQueueSize uint32 `json:"nodesCacheUpdateQueueSize" yaml:"nodesCacheUpdateQueueSize"`
+
+	// The number of Sampling Pipelines to run in parallel.
+	//
+	// Default: 100.
+	ParallelSamplingPipelines uint32 `json:"parallelSamplingPipelines" yaml:"parallelSamplingPipelines"`
+
+	// The list of plugins for the sampling pipeline.
+	Plugins SamplingPluginsList `json:"plugins" yaml:"plugins"`
+
+	// (optional) Allows specifying configuration parameters for each plugin.
+	PluginsConfig []*PluginsConfigListEntry `json:"pluginsConfig" yaml:"pluginsConfig"`
 }
 
 // Sets the default values in the ClusterAgentConfig for fields that are not set properly.
@@ -37,5 +49,8 @@ func SetDefaultsClusterAgentConfig(config *ClusterAgentConfig) {
 	}
 	if config.NodesCacheUpdateQueueSize == 0 {
 		config.NodesCacheUpdateQueueSize = DefaultNodesCacheUpdateQueueSize
+	}
+	if config.ParallelSamplingPipelines == 0 {
+		config.ParallelSamplingPipelines = DefaultParallelSamplingPipelines
 	}
 }

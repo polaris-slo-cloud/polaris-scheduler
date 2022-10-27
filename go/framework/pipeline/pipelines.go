@@ -14,18 +14,20 @@ const (
 	PreScoreStage    = "PreScore"
 	ScoreStage       = "Score"
 	ReserveStage     = "Reserve"
+
+	SamplingStrategyStage = "SamplingStrategy" // Sampling pipeline only
 )
 
-// Plugin is the parent interface for all Polaris scheduling pipeline plugins
+// Plugin is the parent interface for all Polaris scheduling pipeline and Polaris sampling pipeline plugins
 //
 // The Polaris scheduling pipeline consists of the following stages:
-// - Sort (one plugin only)
-// - SampleNodes (one plugin only)
-// - PreFilter
-// - Filter
-// - PreScore
-// - Score
-// - Reserve
+//   - Sort (one plugin only)
+//   - SampleNodes (one plugin only)
+//   - PreFilter
+//   - Filter
+//   - PreScore
+//   - Score
+//   - Reserve
 //
 // The stages from PreFilter up to (including) Reserve are called the "Decision Pipeline".
 // For Decision Pipeline plugins it is common to tie into multiple stages of the pipeline.
@@ -34,7 +36,17 @@ const (
 //
 // Multiple Decision Pipeline instances may execute in parallel, but each instance will
 // execute on a single goroutine and only be traversed by a single pod at a time.
+//
+// The Polaris sampling pipeline consists of the following stages:
+//   - SamplingStrategy (one plugin only)
+//   - PreFilter
+//   - Filter
+//   - PreScore
+//   - Score
 type Plugin interface {
+	// Gets the name of this plugin.
+	//
+	// The returned name must be usable as a URI component.
 	Name() string
 }
 
@@ -52,7 +64,7 @@ type SortPlugin interface {
 type SampleNodesPlugin interface {
 	Plugin
 
-	// Samples nodes across the entire supercluster to act has hosting candidates for the pod.
+	// Samples nodes across the entire supercluster to act as hosting candidates for the pod.
 	//
 	// Returns an array of NodeInfos that describe the sampled nodes and a Status.
 	SampleNodes(ctx SchedulingContext, podInfo *PodInfo) ([]*NodeInfo, Status)
@@ -138,6 +150,23 @@ type ReservePlugin interface {
 	Unreserve(ctx SchedulingContext, podInfo *PodInfo, targetNode *NodeInfo)
 }
 
+// Encapsulates a node sampling strategy in the sampling pipeline.
+//
+// A SamplingStrategyPlugin must be thread-safe, because a single instance is shared across all sampling pipelines.
+// This "singleton approach" is needed to avoid sampling the same nodes in multiple pipeline instances, i.e., if there were multiple instances
+// of a deterministic SamplingStrategyPlugin (e.g., Round-Robin sampling), each instance would return the same nodes upon the first invocation.
+type SamplingStrategyPlugin interface {
+	Plugin
+
+	// Returns the name of the sampling strategy in a URI component compatible form.
+	StrategyName() string
+
+	// Executes the sampling strategy and returns a sample of nodes and a status.
+	//
+	// Important: This method may be called concurrently on multiple goroutines, so its implementation must be thread-safe.
+	SampleNodes(ctx SchedulingContext, podInfo *PodInfo, sampleSize int) ([]*NodeInfo, Status)
+}
+
 // Represents a scheduling decision made by the Decision Pipeline.
 type SchedulingDecision struct {
 
@@ -158,4 +187,21 @@ type DecisionPipeline interface {
 	// Executes the Decision Pipeline and returns a SchedulingDecision and a Status.
 	// The SchedulingDecision is nil in case the pod could not be scheduled or if an error occurred.
 	SchedulePod(podInfo *SampledPodInfo) (*SchedulingDecision, Status)
+}
+
+// Represents an instance of the Polaris Scheduler Sampling Pipeline,
+// encompassing all its stages.
+//
+// A Sampling Pipeline executes on a single goroutine and there is only
+// a single pod traversing the pipeline at a time.
+//
+// The SamplingStrategyPlugin instances are shared across all pipelines and, thus, must be thread-safe.
+// All other plugins execute only on this pipeline's goroutine.
+// The "singleton approach" for SamplingStrategyPlugins is needed to avoid sampling the same nodes in multiple pipeline instances, i.e., if there were multiple instances
+// of a deterministic SamplingStrategyPlugin (e.g., Round-Robin sampling), each instance would return the same nodes upon the first invocation.
+type SamplingPipeline interface {
+
+	// Executes the sampling pipeline for the specified pod using the specified sampling strategy.
+	// The number of nodes to be sampled is specified as basis points (bp) of the total number of nodes.
+	SampleNodes(ctx SchedulingContext, samplingStrategy SamplingStrategyPlugin, podInfo *PodInfo, nodesToSampleBp int) ([]*NodeInfo, Status)
 }

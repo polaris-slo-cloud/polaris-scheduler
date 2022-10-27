@@ -10,10 +10,11 @@ import (
 )
 
 var (
-	_ pipeline.PreFilterPlugin   = (*ResourcesFitPlugin)(nil)
-	_ pipeline.FilterPlugin      = (*ResourcesFitPlugin)(nil)
-	_ pipeline.ScorePlugin       = (*ResourcesFitPlugin)(nil)
-	_ pipeline.PluginFactoryFunc = NewResourcesFitPlugin
+	_ pipeline.PreFilterPlugin             = (*ResourcesFitPlugin)(nil)
+	_ pipeline.FilterPlugin                = (*ResourcesFitPlugin)(nil)
+	_ pipeline.ScorePlugin                 = (*ResourcesFitPlugin)(nil)
+	_ pipeline.SchedulingPluginFactoryFunc = NewResourcesFitSchedulingPlugin
+	_ pipeline.SamplingPluginFactoryFunc   = NewResourcesFitSamplingPlugin
 )
 
 const (
@@ -42,13 +43,19 @@ type scoringFn func(state *resourcesFitState, podInfo *pipeline.PodInfo, nodeInf
 // - Filter
 // - Score
 type ResourcesFitPlugin struct {
-	scheduler pipeline.PolarisScheduler
 	scoringFn scoringFn
 }
 
-func NewResourcesFitPlugin(configMap config.PluginConfig, scheduler pipeline.PolarisScheduler) (pipeline.Plugin, error) {
-	rf := ResourcesFitPlugin{
-		scheduler: scheduler,
+func NewResourcesFitSchedulingPlugin(configMap config.PluginConfig, scheduler pipeline.PolarisScheduler) (pipeline.Plugin, error) {
+	return newResourcesFitPlugin(configMap)
+}
+
+func NewResourcesFitSamplingPlugin(configMap config.PluginConfig, nodeSampler pipeline.PolarisNodeSampler) (pipeline.Plugin, error) {
+	return newResourcesFitPlugin(configMap)
+}
+
+func newResourcesFitPlugin(configMap config.PluginConfig) (pipeline.Plugin, error) {
+	rf := &ResourcesFitPlugin{
 		scoringFn: calculateLeastAllocatedScore,
 	}
 
@@ -65,7 +72,7 @@ func NewResourcesFitPlugin(configMap config.PluginConfig, scheduler pipeline.Pol
 		}
 	}
 
-	return &rf, nil
+	return rf, nil
 }
 
 func (rf *ResourcesFitPlugin) Name() string {

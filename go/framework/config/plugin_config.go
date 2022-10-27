@@ -17,7 +17,7 @@ type PluginListEntry struct {
 }
 
 // Used to configure the plugins used in the scheduling pipeline.
-type PluginsList struct {
+type SchedulingPluginsList struct {
 	Sort *PluginListEntry `json:"sort" yaml:"sort"`
 
 	SampleNodes *PluginListEntry `json:"sampleNodes" yaml:"sampleNodes"`
@@ -31,6 +31,19 @@ type PluginsList struct {
 	Score []*PluginListEntry `json:"score" yaml:"score"`
 
 	Reserve []*PluginListEntry `json:"reserve" yaml:"reserve"`
+}
+
+// Used to configure the plugins used in the sampling pipeline.
+type SamplingPluginsList struct {
+	SamplingStrategies []*PluginListEntry `json:"samplingStrategies" yaml:"samplingStrategies"`
+
+	PreFilter []*PluginListEntry `json:"preFilter" yaml:"preFilter"`
+
+	Filter []*PluginListEntry `json:"filter" yaml:"filter"`
+
+	PreScore []*PluginListEntry `json:"preScore" yaml:"preScore"`
+
+	Score []*PluginListEntry `json:"score" yaml:"score"`
 }
 
 // Stores configuration for a specific plugin in the PluginsList.

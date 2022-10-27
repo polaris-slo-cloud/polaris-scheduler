@@ -1,4 +1,4 @@
-package sampling
+package roundrobinsampling
 
 import (
 	"fmt"
@@ -6,16 +6,17 @@ import (
 
 	core "k8s.io/api/core/v1"
 	"polaris-slo-cloud.github.io/polaris-scheduler/v2/framework/collections"
+	"polaris-slo-cloud.github.io/polaris-scheduler/v2/framework/config"
 	"polaris-slo-cloud.github.io/polaris-scheduler/v2/framework/pipeline"
-	"polaris-slo-cloud.github.io/polaris-scheduler/v2/framework/remotesampling"
 )
 
 var (
-	_ SamplingStrategy            = (*RandomSamplingStrategy)(nil)
-	_ SamplingStrategyFactoryFunc = NewRoundRobinSamplingStrategy
+	_ pipeline.SamplingStrategyPlugin    = (*RoundRobinSamplingStrategy)(nil)
+	_ pipeline.SamplingPluginFactoryFunc = NewRoundRobinSamplingStrategy
 )
 
 const (
+	PluginName                     = "RoundRobinSamplingStrategy"
 	RoundRobinSamplingStrategyName = "round-robin"
 )
 
@@ -31,7 +32,7 @@ type roundRobinSampleRange struct {
 }
 
 type RoundRobinSamplingStrategy struct {
-	polarisNodeSampler PolarisNodeSampler
+	polarisNodeSampler pipeline.PolarisNodeSampler
 
 	// Stores the last index from which a node was taken for a sample.
 	// Access to this is controller by the mutex.
@@ -39,7 +40,7 @@ type RoundRobinSamplingStrategy struct {
 	mutex         *sync.Mutex
 }
 
-func NewRoundRobinSamplingStrategy(polarisNodeSampler PolarisNodeSampler) (SamplingStrategy, error) {
+func NewRoundRobinSamplingStrategy(pluginConfig config.PluginConfig, polarisNodeSampler pipeline.PolarisNodeSampler) (pipeline.Plugin, error) {
 	rr := &RoundRobinSamplingStrategy{
 		polarisNodeSampler: polarisNodeSampler,
 		lastNodeIndex:      -1,
@@ -49,28 +50,30 @@ func NewRoundRobinSamplingStrategy(polarisNodeSampler PolarisNodeSampler) (Sampl
 }
 
 func (rr *RoundRobinSamplingStrategy) Name() string {
+	return PluginName
+}
+
+func (rr *RoundRobinSamplingStrategy) StrategyName() string {
 	return RoundRobinSamplingStrategyName
 }
 
-func (rr *RoundRobinSamplingStrategy) SampleNodes(request *remotesampling.RemoteNodesSamplerRequest) (*remotesampling.RemoteNodesSamplerResponse, error) {
-	response := &remotesampling.RemoteNodesSamplerResponse{}
-
+func (rr *RoundRobinSamplingStrategy) SampleNodes(ctx pipeline.SchedulingContext, podInfo *pipeline.PodInfo, sampleSize int) ([]*pipeline.NodeInfo, pipeline.Status) {
 	storeReader := rr.polarisNodeSampler.NodesCache().Nodes().ReadLock()
 	defer storeReader.Unlock()
 
-	sampleRange := rr.computeSampleRange(request, storeReader)
-	response.Nodes = rr.getNodesSample(sampleRange, storeReader)
+	sampleRange := rr.computeSampleRange(sampleSize, storeReader)
+	nodes := rr.getNodesSample(sampleRange, storeReader)
 
-	return response, nil
+	return nodes, pipeline.NewSuccessStatus()
 }
 
 func (rr *RoundRobinSamplingStrategy) computeSampleRange(
-	request *remotesampling.RemoteNodesSamplerRequest,
+	sampleSize int,
 	storeReader collections.ConcurrentObjectStoreReader[*core.Node],
 ) roundRobinSampleRange {
 	totalNodesCount := storeReader.Len()
 	ret := roundRobinSampleRange{
-		requiredNodesCount: calcRequiredNodesCount(request, storeReader),
+		requiredNodesCount: sampleSize,
 	}
 	if totalNodesCount == 0 {
 		ret.requiredNodesCount = 0

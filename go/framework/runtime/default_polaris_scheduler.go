@@ -11,6 +11,7 @@ import (
 	"polaris-slo-cloud.github.io/polaris-scheduler/v2/framework/client"
 	"polaris-slo-cloud.github.io/polaris-scheduler/v2/framework/config"
 	"polaris-slo-cloud.github.io/polaris-scheduler/v2/framework/pipeline"
+	"polaris-slo-cloud.github.io/polaris-scheduler/v2/framework/runtime/pluginfactories"
 	"polaris-slo-cloud.github.io/polaris-scheduler/v2/framework/runtime/queue"
 )
 
@@ -32,7 +33,7 @@ const (
 type DefaultPolarisScheduler struct {
 	config            *config.SchedulerConfig
 	clusterClientsMgr client.ClusterClientsManager
-	pluginsFactory    pipeline.PluginsFactory
+	pluginsFactory    pipeline.SchedulingPluginsFactory
 	podSource         pipeline.PodSource
 
 	// The scheduling queue, which is sorted by the SortPlugin.
@@ -70,7 +71,7 @@ type DefaultPolarisScheduler struct {
 // Creates a new instance of the default implementation of the PolarisScheduler.
 func NewDefaultPolarisScheduler(
 	conf *config.SchedulerConfig,
-	pluginsRegistry *pipeline.PluginsRegistry,
+	pluginsRegistry *pipeline.PluginsRegistry[pipeline.PolarisScheduler],
 	podSource pipeline.PodSource,
 	clusterClientsMgr client.ClusterClientsManager,
 	logger *logr.Logger,
@@ -81,7 +82,7 @@ func NewDefaultPolarisScheduler(
 	scheduler := &DefaultPolarisScheduler{
 		config:                conf,
 		clusterClientsMgr:     clusterClientsMgr,
-		pluginsFactory:        NewDefaultPluginsFactory(pluginsRegistry),
+		pluginsFactory:        pluginfactories.NewDefaultSchedulingPluginsFactory(pluginsRegistry),
 		podSource:             podSource,
 		decisionPipelineQueue: make(chan *pipeline.SampledPodInfo, decisionPipelineQueueSize),
 		stopCh:                make(chan bool, 1),

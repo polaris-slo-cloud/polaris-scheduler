@@ -11,6 +11,9 @@ type NodeInfo struct {
 	// The Node described by this NodeInfo.
 	Node *core.Node `json:"node" yaml:"node"`
 
+	// The scores computed by the Score plugins of the sampling pipeline.
+	SamplingScores []WeightedNodeScore
+
 	// The name of the cluster that the node is part of.
 	ClusterName string `json:"clusterName" yaml:"clusterName"`
 
@@ -25,6 +28,12 @@ type NodeInfo struct {
 type NodeScore struct {
 	Node  *NodeInfo
 	Score int64
+}
+
+// WeightedNodeScore adds the weight .
+type WeightedNodeScore struct {
+	Score  int64 `json:"score" yaml:"score"`
+	Weight int32 `json:"weight" yaml:"weight"`
 }
 
 // Creates a new NodeInfo object and computes its resources.

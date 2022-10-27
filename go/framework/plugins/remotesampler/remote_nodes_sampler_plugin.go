@@ -9,8 +9,8 @@ import (
 )
 
 var (
-	_ pipeline.SampleNodesPlugin = (*RemoteNodesSamplerPlugin)(nil)
-	_ pipeline.PluginFactoryFunc = NewRemoteNodesSamplerPlugin
+	_ pipeline.SampleNodesPlugin           = (*RemoteNodesSamplerPlugin)(nil)
+	_ pipeline.SchedulingPluginFactoryFunc = NewRemoteNodesSamplerPlugin
 )
 
 const (

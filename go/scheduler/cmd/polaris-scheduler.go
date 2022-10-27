@@ -29,7 +29,7 @@ type commandLineArgs struct {
 }
 
 // Creates a new polaris-scheduler command.
-func NewPolarisSchedulerCmd(ctx context.Context, pluginsRegistry *pipeline.PluginsRegistry) *cobra.Command {
+func NewPolarisSchedulerCmd(ctx context.Context, pluginsRegistry *pipeline.PluginsRegistry[pipeline.PolarisScheduler]) *cobra.Command {
 	cmdLineArgs := commandLineArgs{}
 
 	logger := initLogger()
@@ -129,7 +129,7 @@ func setUpSubmitPodApiPodSource(schedConfig *config.SchedulerConfig, logger *log
 func runScheduler(
 	ctx context.Context,
 	schedConfig *config.SchedulerConfig,
-	pluginsRegistry *pipeline.PluginsRegistry,
+	pluginsRegistry *pipeline.PluginsRegistry[pipeline.PolarisScheduler],
 	logger *logr.Logger,
 	cmdLineArgs *commandLineArgs,
 ) error {

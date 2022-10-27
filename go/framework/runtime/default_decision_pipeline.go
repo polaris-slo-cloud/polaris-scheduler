@@ -137,7 +137,8 @@ func (dp *DefaultDecisionPipeline) runPreScorePlugins(ctx pipeline.SchedulingCon
 }
 
 func (dp *DefaultDecisionPipeline) runScorePlugins(ctx pipeline.SchedulingContext, podInfo *pipeline.PodInfo, eligibleNodes []*pipeline.NodeInfo) ([]pipeline.NodeScore, pipeline.Status) {
-	allScores := make([][]pipeline.NodeScore, len(eligibleNodes))
+	// allSchedulerScores[i] stores the scores for all eligible nodes computed by the scheduler score plugin i.
+	allSchedulerScores := make([][]pipeline.NodeScore, len(dp.plugins.Score))
 
 	for i, plugin := range dp.plugins.Score {
 		scores, status := dp.runScorePlugin(ctx, plugin, podInfo, eligibleNodes)
@@ -145,10 +146,10 @@ func (dp *DefaultDecisionPipeline) runScorePlugins(ctx pipeline.SchedulingContex
 			status.SetFailedPlugin(plugin, pipeline.ScoreStage)
 			return nil, status
 		}
-		allScores[i] = scores
+		allSchedulerScores[i] = scores
 	}
 
-	finalScores := dp.combineScores(dp.plugins.Score, allScores, eligibleNodes)
+	finalScores := dp.combineScores(dp.plugins.Score, allSchedulerScores, eligibleNodes)
 	return finalScores, pipeline.NewSuccessStatus()
 }
 
@@ -181,30 +182,44 @@ func (dp *DefaultDecisionPipeline) runScorePlugin(
 	return scores, pipeline.NewSuccessStatus()
 }
 
-func (dp *DefaultDecisionPipeline) combineScores(scorePlugins []*pipeline.ScorePluginWithExtensions, allScores [][]pipeline.NodeScore, eligibleNodes []*pipeline.NodeInfo) []pipeline.NodeScore {
+// Aggregates the scores for each node and computes an average.
+// The aggregation considers the scores computed by the sampling score plugins (stored in each eligibleNode) and
+// those computed by the scheduler's score plugins (stored in allSchedulerScores - allSchedulerScores[i] contains a list of scores for all eligible nodes computed by the scheduler score plugin i).
+func (dp *DefaultDecisionPipeline) combineScores(scorePlugins []*pipeline.ScorePluginWithExtensions, allSchedulerScores [][]pipeline.NodeScore, eligibleNodes []*pipeline.NodeInfo) []pipeline.NodeScore {
 	nodeScores := make([]pipeline.NodeScore, len(eligibleNodes))
 	for i := range nodeScores {
 		nodeScores[i] = pipeline.NodeScore{
 			Node:  eligibleNodes[i],
 			Score: 0,
 		}
+
+		dp.aggregateSamplingScores(&nodeScores[i])
 	}
 
+	// Aggregate the scores from the scheduler's score plugins.
 	for pluginIndex, plugin := range scorePlugins {
 		weight := int64(plugin.Weight)
-		pluginScores := allScores[pluginIndex]
+		pluginScores := allSchedulerScores[pluginIndex]
 		for nodeIndex := range pluginScores {
 			nodeScores[nodeIndex].Score += pluginScores[nodeIndex].Score * weight
 		}
 	}
 
-	pluginsCount := int64(len(scorePlugins))
+	schedulerScorePluginsCount := int64(len(scorePlugins))
 	for i := range nodeScores {
 		accumulatedScore := &nodeScores[i]
-		accumulatedScore.Score = accumulatedScore.Score / pluginsCount
+		accumulatedScoreComponents := schedulerScorePluginsCount + int64(len(accumulatedScore.Node.SamplingScores))
+		accumulatedScore.Score = accumulatedScore.Score / accumulatedScoreComponents
 	}
 
 	return nodeScores
+}
+
+func (dp *DefaultDecisionPipeline) aggregateSamplingScores(nodeScore *pipeline.NodeScore) {
+	for i := range nodeScore.Node.SamplingScores {
+		score := &nodeScore.Node.SamplingScores[i]
+		nodeScore.Score += nodeScore.Score * int64(score.Weight)
+	}
 }
 
 func (dp *DefaultDecisionPipeline) pickBestNode(finalScores []pipeline.NodeScore) *pipeline.NodeInfo {

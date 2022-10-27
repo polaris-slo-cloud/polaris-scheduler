@@ -1,4 +1,4 @@
-package sampling
+package randomsampling
 
 import (
 	"fmt"
@@ -6,8 +6,8 @@ import (
 
 	core "k8s.io/api/core/v1"
 
+	"polaris-slo-cloud.github.io/polaris-scheduler/v2/framework/config"
 	"polaris-slo-cloud.github.io/polaris-scheduler/v2/framework/pipeline"
-	"polaris-slo-cloud.github.io/polaris-scheduler/v2/framework/remotesampling"
 )
 
 const (
@@ -15,23 +15,24 @@ const (
 )
 
 var (
-	_ SamplingStrategy            = (*RandomSamplingStrategy)(nil)
-	_ SamplingStrategyFactoryFunc = NewRandomSamplingStrategy
+	_ pipeline.SamplingStrategyPlugin    = (*RandomSamplingStrategy)(nil)
+	_ pipeline.SamplingPluginFactoryFunc = NewRandomSamplingStrategy
 )
 
 const (
+	PluginName                 = "RandomSamplingStrategy"
 	RandomSamplingStrategyName = "random"
 )
 
 type RandomSamplingStrategy struct {
-	polarisNodeSampler PolarisNodeSampler
+	polarisNodeSampler pipeline.PolarisNodeSampler
 
 	// A pool of rand.Rand objects, each of them to be used by a single goroutine.
 	// rand.Rand is not thread-safe and the global rand.Int() function uses a mutex to sync access to a single Rand.
 	randPool chan *rand.Rand
 }
 
-func NewRandomSamplingStrategy(polarisNodeSampler PolarisNodeSampler) (SamplingStrategy, error) {
+func NewRandomSamplingStrategy(pluginConfig config.PluginConfig, polarisNodeSampler pipeline.PolarisNodeSampler) (pipeline.Plugin, error) {
 	rs := &RandomSamplingStrategy{
 		polarisNodeSampler: polarisNodeSampler,
 		randPool:           make(chan *rand.Rand, randomPoolSize),
@@ -46,12 +47,16 @@ func NewRandomSamplingStrategy(polarisNodeSampler PolarisNodeSampler) (SamplingS
 }
 
 func (rs *RandomSamplingStrategy) Name() string {
+	return PluginName
+}
+
+func (rs *RandomSamplingStrategy) StrategyName() string {
 	return RandomSamplingStrategyName
 }
 
-func (rs *RandomSamplingStrategy) SampleNodes(request *remotesampling.RemoteNodesSamplerRequest) (*remotesampling.RemoteNodesSamplerResponse, error) {
+func (rs *RandomSamplingStrategy) SampleNodes(ctx pipeline.SchedulingContext, podInfo *pipeline.PodInfo, sampleSize int) ([]*pipeline.NodeInfo, pipeline.Status) {
 	random := <-rs.randPool
-	nodes := rs.sampleNodesInternal(request, random)
+	nodes := rs.sampleNodesInternal(podInfo, sampleSize, random)
 	rs.randPool <- random
 
 	clusterName := rs.polarisNodeSampler.ClusterClient().ClusterName()
@@ -60,17 +65,13 @@ func (rs *RandomSamplingStrategy) SampleNodes(request *remotesampling.RemoteNode
 		nodeInfos[i] = pipeline.NewNodeInfo(clusterName, node)
 	}
 
-	response := &remotesampling.RemoteNodesSamplerResponse{
-		Nodes: nodeInfos,
-	}
-	return response, nil
+	return nodeInfos, pipeline.NewSuccessStatus()
 }
 
-func (rs *RandomSamplingStrategy) sampleNodesInternal(request *remotesampling.RemoteNodesSamplerRequest, random *rand.Rand) []*core.Node {
+func (rs *RandomSamplingStrategy) sampleNodesInternal(podInfo *pipeline.PodInfo, reqNodesCount int, random *rand.Rand) []*core.Node {
 	storeReader := rs.polarisNodeSampler.NodesCache().Nodes().ReadLock()
 	defer storeReader.Unlock()
 
-	reqNodesCount := calcRequiredNodesCount(request, storeReader)
 	totalNodesCount := storeReader.Len()
 	if totalNodesCount == 0 {
 		return make([]*core.Node, 0)

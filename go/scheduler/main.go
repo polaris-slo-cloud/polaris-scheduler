@@ -18,10 +18,10 @@ func main() {
 	rand.Seed(time.Now().UnixNano())
 	ctx := util.SetupSignalHandlingContext()
 
-	pluginsRegistry := pipeline.NewPluginsRegistry(map[string]pipeline.PluginFactoryFunc{
+	pluginsRegistry := pipeline.NewPluginsRegistry(map[string]pipeline.PluginFactoryFunc[pipeline.PolarisScheduler]{
 		prioritysort.PluginName:  prioritysort.NewPrioritySortPlugin,
 		remotesampler.PluginName: remotesampler.NewRemoteNodesSamplerPlugin,
-		resourcesfit.PluginName:  resourcesfit.NewResourcesFitPlugin,
+		resourcesfit.PluginName:  resourcesfit.NewResourcesFitSchedulingPlugin,
 	})
 
 	schedulerCmd := cmd.NewPolarisSchedulerCmd(ctx, pluginsRegistry)

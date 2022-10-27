@@ -16,7 +16,8 @@ import (
 	"polaris-slo-cloud.github.io/polaris-scheduler/v2/framework/client"
 	"polaris-slo-cloud.github.io/polaris-scheduler/v2/framework/clusteragent"
 	"polaris-slo-cloud.github.io/polaris-scheduler/v2/framework/config"
-	"polaris-slo-cloud.github.io/polaris-scheduler/v2/framework/sampling"
+	"polaris-slo-cloud.github.io/polaris-scheduler/v2/framework/pipeline"
+	"polaris-slo-cloud.github.io/polaris-scheduler/v2/framework/runtime"
 	"polaris-slo-cloud.github.io/polaris-scheduler/v2/framework/util"
 	"polaris-slo-cloud.github.io/polaris-scheduler/v2/k8s-connector/kubernetes"
 )
@@ -30,7 +31,7 @@ type commandLineArgs struct {
 }
 
 // Creates a new polaris-cluster-agent command.
-func NewPolarisClusterAgentCmd(ctx context.Context, samplingStrategies []sampling.SamplingStrategyFactoryFunc) *cobra.Command {
+func NewPolarisClusterAgentCmd(ctx context.Context, pluginRegistry *pipeline.PluginsRegistry[pipeline.PolarisNodeSampler]) *cobra.Command {
 	cmdLineArgs := commandLineArgs{}
 
 	logger := initLogger()
@@ -48,7 +49,7 @@ func NewPolarisClusterAgentCmd(ctx context.Context, samplingStrategies []samplin
 				os.Exit(1)
 			}
 
-			if err := runNodeSampler(ctx, samplerConfig, samplingStrategies, logger, &cmdLineArgs); err != nil {
+			if err := runNodeSampler(ctx, samplerConfig, pluginRegistry, logger, &cmdLineArgs); err != nil {
 				logger.Error(err, "Error starting polaris-cluster-agent")
 				os.Exit(1)
 			}
@@ -120,15 +121,15 @@ func startNodeSampler(
 	clusterAgentConfig *config.ClusterAgentConfig,
 	k8sClusterClient kubernetes.KubernetesClusterClient,
 	ginEngine *gin.Engine,
-	samplingStrategies []sampling.SamplingStrategyFactoryFunc,
+	pluginRegistry *pipeline.PluginsRegistry[pipeline.PolarisNodeSampler],
 	logger *logr.Logger,
-) (sampling.PolarisNodeSampler, error) {
+) (pipeline.PolarisNodeSampler, error) {
 	nodesCache, err := setUpNodesCache(clusterAgentConfig, k8sClusterClient)
 	if err != nil {
 		return nil, err
 	}
 
-	nodeSampler := sampling.NewDefaultPolarisNodeSampler(clusterAgentConfig, ginEngine, k8sClusterClient, nodesCache, samplingStrategies, logger)
+	nodeSampler := runtime.NewDefaultPolarisNodeSampler(clusterAgentConfig, ginEngine, k8sClusterClient, nodesCache, pluginRegistry, logger)
 	err = nodeSampler.Start(ctx)
 	if err != nil {
 		return nil, err
@@ -156,7 +157,7 @@ func startClusterAgent(
 func runNodeSampler(
 	ctx context.Context,
 	clusterAgentConfig *config.ClusterAgentConfig,
-	samplingStrategies []sampling.SamplingStrategyFactoryFunc,
+	pluginRegistry *pipeline.PluginsRegistry[pipeline.PolarisNodeSampler],
 	logger *logr.Logger,
 	cmdLineArgs *commandLineArgs,
 ) error {
@@ -172,7 +173,7 @@ func runNodeSampler(
 	ginEngine := gin.Default()
 	ginEngine.SetTrustedProxies(nil)
 
-	if _, err := startNodeSampler(ctx, clusterAgentConfig, k8sClusterClient, ginEngine, samplingStrategies, logger); err != nil {
+	if _, err := startNodeSampler(ctx, clusterAgentConfig, k8sClusterClient, ginEngine, pluginRegistry, logger); err != nil {
 		return err
 	}
 

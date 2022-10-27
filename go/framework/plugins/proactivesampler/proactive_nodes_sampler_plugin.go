@@ -8,8 +8,8 @@ import (
 )
 
 var (
-	_ pipeline.SampleNodesPlugin = (*ProactiveNodesSamplerPlugin)(nil)
-	_ pipeline.PluginFactoryFunc = NewProactiveNodesSamplerPlugin
+	_ pipeline.SampleNodesPlugin           = (*ProactiveNodesSamplerPlugin)(nil)
+	_ pipeline.SchedulingPluginFactoryFunc = NewProactiveNodesSamplerPlugin
 )
 
 const (

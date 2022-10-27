@@ -97,7 +97,7 @@ type SchedulerConfig struct {
 	RemoteClusters map[string]*RemoteClusterConfig `json:"remoteClusters" yaml:"remoteClusters"`
 
 	// The list of plugins for the scheduling pipeline.
-	Plugins PluginsList `json:"plugins" yaml:"plugins"`
+	Plugins SchedulingPluginsList `json:"plugins" yaml:"plugins"`
 
 	// (optional) Allows specifying configuration parameters for each plugin.
 	PluginsConfig []*PluginsConfigListEntry `json:"pluginsConfig" yaml:"pluginsConfig"`

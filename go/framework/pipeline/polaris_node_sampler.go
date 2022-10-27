@@ -1,4 +1,4 @@
-package sampling
+package pipeline
 
 import (
 	"context"
@@ -33,7 +33,7 @@ type PolarisNodeSampler interface {
 	NodesCache() client.NodesCache
 
 	// Gets the sampling strategies available in this sampler.
-	SamplingStrategies() []SamplingStrategy
+	SamplingStrategies() []SamplingStrategyPlugin
 
 	// Gets the logger used by this sampler.
 	Logger() *logr.Logger

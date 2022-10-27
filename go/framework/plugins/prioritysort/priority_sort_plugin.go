@@ -6,8 +6,8 @@ import (
 )
 
 var (
-	_ pipeline.SortPlugin        = (*PrioritySortPlugin)(nil)
-	_ pipeline.PluginFactoryFunc = NewPrioritySortPlugin
+	_ pipeline.SortPlugin                  = (*PrioritySortPlugin)(nil)
+	_ pipeline.SchedulingPluginFactoryFunc = NewPrioritySortPlugin
 )
 
 const (
