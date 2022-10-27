@@ -13,6 +13,9 @@ type ClusterClient interface {
 	CommitSchedulingDecision(ctx context.Context, schedulingDecision *ClusterSchedulingDecision) error
 
 	// ToDo: Add generic methods for accessing arbitrary cluster objects? or at least a defined subset?
+
+	// Originally, we considered using a native only client in the cluster agent, but then we decided to
+	// keep this abstraction for the cluster agent, because it allows orchestrator-independent cluster agent plugins.
 }
 
 // Manages the clients for multiple clusters.
