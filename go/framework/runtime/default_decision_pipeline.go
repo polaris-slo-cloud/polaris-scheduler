@@ -183,17 +183,22 @@ func (dp *DefaultDecisionPipeline) runScorePlugin(
 }
 
 // Aggregates the scores for each node and computes an average.
-// The aggregation considers the scores computed by the sampling score plugins (stored in each eligibleNode) and
-// those computed by the scheduler's score plugins (stored in allSchedulerScores - allSchedulerScores[i] contains a list of scores for all eligible nodes computed by the scheduler score plugin i).
+// The aggregation considers the accumulated score computed by the sampling score plugins (stored in each eligibleNode) and
+// the scores computed by the scheduler's score plugins (stored in allSchedulerScores - allSchedulerScores[i] contains a list of scores for all eligible nodes computed by the scheduler score plugin i).
 func (dp *DefaultDecisionPipeline) combineScores(scorePlugins []*pipeline.ScorePluginWithExtensions, allSchedulerScores [][]pipeline.NodeScore, eligibleNodes []*pipeline.NodeInfo) []pipeline.NodeScore {
 	nodeScores := make([]pipeline.NodeScore, len(eligibleNodes))
 	for i := range nodeScores {
-		nodeScores[i] = pipeline.NodeScore{
-			Node:  eligibleNodes[i],
-			Score: 0,
+		node := eligibleNodes[i]
+
+		var initialScore int64 = 0
+		if node.SamplingScore != nil {
+			initialScore = node.SamplingScore.AccumulatedScore
 		}
 
-		dp.aggregateSamplingScores(&nodeScores[i])
+		nodeScores[i] = pipeline.NodeScore{
+			Node:  node,
+			Score: initialScore,
+		}
 	}
 
 	// Aggregate the scores from the scheduler's score plugins.
@@ -208,18 +213,14 @@ func (dp *DefaultDecisionPipeline) combineScores(scorePlugins []*pipeline.ScoreP
 	schedulerScorePluginsCount := int64(len(scorePlugins))
 	for i := range nodeScores {
 		accumulatedScore := &nodeScores[i]
-		accumulatedScoreComponents := schedulerScorePluginsCount + int64(len(accumulatedScore.Node.SamplingScores))
+		accumulatedScoreComponents := schedulerScorePluginsCount
+		if accumulatedScore.Node.SamplingScore != nil {
+			accumulatedScoreComponents += int64(accumulatedScore.Node.SamplingScore.ScorePluginsCount)
+		}
 		accumulatedScore.Score = accumulatedScore.Score / accumulatedScoreComponents
 	}
 
 	return nodeScores
-}
-
-func (dp *DefaultDecisionPipeline) aggregateSamplingScores(nodeScore *pipeline.NodeScore) {
-	for i := range nodeScore.Node.SamplingScores {
-		score := &nodeScore.Node.SamplingScores[i]
-		nodeScore.Score += nodeScore.Score * int64(score.Weight)
-	}
 }
 
 func (dp *DefaultDecisionPipeline) pickBestNode(finalScores []pipeline.NodeScore) *pipeline.NodeInfo {
