@@ -2,7 +2,6 @@
 
 # The list of addresses and ports that the cluster-agent should listen on
 # in the format "<IP>:<PORT>"
-# This setting applies only if "operatingMode" is set to "multiCluster".
 #
 # Default: [ "0.0.0.0:8081" ]
 submitPodListenOn:
@@ -18,3 +17,42 @@ nodesCacheUpdateIntervalMs: 200
 #
 # Default: 1000
 nodesCacheUpdateQueueSize: 1000
+
+# The number of Sampling Pipelines to run in parallel.
+#
+# Default: 100.
+parallelSamplingPipelines: 100
+
+# The list of plugins for the sampling pipeline.
+plugins:
+  # Only one sampling strategy is used for a pod in the sampling pipeline.
+  # However, multiple sampling strategy plugins can be configured, which will then be exposed
+  # as different sampling endpoints.
+  samplingStrategies:
+    - name: RandomSamplingStrategy
+    - name: RoundRobinSamplingStrategy
+
+  preFilter:
+    - name: ResourcesFit
+    # - name: Plugin2
+
+  filter:
+    - name: ResourcesFit
+    # - name: Plugin2
+
+  # preScore:
+  #   - name: Plugin1
+  #   - name: Plugin2
+
+  score:
+    - name: ResourcesFit
+      weight: 1
+  #   - name: Plugin2
+  #     weight: 1
+
+
+# (optional) Allows specifying configuration parameters for each plugin.
+pluginsConfig:
+  - name: ResourcesFit
+    config:
+      scoringMode: LeastAllocated

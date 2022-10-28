@@ -35,6 +35,9 @@ type SchedulingPluginsList struct {
 
 // Used to configure the plugins used in the sampling pipeline.
 type SamplingPluginsList struct {
+	// Only one sampling strategy is used for a pod in the sampling pipeline.
+	// However, multiple sampling strategy plugins can be configured, which will then be exposed
+	// as different sampling endpoints.
 	SamplingStrategies []*PluginListEntry `json:"samplingStrategies" yaml:"samplingStrategies"`
 
 	PreFilter []*PluginListEntry `json:"preFilter" yaml:"preFilter"`
