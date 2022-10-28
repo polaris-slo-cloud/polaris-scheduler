@@ -32,6 +32,13 @@ func ConvertToSlice[T any](linkedList *list.List) []T {
 	return slice
 }
 
+// Appends the elements of src to the end of dest, without making any copies.
+func AppendToLinkedList(dest *list.List, src *list.List) {
+	for e := src.Front(); e != nil; e = e.Next() {
+		dest.PushBack(e)
+	}
+}
+
 // Swaps the elements in the positions i and j.
 func Swap[T any](slice []T, i int, j int) {
 	temp := slice[j]
