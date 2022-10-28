@@ -4,6 +4,7 @@ WORKDIR /usr/src/polaris-scheduler
 # Copy the Go Modules manifests
 COPY go.work go.work.sum ./
 COPY ./cluster-agent/go.mod ./cluster-agent/go.sum ./cluster-agent/
+COPY ./context-awareness/go.mod ./context-awareness/go.sum ./context-awareness/
 COPY ./framework/go.mod ./framework/go.sum ./framework/
 COPY ./k8s-connector/go.mod ./k8s-connector/go.sum ./k8s-connector/
 COPY ./scheduler/go.mod ./scheduler/go.sum ./scheduler/
