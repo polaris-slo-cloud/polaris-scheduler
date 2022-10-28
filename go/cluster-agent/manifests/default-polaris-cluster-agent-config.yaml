@@ -35,10 +35,12 @@ plugins:
   preFilter:
     - name: ResourcesFit
     - name: GeoLocation
+    - name: BatteryLevel
 
   filter:
     - name: ResourcesFit
     - name: GeoLocation
+    - name: BatteryLevel
 
   # preScore:
   #   - name: Plugin1

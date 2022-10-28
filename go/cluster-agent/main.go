@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"polaris-slo-cloud.github.io/polaris-scheduler/v2/cluster-agent/cmd"
+	"polaris-slo-cloud.github.io/polaris-scheduler/v2/contextawareness/plugins/batterylevel"
 	"polaris-slo-cloud.github.io/polaris-scheduler/v2/contextawareness/plugins/geolocation"
 	"polaris-slo-cloud.github.io/polaris-scheduler/v2/framework/pipeline"
 	"polaris-slo-cloud.github.io/polaris-scheduler/v2/framework/plugins/randomsampling"
@@ -24,6 +25,7 @@ func main() {
 		roundrobinsampling.PluginName: roundrobinsampling.NewRoundRobinSamplingStrategy,
 		resourcesfit.PluginName:       resourcesfit.NewResourcesFitSamplingPlugin,
 		geolocation.PluginName:        resourcesfit.NewResourcesFitSamplingPlugin,
+		batterylevel.PluginName:       batterylevel.NewBatteryLevelSamplingPlugin,
 	})
 
 	nodeSamplerCmd := cmd.NewPolarisClusterAgentCmd(ctx, pluginsRegistry)
