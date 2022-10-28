@@ -1,7 +1,6 @@
 package runtime
 
 import (
-	"container/list"
 	"math/rand"
 	"sort"
 	"time"
@@ -16,19 +15,21 @@ var (
 
 // Default implementation of the Polaris DecisionPipeline
 type DefaultDecisionPipeline struct {
-	id        int
-	plugins   *pipeline.DecisionPipelinePlugins
-	scheduler pipeline.PolarisScheduler
-	random    *rand.Rand
+	id             int
+	plugins        *pipeline.DecisionPipelinePlugins
+	pipelineHelper *PipelineHelper
+	scheduler      pipeline.PolarisScheduler
+	random         *rand.Rand
 }
 
 // Creates a new instance of the DefaultDecisionPipeline.
 func NewDefaultDecisionPipeline(id int, plugins *pipeline.DecisionPipelinePlugins, scheduler pipeline.PolarisScheduler) *DefaultDecisionPipeline {
 	decisionPipeline := DefaultDecisionPipeline{
-		id:        id,
-		plugins:   plugins,
-		scheduler: scheduler,
-		random:    rand.New(rand.NewSource(time.Now().UnixNano())),
+		id:             id,
+		plugins:        plugins,
+		pipelineHelper: NewPipelineHelper(),
+		scheduler:      scheduler,
+		random:         rand.New(rand.NewSource(time.Now().UnixNano())),
 	}
 	return &decisionPipeline
 }
@@ -36,29 +37,30 @@ func NewDefaultDecisionPipeline(id int, plugins *pipeline.DecisionPipelinePlugin
 func (dp *DefaultDecisionPipeline) SchedulePod(podInfo *pipeline.SampledPodInfo) (*pipeline.SchedulingDecision, pipeline.Status) {
 	schedCtx := podInfo.Ctx
 
-	status := dp.runPreFilterPlugins(schedCtx, podInfo.PodInfo)
+	status := dp.pipelineHelper.RunPreFilterPlugins(schedCtx, dp.plugins.PreFilter, podInfo.PodInfo)
 	if !pipeline.IsSuccessStatus(status) {
 		return nil, status
 	}
 
 	candidateNodesList := collections.ConvertToLinkedList(podInfo.SampledNodes)
 	podInfo.SampledNodes = nil // Allow reclaiming memory.
-	status = dp.runFilterPlugins(schedCtx, podInfo.PodInfo, candidateNodesList)
+	status = dp.pipelineHelper.RunFilterPlugins(schedCtx, dp.plugins.Filter, podInfo.PodInfo, candidateNodesList)
 	if !pipeline.IsSuccessStatus(status) {
 		return nil, status
 	}
 	eligibleNodes := collections.ConvertToSlice[*pipeline.NodeInfo](candidateNodesList)
 	candidateNodesList = nil
 
-	status = dp.runPreScorePlugins(schedCtx, podInfo.PodInfo, eligibleNodes)
+	status = dp.pipelineHelper.RunPreScorePlugins(schedCtx, dp.plugins.PreScore, podInfo.PodInfo, eligibleNodes)
 	if !pipeline.IsSuccessStatus(status) {
 		return nil, status
 	}
 
-	finalScores, status := dp.runScorePlugins(schedCtx, podInfo.PodInfo, eligibleNodes)
+	allScores, status := dp.pipelineHelper.RunScorePlugins(schedCtx, dp.plugins.Score, podInfo.PodInfo, eligibleNodes)
 	if !pipeline.IsSuccessStatus(status) {
 		return nil, status
 	}
+	finalScores := dp.combineScores(dp.plugins.Score, allScores, eligibleNodes)
 
 	targetNode := dp.pickBestNode(finalScores)
 	status = dp.runReservePlugins(schedCtx, podInfo.PodInfo, targetNode)
@@ -72,114 +74,6 @@ func (dp *DefaultDecisionPipeline) SchedulePod(podInfo *pipeline.SampledPodInfo)
 		TargetNode: targetNode,
 	}
 	return &decision, pipeline.NewSuccessStatus()
-}
-
-func (dp *DefaultDecisionPipeline) runPreFilterPlugins(ctx pipeline.SchedulingContext, podInfo *pipeline.PodInfo) pipeline.Status {
-	for _, plugin := range dp.plugins.PreFilter {
-		status := plugin.PreFilter(ctx, podInfo)
-		if !pipeline.IsSuccessStatus(status) {
-			status.SetFailedPlugin(plugin, pipeline.PreFilterStage)
-			return status
-		}
-	}
-	return pipeline.NewSuccessStatus()
-}
-
-func (dp *DefaultDecisionPipeline) runFilterPlugins(ctx pipeline.SchedulingContext, podInfo *pipeline.PodInfo, candidateNodes *list.List) pipeline.Status {
-	for _, plugin := range dp.plugins.Filter {
-		status := dp.runFilterPlugin(ctx, plugin, podInfo, candidateNodes)
-
-		if !pipeline.IsSuccessStatus(status) {
-			status.SetFailedPlugin(plugin, pipeline.FilterStage)
-			return status
-		}
-
-		if candidateNodes.Len() == 0 {
-			unschedulableStatus := pipeline.NewStatus(pipeline.Unschedulable, "no candidates left after Filter plugins")
-			unschedulableStatus.SetFailedPlugin(plugin, pipeline.FilterStage)
-			return unschedulableStatus
-		}
-	}
-	return pipeline.NewSuccessStatus()
-}
-
-func (dp *DefaultDecisionPipeline) runFilterPlugin(ctx pipeline.SchedulingContext, plugin pipeline.FilterPlugin, podInfo *pipeline.PodInfo, candidateNodes *list.List) pipeline.Status {
-	for currNode := candidateNodes.Front(); currNode != nil; {
-		status := plugin.Filter(ctx, podInfo, currNode.Value.(*pipeline.NodeInfo))
-
-		// We get the next element already now, because the current one might be removed from the list.
-		nextNode := currNode.Next()
-
-		if !pipeline.IsSuccessStatus(status) {
-			switch status.Code() {
-			case pipeline.Unschedulable:
-				candidateNodes.Remove(currNode)
-				break
-			case pipeline.InternalError:
-				return status
-			}
-		}
-
-		currNode = nextNode
-	}
-	return pipeline.NewSuccessStatus()
-}
-
-func (dp *DefaultDecisionPipeline) runPreScorePlugins(ctx pipeline.SchedulingContext, podInfo *pipeline.PodInfo, eligibleNodes []*pipeline.NodeInfo) pipeline.Status {
-	for _, plugin := range dp.plugins.PreScore {
-		status := plugin.PreScore(ctx, podInfo, eligibleNodes)
-		if !pipeline.IsSuccessStatus(status) {
-			status.SetFailedPlugin(plugin, pipeline.PreScoreStage)
-			return status
-		}
-	}
-	return pipeline.NewSuccessStatus()
-}
-
-func (dp *DefaultDecisionPipeline) runScorePlugins(ctx pipeline.SchedulingContext, podInfo *pipeline.PodInfo, eligibleNodes []*pipeline.NodeInfo) ([]pipeline.NodeScore, pipeline.Status) {
-	// allSchedulerScores[i] stores the scores for all eligible nodes computed by the scheduler score plugin i.
-	allSchedulerScores := make([][]pipeline.NodeScore, len(dp.plugins.Score))
-
-	for i, plugin := range dp.plugins.Score {
-		scores, status := dp.runScorePlugin(ctx, plugin, podInfo, eligibleNodes)
-		if !pipeline.IsSuccessStatus(status) {
-			status.SetFailedPlugin(plugin, pipeline.ScoreStage)
-			return nil, status
-		}
-		allSchedulerScores[i] = scores
-	}
-
-	finalScores := dp.combineScores(dp.plugins.Score, allSchedulerScores, eligibleNodes)
-	return finalScores, pipeline.NewSuccessStatus()
-}
-
-func (dp *DefaultDecisionPipeline) runScorePlugin(
-	ctx pipeline.SchedulingContext,
-	plugin *pipeline.ScorePluginWithExtensions,
-	podInfo *pipeline.PodInfo,
-	eligibleNodes []*pipeline.NodeInfo,
-) ([]pipeline.NodeScore, pipeline.Status) {
-	scores := make([]pipeline.NodeScore, len(eligibleNodes))
-
-	for i, node := range eligibleNodes {
-		score, status := plugin.Score(ctx, podInfo, node)
-		if !pipeline.IsSuccessStatus(status) {
-			return nil, status
-		}
-		scores[i] = pipeline.NodeScore{
-			Node:  node,
-			Score: score,
-		}
-	}
-
-	if plugin.ScoreExtensions != nil {
-		status := plugin.ScoreExtensions.NormalizeScores(ctx, podInfo, scores)
-		if !pipeline.IsSuccessStatus(status) {
-			return nil, status
-		}
-	}
-
-	return scores, pipeline.NewSuccessStatus()
 }
 
 // Aggregates the scores for each node and computes an average.
