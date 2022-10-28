@@ -34,11 +34,11 @@ plugins:
 
   preFilter:
     - name: ResourcesFit
-    # - name: Plugin2
+    - name: GeoLocation
 
   filter:
     - name: ResourcesFit
-    # - name: Plugin2
+    - name: GeoLocation
 
   # preScore:
   #   - name: Plugin1
@@ -47,8 +47,8 @@ plugins:
   score:
     - name: ResourcesFit
       weight: 1
-  #   - name: Plugin2
-  #     weight: 1
+    - name: GeoLocation
+      weight: 1
 
 
 # (optional) Allows specifying configuration parameters for each plugin.
