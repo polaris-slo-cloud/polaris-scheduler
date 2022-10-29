@@ -1,22 +1,19 @@
 #!/bin/bash
 
+CLUSTER_CONFIG_DIR=$(dirname "${BASH_SOURCE}")
+source "${CLUSTER_CONFIG_DIR}/common.sh"
+
 # The name of the kind cluster.
-kindClusterName="kind"
-
-# kind Kubernetes node image
-kindImage="kindest/node:v1.25.3@sha256:3f251a73d58a0db2950d5abfa5adfa503099ac1b3811e9bc253ff03c079e108e"
-
-# fake-kubelet image
-fakeKubeletImageVersionTag="v0.8.0"
+kindClusterName="kind-01"
 
 # Declares the types of fake nodes and how many nodes of each type to create.
 # For each fake node type, the amount of CPUs and memory must be added to fakeNodeTypeCpus and fakeNodeTypeMemory respectively.
 declare -A fakeNodeTypes=(
-    ["raspi-3b-plus"]="2"
-    ["raspi-4b-2gi"]="2"
-    ["raspi-4b-4gi"]="4"
-    ["cell-5g-base-station"]="3"
-    ["cloud-medium"]="1"
+    ["raspi-3b-plus"]="200"
+    ["raspi-4b-2gi"]="200"
+    ["raspi-4b-4gi"]="400"
+    ["cell-5g-base-station"]="100"
+    ["cloud-medium"]="100"
 )
 
 # Each node's CPUs are configured as `cpu` and `polaris-slo-cloud.github.io/fake-cpu`.

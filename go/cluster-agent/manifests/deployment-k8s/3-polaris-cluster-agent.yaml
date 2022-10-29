@@ -65,7 +65,7 @@ spec:
             - containerPort: 8081
           volumeMounts:
             - mountPath: /etc/polaris-cluster-agent
-              name: polaris-cluster-agent-config
+              name: config-volume
               readOnly: true
       hostNetwork: false
       hostPID: false

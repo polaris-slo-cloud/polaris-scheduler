@@ -17,6 +17,9 @@ set -m
 SCRIPT_DIR=$(dirname "${BASH_SOURCE}")
 source "${SCRIPT_DIR}/common.sh"
 
+# kubectl context (is set after loading the cluster config file).
+CONTEXT=""
+
 # Special indents for formatting raw YAML strings for the template.
 EXTRA_NODE_LABELS_INDENT="        "
 EXTENDED_RESOURCES_INDENT="      "
@@ -53,10 +56,10 @@ function validateConfig() {
 
 # Starts a local kind cluster with a single node.
 function startLocalCluster() {
-    kind create cluster --image ${kindImage}
+    kind create cluster --name "${kindClusterName}" --image "${kindImage}"
 
     # Ensure that we do not schedule anything on the control plane node.
-    kubectl taint --context $CONTEXT node kind-control-plane node-role.kubernetes.io/master=:NoSchedule
+    kubectl taint --context $CONTEXT node "${kindClusterName}-control-plane" node-role.kubernetes.io/master=:NoSchedule
 }
 
 # Deploys fake-kubelet to simulate nodes.
@@ -90,7 +93,7 @@ function deployFakeKubelet() {
         nodeTypeYaml=$(echo "${nodeTypeYaml}" | sed -e "s/{{ \.polarisTemplate\.extraNodeLabels }}/${extraLabels}/" -)
         nodeTypeYaml=$(echo "${nodeTypeYaml}" | sed -e "s/{{ \.polarisTemplate\.extendedResources }}/${extendedResourcesYaml}/" -)
         nodeTypeYaml=$(echo "${nodeTypeYaml}" | sed -e "s/{{ \.fakeKubeletImageVersionTag }}/${fakeKubeletImageVersionTag}/" -)
-        echo "${nodeTypeYaml}" | kubectl apply -f -
+        echo "${nodeTypeYaml}" | kubectl --context $CONTEXT apply -f -
 
         totalNodes=$(($totalNodes + $fakeNodesCount))
     done
@@ -151,6 +154,9 @@ fi
 # Load the configuration (yes, it is dangerous to do it this way, but this script is only used in our experiments).
 # For an example config file see: cluster.config.sh
 source "$1"
+
+# Set the kubectl context according to the cluster name.
+CONTEXT="kind-${kindClusterName}"
 
 validateConfig
 startLocalCluster
