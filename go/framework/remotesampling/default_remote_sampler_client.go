@@ -15,6 +15,10 @@ var (
 	_ RemoteSamplerClient = (*DefaultRemoteSamplerClient)(nil)
 )
 
+const (
+	samplingEndpointsPath = "samples"
+)
+
 // Default implementation of RemoteSamplerClient.
 type DefaultRemoteSamplerClient struct {
 	clusterName          string
@@ -31,7 +35,7 @@ func NewDefaultRemoteSamplerClient(
 	samplingStrategyName string,
 	logger *logr.Logger,
 ) *DefaultRemoteSamplerClient {
-	requestURI, err := url.JoinPath(baseURI, samplingStrategyName)
+	requestURI, err := url.JoinPath(baseURI, samplingEndpointsPath, samplingStrategyName)
 	if err != nil {
 		panic(err)
 	}

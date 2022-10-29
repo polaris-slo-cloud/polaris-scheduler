@@ -15,6 +15,7 @@ var (
 
 type samplingContext struct {
 	ctx          context.Context
+	cancelFn     context.CancelFunc
 	request      *RemoteNodesSamplerRequest
 	waitGroup    *sync.WaitGroup
 	results      map[string]*RemoteNodesSamplerResult
@@ -39,10 +40,10 @@ func newSamplingContext(ctx context.Context, request *RemoteNodesSamplerRequest,
 	waitGroup.Add(clustersCount)
 
 	reqCtx, cancelFn := context.WithCancel(ctx)
-	defer cancelFn()
 
 	samplingCtx := &samplingContext{
 		ctx:          reqCtx,
+		cancelFn:     cancelFn,
 		request:      request,
 		waitGroup:    &waitGroup,
 		results:      make(map[string]*RemoteNodesSamplerResult, clustersCount),
@@ -75,6 +76,7 @@ func NewDefaultRemoteSamplerClientsManager(
 func (scm *DefaultRemoteSamplerClientsManager) SampleNodesFromAllClusters(ctx context.Context, request *RemoteNodesSamplerRequest) (map[string]*RemoteNodesSamplerResult, error) {
 	scm.ensureSamplingRoutinesStarted()
 	samplingCtx := newSamplingContext(ctx, request, len(scm.remoteSamplers))
+	defer samplingCtx.cancelFn()
 
 	for _, clusterSampler := range scm.remoteSamplers {
 		queuedReq := &queuedSamplingRequest{
@@ -91,7 +93,7 @@ func (scm *DefaultRemoteSamplerClientsManager) SampleNodesFromAllClusters(ctx co
 func (scm *DefaultRemoteSamplerClientsManager) sampleSingleCluster(samplingCtx *samplingContext, clusterSampler RemoteSamplerClient) {
 	result := &RemoteNodesSamplerResult{}
 
-	if response, err := clusterSampler.SampleNodes(samplingCtx.ctx, samplingCtx.request); err != nil {
+	if response, err := clusterSampler.SampleNodes(samplingCtx.ctx, samplingCtx.request); err == nil {
 		result.Response = response
 	} else {
 		result.Error = err

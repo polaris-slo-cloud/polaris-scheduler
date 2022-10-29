@@ -53,7 +53,10 @@ func (sp *DefaultSamplingPipeline) SampleNodes(
 
 	stopwatch := util.NewStopwatch()
 	stopwatch.Start()
-	defer sp.stopAndLogStopwatch(stopwatch, podInfo, status, eligibleNodes)
+	defer func() {
+		// Wrap this call into a function to ensure that the arguments are evaluated when the function executes.
+		sp.stopAndLogStopwatch(stopwatch, podInfo, status, eligibleNodes)
+	}()
 
 	sampleSize := sp.calcRequiredNodesCount(nodesToSampleBp)
 
@@ -152,5 +155,6 @@ func (sp *DefaultSamplingPipeline) stopAndLogStopwatch(stopwatch *util.Stopwatch
 		"pod", fullPodName,
 		"success", pipeline.IsSuccessStatus(status),
 		"eligibleNodes", len(eligibleNodes),
+		"durationMs", stopwatch.Duration().Milliseconds(),
 	)
 }
