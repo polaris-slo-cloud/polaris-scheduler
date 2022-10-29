@@ -75,8 +75,8 @@ func ReadStringFromPluginConfig(rawConfig PluginConfig, key string) (string, err
 // Reads an int32 value from the raw plugin config.
 func ReadInt32FromPluginConfig(rawConfig PluginConfig, key string) (int32, error) {
 	if val, ok := rawConfig[key]; ok {
-		if valInt32, ok := val.(int32); ok {
-			return valInt32, nil
+		if valInt, ok := val.(int); ok {
+			return int32(valInt), nil
 		} else {
 			return 0, fmt.Errorf("value is not of type int32")
 		}
