@@ -6,6 +6,29 @@ source "${CLUSTER_CONFIG_DIR}/common.sh"
 # The name of the kind cluster.
 kindClusterName="kind-01"
 
+# The port on localhost, where the polaris-cluster-agent of this cluster should be exposed.
+clusterAgentPortLocalhost=30001
+
+# (optional) Additional kind node config.
+# For config options see https://kind.sigs.k8s.io/docs/user/configuration/
+kindExtraConfig=$(cat <<EOF
+kind: Cluster
+apiVersion: kind.x-k8s.io/v1alpha4
+nodes:
+- role: control-plane
+  # port forward ${clusterAgentPortLocalhost} on the host to 30033 on the control-plane node
+  extraPortMappings:
+  - containerPort: 30033
+    hostPort: ${clusterAgentPortLocalhost}
+    # optional: set the bind address on the host
+    # 0.0.0.0 is the current default
+    listenAddress: "127.0.0.1"
+    # optional: set the protocol to one of TCP, UDP, SCTP.
+    # TCP is the default
+    # protocol: TCP
+EOF
+)
+
 # Declares the types of fake nodes and how many nodes of each type to create.
 # For each fake node type, the amount of CPUs and memory must be added to fakeNodeTypeCpus and fakeNodeTypeMemory respectively.
 declare -A fakeNodeTypes=(

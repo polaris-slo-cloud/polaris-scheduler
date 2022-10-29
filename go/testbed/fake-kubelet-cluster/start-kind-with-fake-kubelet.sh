@@ -56,7 +56,14 @@ function validateConfig() {
 
 # Starts a local kind cluster with a single node.
 function startLocalCluster() {
-    kind create cluster --name "${kindClusterName}" --image "${kindImage}"
+    if [ -z "$kindExtraConfig" ]; then
+        # If there is no extra config, just launch kind create normally.
+        kind create cluster --name "${kindClusterName}" --image "${kindImage}"
+    else
+        # If there is an extra config, pass it to kind create.
+        echo "Starting kind cluster with extra config."
+        echo "$kindExtraConfig" | kind create cluster --name "${kindClusterName}" --image "${kindImage}" --config=-
+    fi
 
     # Ensure that we do not schedule anything on the control plane node.
     kubectl taint --context $CONTEXT node "${kindClusterName}-control-plane" node-role.kubernetes.io/master=:NoSchedule
