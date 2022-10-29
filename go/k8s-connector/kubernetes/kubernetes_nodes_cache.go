@@ -144,7 +144,7 @@ func (knc *KubernetesNodesCache) runUpdateLoopIteration() {
 		select {
 		case update := <-knc.updateQueue:
 			if storeWriter == nil {
-				storeWriter := knc.store.WriteLock()
+				storeWriter = knc.store.WriteLock()
 				defer storeWriter.Unlock()
 			}
 			knc.applyUpdate(update, storeWriter)

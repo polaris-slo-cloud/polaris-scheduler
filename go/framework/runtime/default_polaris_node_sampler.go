@@ -67,9 +67,9 @@ type samplingRequest struct {
 }
 
 type defaultPolarisNodeSamplerStatus struct {
-	Status     string         `json:"status" yaml:"status"`
-	Routes     gin.RoutesInfo `json:"routes" yaml:"routes"`
-	NodesCount int            `json:"nodesCount" yaml:"nodesCount"`
+	Status     string   `json:"status" yaml:"status"`
+	Routes     []string `json:"routes" yaml:"routes"`
+	NodesCount int      `json:"nodesCount" yaml:"nodesCount"`
 }
 
 func NewDefaultPolarisNodeSampler(
@@ -218,9 +218,15 @@ func (sampler *DefaultPolarisNodeSampler) sampleNodes(
 }
 
 func (sampler *DefaultPolarisNodeSampler) handleStatusRequest(c *gin.Context) {
+	routes := sampler.ginEngine.Routes()
+	routePaths := make([]string, len(routes))
+	for i, route := range routes {
+		routePaths[i] = route.Path
+	}
+
 	status := &defaultPolarisNodeSamplerStatus{
 		Status:     "ok",
-		Routes:     sampler.ginEngine.Routes(),
+		Routes:     routePaths,
 		NodesCount: sampler.getNodesCount(),
 	}
 	c.JSON(http.StatusOK, status)
