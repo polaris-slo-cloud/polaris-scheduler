@@ -2,10 +2,13 @@ package runtime
 
 import (
 	"container/list"
+	"fmt"
 	"math"
 
+	"github.com/go-logr/logr"
 	"polaris-slo-cloud.github.io/polaris-scheduler/v2/framework/collections"
 	"polaris-slo-cloud.github.io/polaris-scheduler/v2/framework/pipeline"
+	"polaris-slo-cloud.github.io/polaris-scheduler/v2/framework/util"
 )
 
 const (
@@ -24,6 +27,7 @@ type DefaultSamplingPipeline struct {
 	plugins        *pipeline.SamplingPipelinePlugins
 	pipelineHelper *PipelineHelper
 	nodeSampler    pipeline.PolarisNodeSampler
+	logger         *logr.Logger
 }
 
 func NewDefaultSamplingPipeline(id int, plugins *pipeline.SamplingPipelinePlugins, nodeSampler pipeline.PolarisNodeSampler) *DefaultSamplingPipeline {
@@ -32,6 +36,7 @@ func NewDefaultSamplingPipeline(id int, plugins *pipeline.SamplingPipelinePlugin
 		plugins:        plugins,
 		pipelineHelper: NewPipelineHelper(),
 		nodeSampler:    nodeSampler,
+		logger:         nodeSampler.Logger(),
 	}
 	return samplingPipeline
 }
@@ -43,14 +48,21 @@ func (sp *DefaultSamplingPipeline) SampleNodes(
 	podInfo *pipeline.PodInfo,
 	nodesToSampleBp int,
 ) ([]*pipeline.NodeInfo, pipeline.Status) {
+	var status pipeline.Status
+	var eligibleNodes []*pipeline.NodeInfo
+
+	stopwatch := util.NewStopwatch()
+	stopwatch.Start()
+	defer sp.stopAndLogStopwatch(stopwatch, podInfo, status, eligibleNodes)
+
 	sampleSize := sp.calcRequiredNodesCount(nodesToSampleBp)
 
-	status := sp.pipelineHelper.RunPreFilterPlugins(ctx, sp.plugins.PreFilter, podInfo)
+	status = sp.pipelineHelper.RunPreFilterPlugins(ctx, sp.plugins.PreFilter, podInfo)
 	if !pipeline.IsSuccessStatus(status) {
 		return nil, status
 	}
 
-	eligibleNodes, status := sp.sampleAndFilterNodes(ctx, samplingStrategy, podInfo, sampleSize)
+	eligibleNodes, status = sp.sampleAndFilterNodes(ctx, samplingStrategy, podInfo, sampleSize)
 	if !pipeline.IsSuccessStatus(status) {
 		return nil, status
 	}
@@ -130,4 +142,15 @@ func (sp *DefaultSamplingPipeline) combineAndAssignScores(scorePlugins []*pipeli
 			eligibleNodes[nodeIndex].SamplingScore.AccumulatedScore += pluginScores[nodeIndex].Score * weight
 		}
 	}
+}
+
+func (sp *DefaultSamplingPipeline) stopAndLogStopwatch(stopwatch *util.Stopwatch, podInfo *pipeline.PodInfo, status pipeline.Status, eligibleNodes []*pipeline.NodeInfo) {
+	stopwatch.Stop()
+	fullPodName := fmt.Sprintf("%s.%s", podInfo.Pod.Namespace, podInfo.Pod.Name)
+	sp.logger.Info(
+		"Pod traversed sampling pipeline",
+		"pod", fullPodName,
+		"success", pipeline.IsSuccessStatus(status),
+		"eligibleNodes", len(eligibleNodes),
+	)
 }

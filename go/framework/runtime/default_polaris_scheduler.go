@@ -13,6 +13,7 @@ import (
 	"polaris-slo-cloud.github.io/polaris-scheduler/v2/framework/pipeline"
 	"polaris-slo-cloud.github.io/polaris-scheduler/v2/framework/runtime/pluginfactories"
 	"polaris-slo-cloud.github.io/polaris-scheduler/v2/framework/runtime/queue"
+	"polaris-slo-cloud.github.io/polaris-scheduler/v2/framework/util"
 )
 
 var (
@@ -234,6 +235,11 @@ func (ps *DefaultPolarisScheduler) pumpIntoQueue(src pipeline.PodSource) {
 func (ps *DefaultPolarisScheduler) addPodToQueue(pod *core.Pod) {
 	schedCtx := pipeline.NewSchedulingContext(ps.ctx)
 	queuedPod := pipeline.NewQueuedPodInfo(pod, schedCtx)
+
+	stopwatch := util.NewStopwatch()
+	stopwatch.Start()
+	schedCtx.Write(util.StopwatchStateKey, stopwatch)
+
 	ps.schedQueue.Enqueue(queuedPod)
 }
 
@@ -287,6 +293,7 @@ func (ps *DefaultPolarisScheduler) executeDecisionPipelinePump(id int, decisionP
 		case pod := <-ps.decisionPipelineQueue:
 			atomic.AddInt32(&ps.podsInDecisionPipeline, 1)
 			decision, status := decisionPipeline.SchedulePod(pod)
+			ps.stopStopwatch(pod, decision)
 			if pipeline.IsSuccessStatus(status) {
 				ps.commitSchedulingDecision(pod.Ctx, decision)
 			} else {
@@ -324,4 +331,21 @@ func (ps *DefaultPolarisScheduler) commitSchedulingDecision(schedCtx pipeline.Sc
 	}
 
 	go clusterClient.CommitSchedulingDecision(schedCtx.Context(), clusterSchedDecision)
+}
+
+func (ps *DefaultPolarisScheduler) stopStopwatch(podInfo *pipeline.SampledPodInfo, decision *pipeline.SchedulingDecision) {
+	stopwatch, ok, err := pipeline.ReadTypedStateData[*util.Stopwatch](podInfo.Ctx, util.StopwatchStateKey)
+	if !ok || err != nil {
+		panic("could not read Stopwatch from SchedulingContext")
+	}
+
+	stopwatch.Stop()
+
+	fullPodName := fmt.Sprintf("%s.%s", podInfo.Pod.Namespace, podInfo.Pod.Name)
+	targetNode := "-"
+	if decision != nil {
+		targetNode = fmt.Sprintf("%s.%s", decision.TargetNode.ClusterName, decision.TargetNode.Node)
+	}
+
+	ps.logger.Info("Pod traversed scheduling pipeline", "pod", fullPodName, "targetNode", targetNode, "durationMs", stopwatch.Duration().Milliseconds())
 }

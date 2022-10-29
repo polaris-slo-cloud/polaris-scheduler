@@ -2,6 +2,7 @@ package pipeline
 
 import (
 	"context"
+	"fmt"
 	"sync"
 )
 
@@ -23,6 +24,27 @@ func NewSchedulingContext(ctx context.Context) SchedulingContext {
 		state: make(map[string]StateData),
 	}
 	return &schedulingCtx
+}
+
+// Convenience function to read StateData from a SchedulingContext and casting it to a specific type.
+// Returns
+//   - (stateData as T, true, nil) if the key was found
+//   - (zeroValue(T), false, nil) if the key was not found
+//   - (zeroValue(T), true, err) if the key was found, but the value could not be converted to T
+func ReadTypedStateData[T StateData](schedCtx SchedulingContext, key string) (T, bool, error) {
+	data, ok := schedCtx.Read(key)
+	if !ok {
+		var nilT T
+		return nilT, false, nil
+	}
+
+	dataT, ok := data.(T)
+	if !ok {
+		var nilT T
+		return nilT, true, fmt.Errorf("invalid object stored as %s", key)
+	}
+
+	return dataT, true, nil
 }
 
 func (schedCtx *schedulingContextImpl) Context() context.Context {
