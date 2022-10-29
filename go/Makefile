@@ -81,7 +81,7 @@ build-cluster-agent:
 	$(COMMONENVVAR) $(BUILDENVVAR) go build -ldflags '-X k8s.io/component-base/version.gitVersion=$(VERSION) -w' -o bin/polaris-cluster-agent cluster-agent/main.go
 
 .PHONY: build-cluster-agent-debug
-build-cluster-agent-debug:
+build-cluster-agent-debug: cluster-agent-debug-config
 	$(COMMONENVVAR) $(BUILDENVVAR) go build -gcflags="all=-N -l" -ldflags '-X k8s.io/component-base/version.gitVersion=$(VERSION)' -o bin/polaris-cluster-agent cluster-agent/main.go
 
 .PHONY: cluster-agent-debug-config

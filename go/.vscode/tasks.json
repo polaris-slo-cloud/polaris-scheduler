@@ -9,9 +9,9 @@
             "command": "make build-scheduler-debug"
         },
         {
-            "label": "build-node-sampler-debug",
+            "label": "build-cluster-agent-debug",
             "type": "shell",
-            "command": "make build-node-sampler-debug"
+            "command": "make build-cluster-agent-debug"
         }
     ]
 }
