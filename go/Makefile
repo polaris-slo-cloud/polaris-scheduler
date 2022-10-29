@@ -17,14 +17,12 @@
 COMMONENVVAR=GOOS=$(shell uname -s | tr A-Z a-z) GOARCH=$(subst x86_64,amd64,$(patsubst i%86,386,$(shell uname -m)))
 BUILDENVVAR=CGO_ENABLED=0
 
-PROJECT_VERSION=2.0.0-beta.0
+PROJECT_VERSION=2.0.0-beta.1
 
-# RELEASE_REGISTRY is the container registry to push
-# into. The default is to push to the staging
-# registry, not production(k8s.gcr.io).
+# RELEASE_REGISTRY is the container registry to push into.
 RELEASE_REGISTRY?=polarissloc
-RELEASE_VERSION?=$(shell date +%Y%m%d%H%M)-v$(PROJECT_VERSION)
-# RELEASE_VERSION?=v$(shell date +%Y%m%d)-$(shell git describe --tags --match "v*")
+# RELEASE_VERSION?=$(shell date +%Y%m%d%H%M)-v$(PROJECT_VERSION)
+RELEASE_VERSION?=v$(PROJECT_VERSION)
 SCHEDULER_RELEASE_IMAGE:=polaris-scheduler:$(RELEASE_VERSION)
 CLUSTER_AGENT_RELEASE_IMAGE:=polaris-cluster-agent:$(RELEASE_VERSION)
 
@@ -33,7 +31,8 @@ CLUSTER_AGENT_RELEASE_IMAGE:=polaris-cluster-agent:$(RELEASE_VERSION)
 # The RELEASE_VERSION variable can have one of two formats:
 # v20201009-v0.18.800-46-g939c1c0 - automated build for a commit(not a tag) and also a local build
 # v20200521-v0.18.800             - automated build for a tag
-VERSION=$(shell echo $(RELEASE_VERSION) | awk -F - '{print $$2}')
+# VERSION=$(shell echo $(RELEASE_VERSION) | awk -F - '{print $$2}')
+VERSION=v$(PROJECT_VERSION)
 
 DEBUG_CONFIG=bin/config/kubernetes/scheduler.conf
 DEBUG_CONFIG_PATH=$(shell echo "$(shell pwd)/$(DEBUG_CONFIG)" | sed -e "s|\/|\\\/|g" -)
