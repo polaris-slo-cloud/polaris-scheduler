@@ -64,7 +64,6 @@ func (ph *PipelineHelper) runFilterPlugin(ctx pipeline.SchedulingContext, plugin
 			switch status.Code() {
 			case pipeline.Unschedulable:
 				candidateNodes.Remove(currNode)
-				break
 			case pipeline.InternalError:
 				return status
 			}

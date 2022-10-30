@@ -5,6 +5,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	core "k8s.io/api/core/v1"
+	"polaris-slo-cloud.github.io/polaris-scheduler/v2/framework/client"
 	"polaris-slo-cloud.github.io/polaris-scheduler/v2/framework/config"
 	"polaris-slo-cloud.github.io/polaris-scheduler/v2/framework/pipeline"
 )
@@ -39,7 +40,7 @@ func (ps *PodSubmissionApi) handleSubmitPodRequest(c *gin.Context) {
 	var pod core.Pod
 
 	if err := c.Bind(&pod); err != nil {
-		podSubmissionError := &PodSubmissionApiError{Error: err}
+		podSubmissionError := &PodSubmissionApiError{Error: client.NewPolarisErrorDto(err)}
 		c.JSON(http.StatusBadRequest, podSubmissionError)
 		return
 	}

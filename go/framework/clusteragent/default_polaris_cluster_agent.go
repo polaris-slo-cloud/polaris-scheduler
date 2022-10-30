@@ -87,13 +87,13 @@ func (cb *DefaultPolarisClusterAgent) handlePostSchedulingDecision(c *gin.Contex
 	var schedDecision client.ClusterSchedulingDecision
 
 	if err := c.Bind(&schedDecision); err != nil {
-		agentError := &PolarisClusterAgentError{Error: err}
+		agentError := &PolarisClusterAgentError{Error: client.NewPolarisErrorDto(err)}
 		c.JSON(http.StatusBadRequest, agentError)
 		return
 	}
 
 	if err := cb.clusterClient.CommitSchedulingDecision(cb.ctx, &schedDecision); err != nil {
-		agentError := &PolarisClusterAgentError{Error: err}
+		agentError := &PolarisClusterAgentError{Error: client.NewPolarisErrorDto(err)}
 		c.JSON(http.StatusInternalServerError, agentError)
 		return
 	}

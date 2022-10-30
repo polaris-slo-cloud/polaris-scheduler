@@ -1,6 +1,9 @@
 package remotesampling
 
-import "polaris-slo-cloud.github.io/polaris-scheduler/v2/framework/pipeline"
+import (
+	"polaris-slo-cloud.github.io/polaris-scheduler/v2/framework/client"
+	"polaris-slo-cloud.github.io/polaris-scheduler/v2/framework/pipeline"
+)
 
 // DTO for requesting a nodes sample from a remote nodes sampler.
 type RemoteNodesSamplerRequest struct {
@@ -22,5 +25,5 @@ type RemoteNodesSamplerResponse struct {
 
 // DTO for error responses.
 type RemoteNodesSamplerError struct {
-	Error error `json:"error" yaml:"error"`
+	Error *client.PolarisErrorDto `json:"error" yaml:"error"`
 }

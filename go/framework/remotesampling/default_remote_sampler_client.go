@@ -9,6 +9,7 @@ import (
 	"net/url"
 
 	"github.com/go-logr/logr"
+	"polaris-slo-cloud.github.io/polaris-scheduler/v2/framework/client"
 )
 
 var (
@@ -113,7 +114,7 @@ func (sc *DefaultRemoteSamplerClient) createSamplerNodesHttpRequest(ctx context.
 
 func (sc *DefaultRemoteSamplerClient) createSamplerError(err error) *RemoteNodesSamplerError {
 	return &RemoteNodesSamplerError{
-		Error: err,
+		Error: client.NewPolarisErrorDto(err),
 	}
 }
 

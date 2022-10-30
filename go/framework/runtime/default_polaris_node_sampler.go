@@ -60,12 +60,6 @@ type DefaultPolarisNodeSampler struct {
 	logger *logr.Logger
 }
 
-type samplingRequest struct {
-	remotesampling.RemoteNodesSamplerRequest
-	samplingStrategy pipeline.SamplingStrategyPlugin
-	ginContext       *gin.Context
-}
-
 type defaultPolarisNodeSamplerStatus struct {
 	Status     string   `json:"status" yaml:"status"`
 	Routes     []string `json:"routes" yaml:"routes"`
@@ -180,7 +174,7 @@ func (sampler *DefaultPolarisNodeSampler) handleSamplingRequest(c *gin.Context, 
 	var samplingReq remotesampling.RemoteNodesSamplerRequest
 
 	if err := c.Bind(&samplingReq); err != nil {
-		samplingError := &remotesampling.RemoteNodesSamplerError{Error: err}
+		samplingError := &remotesampling.RemoteNodesSamplerError{Error: client.NewPolarisErrorDto(err)}
 		c.JSON(http.StatusBadRequest, samplingError)
 		return
 	}
@@ -191,7 +185,7 @@ func (sampler *DefaultPolarisNodeSampler) handleSamplingRequest(c *gin.Context, 
 	if samplingResp, err := sampler.sampleNodes(&samplingReq, samplingPipeline, samplingStrategy); err == nil {
 		c.JSON(http.StatusOK, samplingResp)
 	} else {
-		samplingError := &remotesampling.RemoteNodesSamplerError{Error: err}
+		samplingError := &remotesampling.RemoteNodesSamplerError{Error: client.NewPolarisErrorDto(err)}
 		c.JSON(http.StatusInternalServerError, samplingError)
 	}
 
