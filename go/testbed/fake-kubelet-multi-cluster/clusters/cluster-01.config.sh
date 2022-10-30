@@ -4,7 +4,7 @@ CLUSTER_CONFIG_DIR=$(dirname "${BASH_SOURCE}")
 source "${CLUSTER_CONFIG_DIR}/common.sh"
 
 # The name of the kind cluster.
-kindClusterName="kind-01"
+kindClusterName="kind-01-edge-vienna"
 
 # The port on localhost, where the polaris-cluster-agent of this cluster should be exposed.
 clusterAgentPortLocalhost=30001
@@ -32,11 +32,10 @@ EOF
 # Declares the types of fake nodes and how many nodes of each type to create.
 # For each fake node type, the amount of CPUs and memory must be added to fakeNodeTypeCpus and fakeNodeTypeMemory respectively.
 declare -A fakeNodeTypes=(
-    ["raspi-3b-plus"]="200"
+    ["raspi-3b-plus"]="300"
     ["raspi-4b-2gi"]="200"
     ["raspi-4b-4gi"]="400"
     ["cell-5g-base-station"]="100"
-    ["cloud-medium"]="100"
 )
 
 # Each node's CPUs are configured as `cpu` and `polaris-slo-cloud.github.io/fake-cpu`.
@@ -45,7 +44,6 @@ declare -A fakeNodeTypeCpus=(
     ["raspi-4b-2gi"]="4000m"
     ["raspi-4b-4gi"]="4000m"
     ["cell-5g-base-station"]="4000m"
-    ["cloud-medium"]="8000m"
 )
 
 # Each node's memory is configured as `memory` and `polaris-slo-cloud.github.io/fake-memory`.
@@ -54,14 +52,16 @@ declare -A fakeNodeTypeMemory=(
     ["raspi-4b-2gi"]="2Gi"
     ["raspi-4b-4gi"]="4Gi"
     ["cell-5g-base-station"]="1Gi"
-    ["cloud-medium"]="16Gi"
 )
 
 # Optional extra node labels for each node type.
 # The value for each node type has to be a string of the following format (slashes and quotes must be escaped):
 # "<domain1.io>\/<label1>: <value1>;<domain2.io>\/<label2>: <value2>;<...>"
 declare -A extraNodeLabels=(
-    ["cell-5g-base-station"]="polaris-slo-cloud.github.io\/base-station-5g: \"\";polaris-slo-cloud.github.io\/test-label: \"true\""
+    ["raspi-3b-plus"]="polaris-slo-cloud.github.io\/battery\/capacity-mah: \"2000\";polaris-slo-cloud.github.io\/battery\/level: \"90\";polaris-slo-cloud.github.io\/geo-location: \"48.23804518049565, 16.41301756935763\""
+    ["raspi-4b-2gi"]="polaris-slo-cloud.github.io\/battery\/capacity-mah: \"4000\";polaris-slo-cloud.github.io\/battery\/level: \"50\";polaris-slo-cloud.github.io\/geo-location: \"48.23804518049565, 16.41301756935763\""
+    ["raspi-4b-4gi"]="polaris-slo-cloud.github.io\/battery\/capacity-mah: \"4000\";polaris-slo-cloud.github.io\/battery\/level: \"70\";polaris-slo-cloud.github.io\/geo-location: \"48.23804518049565, 16.41301756935763\""
+    ["cell-5g-base-station"]="polaris-slo-cloud.github.io\/base-station-5g: \"\";polaris-slo-cloud.github.io\/geo-location: \"48.23804518049565, 16.41301756935763\""
 )
 
 # Extended resources.

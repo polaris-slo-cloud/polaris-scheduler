@@ -52,9 +52,9 @@ submitPodListenOn:
 #   clusterB":
 #     baseUri: "https://sampler.cluster-b:8888/v1"
 remoteClusters:
-  kind-01:
+  kind-01-edge-vienna:
     baseUri: "http://localhost:30001/"
-  kind-02:
+  kind-02-cloud-vienna:
     baseUri: "http://localhost:30002/"
 
 # The list of plugins for the scheduling pipeline.

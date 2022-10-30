@@ -18,8 +18,8 @@ curl -XPOST localhost:8080/pods -H "Content-Type: application/json" -d '{
                 "image": "gcr.io/google-containers/pause:3.2",
                 "resources": {
                     "limits": {
-                        "memory": "128Mi",
-                        "cpu": "500m"
+                        "polaris-slo-cloud.github.io/fake-cpu": "4000m",
+                        "polaris-slo-cloud.github.io/fake-memory": "8Gi"
                     }
                 }
             }
