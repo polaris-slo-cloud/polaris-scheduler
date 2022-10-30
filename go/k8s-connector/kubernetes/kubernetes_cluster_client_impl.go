@@ -112,7 +112,7 @@ func (c *KubernetesClusterClientImpl) CommitSchedulingDecision(ctx context.Conte
 	}
 
 	fullyQualifiedPodName := pod.Namespace + "." + pod.Name
-	c.logger.Info("PodScheduled", "pod", fullyQualifiedPodName, "cluster", c.clusterName, "node", binding.Target.Name)
+	c.logger.Info("PodBindingSuccess", "pod", fullyQualifiedPodName, "cluster", c.clusterName, "node", binding.Target.Name)
 	return nil
 }
 

@@ -4,6 +4,55 @@ metadata:
   name: polaris-cluster-agent
   namespace: polaris
 ---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  # ClusterRoles are not namespaced
+  name: polaris-cluster-agent-pod-and-namespace-admin
+rules:
+
+# Allow modifying Pods
+- apiGroups:
+  - ""
+  resources:
+  - pods
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+
+# Allow modifying Namespaces
+- apiGroups:
+  - ""
+  resources:
+  - namespaces
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+---
+# Give the polaris-cluster-agent pod/namespace admin permissions
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: polaris-cluster-agent-as-pod-and-namespace-admin
+subjects:
+  - kind: ServiceAccount
+    name: polaris-cluster-agent
+    namespace: polaris
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: polaris-cluster-agent-pod-and-namespace-admin
+---
 # Give the polaris-cluster-agent scheduler permissions
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
