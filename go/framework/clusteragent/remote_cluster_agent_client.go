@@ -66,7 +66,7 @@ func (cbc *RemoteClusterAgentClient) CommitSchedulingDecision(ctx context.Contex
 	if httpResp.StatusCode == http.StatusCreated {
 		return nil
 	} else {
-		if agentError, err := parseErrorResponseBody(httpResp); err == nil {
+		if agentError, err := cbc.parseErrorResponseBody(httpResp); err == nil {
 			return agentError.Error
 		} else {
 			return err
@@ -92,7 +92,7 @@ func (cbc *RemoteClusterAgentClient) createPostRequest(ctx context.Context, requ
 	return httpReq, nil
 }
 
-func parseErrorResponseBody(httpResp *http.Response) (*PolarisClusterAgentError, error) {
+func (cbc *RemoteClusterAgentClient) parseErrorResponseBody(httpResp *http.Response) (*PolarisClusterAgentError, error) {
 	body, err := io.ReadAll(httpResp.Body)
 	if err != nil {
 		return nil, err

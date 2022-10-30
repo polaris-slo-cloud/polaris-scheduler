@@ -1,8 +1,6 @@
 package kubernetes
 
 import (
-	"fmt"
-
 	"github.com/go-logr/logr"
 	"k8s.io/client-go/rest"
 
@@ -15,42 +13,24 @@ var (
 
 // ClusterClientsManager for Kubernetes.
 type KubernetesClusterClientsManager struct {
-	clients map[string]KubernetesClusterClient
+	*client.GenericClusterClientsManager[KubernetesClusterClient]
 }
 
 // Creates a new KubernetesClusterClientsManager and initializes it with clients for the specified cluster configurations.
 func NewKubernetesClusterClientsManager(clusterConfigs map[string]*rest.Config, parentComponentName string, logger *logr.Logger) (*KubernetesClusterClientsManager, error) {
-	mgr := KubernetesClusterClientsManager{
-		clients: make(map[string]KubernetesClusterClient, len(clusterConfigs)),
-	}
+	clients := make(map[string]KubernetesClusterClient, len(clusterConfigs))
 
 	for clusterName, kubeconfig := range clusterConfigs {
 		client, err := NewKubernetesClusterClientImpl(clusterName, kubeconfig, parentComponentName, logger)
 		if err != nil {
 			return nil, err
 		}
-		mgr.clients[clusterName] = client
+		clients[clusterName] = client
 	}
 
-	return &mgr, nil
-}
-
-func (mgr *KubernetesClusterClientsManager) GetClusterClient(clusterName string) (client.ClusterClient, error) {
-	if client, ok := mgr.clients[clusterName]; ok {
-		return client, nil
+	mgr := &KubernetesClusterClientsManager{
+		GenericClusterClientsManager: client.NewGenericClusterClientsManager(clients),
 	}
-	return nil, fmt.Errorf("could not find a ClusterClient for cluster %s", clusterName)
-}
 
-func (mgr *KubernetesClusterClientsManager) ClustersCount() int {
-	return len(mgr.clients)
-}
-
-func (mgr *KubernetesClusterClientsManager) ForEach(fn func(clusterName string, client client.ClusterClient) error) error {
-	for cluster, client := range mgr.clients {
-		if err := fn(cluster, client); err != nil {
-			return err
-		}
-	}
-	return nil
+	return mgr, nil
 }

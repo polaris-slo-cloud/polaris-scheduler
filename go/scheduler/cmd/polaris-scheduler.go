@@ -12,6 +12,8 @@ import (
 
 	"k8s.io/client-go/rest"
 
+	"polaris-slo-cloud.github.io/polaris-scheduler/v2/framework/client"
+	"polaris-slo-cloud.github.io/polaris-scheduler/v2/framework/clusteragent"
 	"polaris-slo-cloud.github.io/polaris-scheduler/v2/framework/config"
 	"polaris-slo-cloud.github.io/polaris-scheduler/v2/framework/pipeline"
 	"polaris-slo-cloud.github.io/polaris-scheduler/v2/framework/podsubmission"
@@ -81,15 +83,31 @@ func loadConfigWithDefaults(configPath string, logger *logr.Logger) (*config.Sch
 	return schedConfig, nil
 }
 
-func setUpPodSource(schedConfig *config.SchedulerConfig, clusterClientsMgr *kubernetes.KubernetesClusterClientsManager, logger *logr.Logger) (pipeline.PodSource, error) {
-	switch schedConfig.OperatingMode {
-	case config.SingleCluster:
-		return setUpLocalClusterPodSource(schedConfig, clusterClientsMgr, logger)
-	case config.MultiCluster:
-		return setUpSubmitPodApiPodSource(schedConfig, logger)
-	default:
-		return nil, fmt.Errorf("invalid \"operatingMode\": %s", schedConfig.OperatingMode)
+func setUpK8sClusterClientsMgr(schedConfig *config.SchedulerConfig, cmdLineArgs *commandLineArgs, logger *logr.Logger) (*kubernetes.KubernetesClusterClientsManager, error) {
+	k8sConfig, err := kubernetes.LoadKubeconfig(cmdLineArgs.kubeconfig, logger)
+	if err != nil {
+		return nil, err
 	}
+
+	k8sConfigs := map[string]*rest.Config{
+		k8sConfig.ServerName: k8sConfig,
+	}
+
+	return kubernetes.NewKubernetesClusterClientsManager(k8sConfigs, schedConfig.SchedulerName, logger)
+}
+
+func setUpClusterAgentClientsMgr(schedConfig *config.SchedulerConfig, logger *logr.Logger) (client.ClusterClientsManager, error) {
+	if len(schedConfig.RemoteClusters) == 0 {
+		return nil, fmt.Errorf("no remoteClusters configured in scheduler config")
+	}
+	clientsMap := make(map[string]*clusteragent.RemoteClusterAgentClient, len(schedConfig.RemoteClusters))
+
+	for clusterName, clusterConfig := range schedConfig.RemoteClusters {
+		clientsMap[clusterName] = clusteragent.NewRemoteClusterAgentClient(clusterName, clusterConfig, logger)
+	}
+
+	clientsMgr := client.NewGenericClusterClientsManager(clientsMap)
+	return clientsMgr, nil
 }
 
 func setUpLocalClusterPodSource(schedConfig *config.SchedulerConfig, clusterClientsMgr *kubernetes.KubernetesClusterClientsManager, logger *logr.Logger) (pipeline.PodSource, error) {
@@ -133,23 +151,32 @@ func runScheduler(
 	logger *logr.Logger,
 	cmdLineArgs *commandLineArgs,
 ) error {
-	k8sConfig, err := kubernetes.LoadKubeconfig(cmdLineArgs.kubeconfig, logger)
-	if err != nil {
-		return err
-	}
+	var clusterClientsMgr client.ClusterClientsManager
+	var podSource pipeline.PodSource
+	var err error
 
-	k8sConfigs := map[string]*rest.Config{
-		k8sConfig.ServerName: k8sConfig,
-	}
-
-	clusterClientsMgr, err := kubernetes.NewKubernetesClusterClientsManager(k8sConfigs, schedConfig.SchedulerName, logger)
-	if err != nil {
-		return err
-	}
-
-	podSource, err := setUpPodSource(schedConfig, clusterClientsMgr, logger)
-	if err != nil {
-		return err
+	switch schedConfig.OperatingMode {
+	case config.SingleCluster:
+		k8sClusterClientsMgr, err := setUpK8sClusterClientsMgr(schedConfig, cmdLineArgs, logger)
+		if err != nil {
+			return err
+		}
+		clusterClientsMgr = k8sClusterClientsMgr
+		podSource, err = setUpLocalClusterPodSource(schedConfig, k8sClusterClientsMgr, logger)
+		if err != nil {
+			return err
+		}
+	case config.MultiCluster:
+		clusterClientsMgr, err = setUpClusterAgentClientsMgr(schedConfig, logger)
+		if err != nil {
+			return err
+		}
+		podSource, err = setUpSubmitPodApiPodSource(schedConfig, logger)
+		if err != nil {
+			return err
+		}
+	default:
+		return fmt.Errorf("invalid \"operatingMode\": %s", schedConfig.OperatingMode)
 	}
 
 	polarisScheduler := polarisRuntime.NewDefaultPolarisScheduler(schedConfig, pluginsRegistry, podSource, clusterClientsMgr, logger)

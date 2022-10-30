@@ -43,6 +43,9 @@ all: build
 .PHONY: build
 build: build-scheduler build-cluster-agent
 
+.PHONY: release-images
+release-images: scheduler-release-image cluster-agent-release-image
+
 .PHONY: clean
 clean:
 	rm -rf ./bin

@@ -67,28 +67,28 @@ func (sc *DefaultRemoteSamplerClient) SamplingStrategyName() string {
 func (sc *DefaultRemoteSamplerClient) SampleNodes(ctx context.Context, request *RemoteNodesSamplerRequest) (*RemoteNodesSamplerResponse, *RemoteNodesSamplerError) {
 	httpReq, err := sc.createSamplerNodesHttpRequest(ctx, request)
 	if err != nil {
-		return nil, createSamplerError(err)
+		return nil, sc.createSamplerError(err)
 	}
 
 	httpResp, err := sc.httpClient.Do(httpReq)
 	if err != nil {
-		return nil, createSamplerError(err)
+		return nil, sc.createSamplerError(err)
 	}
 	if httpResp.Body != nil {
 		defer httpResp.Body.Close()
 	}
 
 	if httpResp.StatusCode == http.StatusOK {
-		if samplerResponse, err := parseSuccessResponseBody(httpResp); err == nil {
+		if samplerResponse, err := sc.parseSuccessResponseBody(httpResp); err == nil {
 			return samplerResponse, nil
 		} else {
-			return nil, createSamplerError(err)
+			return nil, sc.createSamplerError(err)
 		}
 	} else {
-		if samplerError, err := parseErrorResponseBody(httpResp); err == nil {
+		if samplerError, err := sc.parseErrorResponseBody(httpResp); err == nil {
 			return nil, samplerError
 		} else {
-			return nil, createSamplerError(err)
+			return nil, sc.createSamplerError(err)
 		}
 	}
 }
@@ -111,13 +111,13 @@ func (sc *DefaultRemoteSamplerClient) createSamplerNodesHttpRequest(ctx context.
 	return httpReq, nil
 }
 
-func createSamplerError(err error) *RemoteNodesSamplerError {
+func (sc *DefaultRemoteSamplerClient) createSamplerError(err error) *RemoteNodesSamplerError {
 	return &RemoteNodesSamplerError{
 		Error: err,
 	}
 }
 
-func parseSuccessResponseBody(httpResp *http.Response) (*RemoteNodesSamplerResponse, error) {
+func (sc *DefaultRemoteSamplerClient) parseSuccessResponseBody(httpResp *http.Response) (*RemoteNodesSamplerResponse, error) {
 	body, err := io.ReadAll(httpResp.Body)
 	if err != nil {
 		return nil, err
@@ -128,10 +128,16 @@ func parseSuccessResponseBody(httpResp *http.Response) (*RemoteNodesSamplerRespo
 		return nil, err
 	}
 
+	if samplerResponse.Nodes != nil {
+		for _, node := range samplerResponse.Nodes {
+			node.ClusterName = sc.clusterName
+		}
+	}
+
 	return &samplerResponse, nil
 }
 
-func parseErrorResponseBody(httpResp *http.Response) (*RemoteNodesSamplerError, error) {
+func (sc *DefaultRemoteSamplerClient) parseErrorResponseBody(httpResp *http.Response) (*RemoteNodesSamplerError, error) {
 	body, err := io.ReadAll(httpResp.Body)
 	if err != nil {
 		return nil, err

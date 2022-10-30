@@ -151,7 +151,7 @@ func (sp *DefaultSamplingPipeline) stopAndLogStopwatch(stopwatch *util.Stopwatch
 	stopwatch.Stop()
 	fullPodName := fmt.Sprintf("%s.%s", podInfo.Pod.Namespace, podInfo.Pod.Name)
 	sp.logger.Info(
-		"Pod traversed sampling pipeline",
+		"SamplingComplete",
 		"pod", fullPodName,
 		"success", pipeline.IsSuccessStatus(status),
 		"eligibleNodes", len(eligibleNodes),

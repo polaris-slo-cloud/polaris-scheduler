@@ -25,6 +25,9 @@ var (
 	_ PolarisClusterAgent = (*DefaultPolarisClusterAgent)(nil)
 )
 
+// ToDo: Extract all APIs (cluster agent, remote sampling, pod submission) into distinct classes (like we have for the pod submission).
+// Then we can move all of them into a distinct api package.
+
 // Default, orchestrator-independent implementation of the PolarisClusterAgent.
 //
 // This service will expose a REST API at /agent/*
