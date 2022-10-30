@@ -293,7 +293,6 @@ func (ps *DefaultPolarisScheduler) executeDecisionPipelinePump(id int, decisionP
 		case pod := <-ps.decisionPipelineQueue:
 			atomic.AddInt32(&ps.podsInDecisionPipeline, 1)
 			decision, status := decisionPipeline.SchedulePod(pod)
-			ps.stopStopwatch(pod, decision)
 			if pipeline.IsSuccessStatus(status) {
 				ps.commitSchedulingDecision(pod.Ctx, decision)
 			} else {
@@ -325,27 +324,38 @@ func (ps *DefaultPolarisScheduler) commitSchedulingDecision(schedCtx pipeline.Sc
 		return
 	}
 
+	stopwatch := ps.stopStopwatch(schedCtx)
+
+	go ps.commitSchedulingDecisionUsingClient(schedCtx, clusterClient, decision, stopwatch)
+}
+
+func (ps *DefaultPolarisScheduler) commitSchedulingDecisionUsingClient(
+	schedCtx pipeline.SchedulingContext,
+	clusterClient client.ClusterClient,
+	decision *pipeline.SchedulingDecision,
+	completedStopwatch *util.Stopwatch,
+) {
 	clusterSchedDecision := &client.ClusterSchedulingDecision{
 		Pod:      decision.Pod.Pod,
 		NodeName: decision.TargetNode.Node.Name,
 	}
 
-	go clusterClient.CommitSchedulingDecision(schedCtx.Context(), clusterSchedDecision)
+	fullPodName := decision.Pod.Pod.Namespace + "." + decision.Pod.Pod.Name
+	targetNode := decision.TargetNode.ClusterName + "." + decision.TargetNode.Node.Name
+
+	if err := clusterClient.CommitSchedulingDecision(schedCtx.Context(), clusterSchedDecision); err == nil {
+		ps.logger.Info("SchedulingSuccess", "pod", fullPodName, "targetNode", targetNode, "pipelineDurationMs", completedStopwatch.Duration().Milliseconds())
+	} else {
+		ps.logger.Info("FailedScheduling", "pod", fullPodName, "targetNode", targetNode, "pipelineDurationMs", completedStopwatch.Duration().Milliseconds(), "reason", err)
+	}
 }
 
-func (ps *DefaultPolarisScheduler) stopStopwatch(podInfo *pipeline.SampledPodInfo, decision *pipeline.SchedulingDecision) {
-	stopwatch, ok, err := pipeline.ReadTypedStateData[*util.Stopwatch](podInfo.Ctx, util.StopwatchStateKey)
+func (ps *DefaultPolarisScheduler) stopStopwatch(schedCtx pipeline.SchedulingContext) *util.Stopwatch {
+	stopwatch, ok, err := pipeline.ReadTypedStateData[*util.Stopwatch](schedCtx, util.StopwatchStateKey)
 	if !ok || err != nil {
 		panic("could not read Stopwatch from SchedulingContext")
 	}
 
 	stopwatch.Stop()
-
-	fullPodName := fmt.Sprintf("%s.%s", podInfo.Pod.Namespace, podInfo.Pod.Name)
-	targetNode := "-"
-	if decision != nil {
-		targetNode = fmt.Sprintf("%s.%s", decision.TargetNode.ClusterName, decision.TargetNode.Node)
-	}
-
-	ps.logger.Info("Pod traversed scheduling pipeline", "pod", fullPodName, "targetNode", targetNode, "durationMs", stopwatch.Duration().Milliseconds())
+	return stopwatch
 }
