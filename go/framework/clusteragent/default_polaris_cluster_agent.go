@@ -93,6 +93,7 @@ func (cb *DefaultPolarisClusterAgent) handlePostSchedulingDecision(c *gin.Contex
 	}
 
 	if err := cb.clusterClient.CommitSchedulingDecision(cb.ctx, &schedDecision); err != nil {
+		cb.logger.Info("SchedulingDecisionCommitFailed", "reason", err)
 		agentError := &PolarisClusterAgentError{Error: client.NewPolarisErrorDto(err)}
 		c.JSON(http.StatusInternalServerError, agentError)
 		return

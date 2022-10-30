@@ -17,6 +17,12 @@ import (
 	"polaris-slo-cloud.github.io/polaris-scheduler/v2/framework/client"
 )
 
+const (
+	// The name of the scheduler, to which pods are assigned.
+	// This is needed to avoid interference from the default kube-scheduler.
+	polarisClusterAgentSchedulerName = "polaris-cluster-agent"
+)
+
 var (
 	_ KubernetesClusterClient = (*KubernetesClusterClientImpl)(nil)
 )
@@ -80,7 +86,12 @@ func (c *KubernetesClusterClientImpl) EventRecorder() record.EventRecorder {
 }
 
 func (c *KubernetesClusterClientImpl) CommitSchedulingDecision(ctx context.Context, schedulingDecision *client.ClusterSchedulingDecision) error {
-	pod := schedulingDecision.Pod
+	// ToDo: check if pod already exists, before trying to create it.
+	pod, err := c.createPod(ctx, schedulingDecision.Pod)
+	if err != nil {
+		return err
+	}
+
 	binding := &core.Binding{
 		ObjectMeta: meta.ObjectMeta{
 			Namespace: pod.Namespace,
@@ -93,7 +104,7 @@ func (c *KubernetesClusterClientImpl) CommitSchedulingDecision(ctx context.Conte
 		},
 	}
 
-	err := c.k8sClientSet.CoreV1().Pods(pod.Namespace).Bind(ctx, binding, meta.CreateOptions{})
+	err = c.k8sClientSet.CoreV1().Pods(pod.Namespace).Bind(ctx, binding, meta.CreateOptions{})
 	if err != nil {
 		c.logger.Error(err, "could not bind Pod", "pod", pod, "binding", binding)
 		c.eventRecorder.Eventf(pod, core.EventTypeWarning, "FailedScheduling", "Could not bind pod to node %s", &binding.Target.Name)
@@ -103,4 +114,9 @@ func (c *KubernetesClusterClientImpl) CommitSchedulingDecision(ctx context.Conte
 	fullyQualifiedPodName := pod.Namespace + "." + pod.Name
 	c.logger.Info("PodScheduled", "pod", fullyQualifiedPodName, "cluster", c.clusterName, "node", binding.Target.Name)
 	return nil
+}
+
+func (c *KubernetesClusterClientImpl) createPod(ctx context.Context, pod *core.Pod) (*core.Pod, error) {
+	pod.Spec.SchedulerName = polarisClusterAgentSchedulerName
+	return c.k8sClientSet.CoreV1().Pods(pod.Namespace).Create(ctx, pod, meta.CreateOptions{})
 }
