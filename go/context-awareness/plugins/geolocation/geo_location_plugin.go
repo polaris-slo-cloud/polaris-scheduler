@@ -138,12 +138,14 @@ func (glp *GeoLocationPlugin) readState(ctx pipeline.SchedulingContext) (*geoLoc
 	return resState, true
 }
 
-// Parses an ISO 6709 geo location string into a Point object.
+// Parses a geo location string (e.g, "48.22066363087445, 16.403747854930955") into a Point object.
 func parseGeoLocation(locationStr string) (*geo.Point, error) {
-	latLong := strings.Split(locationStr, " ")
+	latLong := strings.Split(locationStr, ",")
 	if len(latLong) != 2 {
-		return nil, fmt.Errorf("the string %s is not a valid ISO 6709 geo location", locationStr)
+		return nil, fmt.Errorf("the string %s is not a valid geo location string", locationStr)
 	}
+	latLong[0] = strings.Trim(latLong[0], " ")
+	latLong[1] = strings.Trim(latLong[1], " ")
 
 	lat, err := strconv.ParseFloat(latLong[0], 64)
 	if err != nil {
