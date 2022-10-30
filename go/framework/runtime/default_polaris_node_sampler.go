@@ -179,7 +179,7 @@ func (sampler *DefaultPolarisNodeSampler) registerSamplingStrategy(strategy pipe
 func (sampler *DefaultPolarisNodeSampler) handleSamplingRequest(c *gin.Context, samplingStrategy pipeline.SamplingStrategyPlugin) {
 	var samplingReq remotesampling.RemoteNodesSamplerRequest
 
-	if err := c.ShouldBind(&samplingReq); err != nil {
+	if err := c.Bind(&samplingReq); err != nil {
 		samplingError := &remotesampling.RemoteNodesSamplerError{Error: err}
 		c.JSON(http.StatusBadRequest, samplingError)
 		return

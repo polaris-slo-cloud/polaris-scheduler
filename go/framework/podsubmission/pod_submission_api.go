@@ -38,7 +38,7 @@ func (ps *PodSubmissionApi) RegisterSubmitPodEndpoint(relativePath string, ginEn
 func (ps *PodSubmissionApi) handleSubmitPodRequest(c *gin.Context) {
 	var pod core.Pod
 
-	if err := c.ShouldBind(&pod); err != nil {
+	if err := c.Bind(&pod); err != nil {
 		podSubmissionError := &PodSubmissionApiError{Error: err}
 		c.JSON(http.StatusBadRequest, podSubmissionError)
 		return
