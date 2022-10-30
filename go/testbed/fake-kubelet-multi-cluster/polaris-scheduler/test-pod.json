@@ -20,6 +20,13 @@
                     }
                 }
             }
+        ],
+        "tolerations": [
+            {
+                "key": "fake-kubelet/provider",
+                "operator": "Exists",
+                "effect": "NoSchedule"
+            }
         ]
     }
 }

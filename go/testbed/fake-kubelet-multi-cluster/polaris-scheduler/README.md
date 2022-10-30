@@ -5,6 +5,7 @@ curl -XPOST localhost:8080/pods -H "Content-Type: application/json" -d '{
     "apiVersion": "v1",
     "kind": "Pod",
     "metadata": {
+        "namespace": "default",
         "name": "myapp-01",
         "labels": {
             "name": "myapp-01"
@@ -21,6 +22,13 @@ curl -XPOST localhost:8080/pods -H "Content-Type: application/json" -d '{
                         "cpu": "500m"
                     }
                 }
+            }
+        ],
+        "tolerations": [
+            {
+                "key": "fake-kubelet/provider",
+                "operator": "Exists",
+                "effect": "NoSchedule"
             }
         ]
     }
