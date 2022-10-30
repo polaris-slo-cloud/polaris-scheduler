@@ -201,13 +201,14 @@ func (ps *DefaultPolarisScheduler) validateConfig() error {
 		return fmt.Errorf("cannot start DefaultPolarisScheduler, because no SampleNodesPlugin is configured")
 	}
 
-	if len(pluginsList.Filter) == 0 {
-		return fmt.Errorf("cannot start DefaultPolarisScheduler, because no FilterPlugin is configured")
-	}
+	// Since the cluster-agent can do filtering and scoring, we do not necessarily need a filter or a score plugin in the scheduler.
+	// if len(pluginsList.Filter) == 0 {
+	// 	return fmt.Errorf("cannot start DefaultPolarisScheduler, because no FilterPlugin is configured")
+	// }
 
-	if len(pluginsList.Score) == 0 {
-		return fmt.Errorf("cannot start DefaultPolarisScheduler, because no ScorePlugin is configured")
-	}
+	// if len(pluginsList.Score) == 0 {
+	// 	return fmt.Errorf("cannot start DefaultPolarisScheduler, because no ScorePlugin is configured")
+	// }
 
 	return nil
 }

@@ -67,22 +67,18 @@ plugins:
   sampleNodes:
     name: RemoteNodesSampler
 
-  preFilter:
-    - name: ResourcesFit
-    # - name: Plugin2
+  # preFilter:
+  #   - name: ResourcesFit
 
-  filter:
-    - name: ResourcesFit
-    # - name: Plugin2
+  # filter:
+  #   - name: ResourcesFit
 
-  # preScore:
-  #   - name: Plugin1
-  #   - name: Plugin2
+  # # preScore:
+  # #   - name: Plugin1
+  # #   - name: Plugin2
 
-  score:
-    - name: ResourcesFit
-      weight: 1
-  #   - name: Plugin2
+  # score:
+  #   - name: ResourcesFit
   #     weight: 1
 
   # reserve:
