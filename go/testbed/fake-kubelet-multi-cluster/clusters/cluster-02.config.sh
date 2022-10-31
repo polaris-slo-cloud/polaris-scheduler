@@ -34,9 +34,9 @@ dataCenterLocation="48.15327005700937_16.20038278418634"
 # Declares the types of fake nodes and how many nodes of each type to create.
 # For each fake node type, the amount of CPUs and memory must be added to fakeNodeTypeCpus and fakeNodeTypeMemory respectively.
 declare -A fakeNodeTypes=(
-    ["cloud-small"]="500"
-    ["cloud-medium"]="300"
-    ["cloud-large"]="200"
+    ["cloud-small"]="1000"
+    ["cloud-medium"]="600"
+    ["cloud-large"]="400"
 )
 
 # Each node's CPUs are configured as `cpu` and `polaris-slo-cloud.github.io/fake-cpu`.
