@@ -4,10 +4,10 @@ CLUSTER_CONFIG_DIR=$(dirname "${BASH_SOURCE}")
 source "${CLUSTER_CONFIG_DIR}/common.sh"
 
 # The name of the kind cluster.
-kindClusterName="kind-02-cloud-vienna"
+kindClusterName="kind-09-cloud-frankfurt"
 
 # The port on localhost, where the polaris-cluster-agent of this cluster should be exposed.
-clusterAgentPortLocalhost=30002
+clusterAgentPortLocalhost=30009
 
 # (optional) Additional kind node config.
 # For config options see https://kind.sigs.k8s.io/docs/user/configuration/
@@ -29,7 +29,7 @@ nodes:
 EOF
 )
 
-dataCenterLocation="48.15327005700937_16.20038278418634"
+dataCenterLocation="50.113485878139905_8.664028308860287"
 
 # Declares the types of fake nodes and how many nodes of each type to create.
 # For each fake node type, the amount of CPUs and memory must be added to fakeNodeTypeCpus and fakeNodeTypeMemory respectively.

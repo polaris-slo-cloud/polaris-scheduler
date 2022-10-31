@@ -56,6 +56,22 @@ remoteClusters:
     baseUri: "http://localhost:30001/"
   kind-02-cloud-vienna:
     baseUri: "http://localhost:30002/"
+  kind-03-edge-salzburg:
+    baseUri: "http://localhost:30003/"
+  kind-04-edge-rome:
+    baseUri: "http://localhost:30004/"
+  kind-05-edge-new-york:
+    baseUri: "http://localhost:30005/"
+  kind-06-edge-san-francisco:
+    baseUri: "http://localhost:30006/"
+  kind-07-edge-frankfurt:
+    baseUri: "http://localhost:30007/"
+  kind-08-cloud-san-francisco:
+    baseUri: "http://localhost:30008/"
+  kind-09-cloud-frankfurt:
+    baseUri: "http://localhost:30009/"
+  kind-10-edge-dallas:
+    baseUri: "http://localhost:30010/"
 
 # The list of plugins for the scheduling pipeline.
 plugins:
