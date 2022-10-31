@@ -15,8 +15,8 @@ const (
 	PluginName = "GeoLocation"
 
 	NodeGeoLocationLabel                = "polaris-slo-cloud.github.io/geo-location"
-	PodTargetGeoLocationLabel           = "polaris-slo-cloud.github.io/geo-location/target-location"
-	PodMaxDistanceToTargetLocationLabel = "polaris-slo-cloud.github.io/geo-location/max-distance-km"
+	PodTargetGeoLocationLabel           = "polaris-slo-cloud.github.io/geo-location.target-location"
+	PodMaxDistanceToTargetLocationLabel = "polaris-slo-cloud.github.io/geo-location.max-distance-km"
 
 	DefaultMaxDistanceToTargetLocationKm = 10.0
 
