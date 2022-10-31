@@ -12,12 +12,12 @@ schedulerName: polaris-scheduler
 nodesToSampleBp: 400
 
 # The number of node samplers to run in parallel.
-# Default: 0 (number of CPU cores)
-parallelNodeSamplers: 100
+# Default: 0 (number of CPU cores * 10)
+parallelNodeSamplers: 0
 
 # The number of Scheduling Decision Pipelines to run in parallel.
-# Default: 0 (number of CPU cores)
-parallelDecisionPipelines: 100
+# Default: 0 (number of CPU cores * 10)
+parallelDecisionPipelines: 0
 
 # The size of the buffer used for incoming pods.
 # Default: 1000

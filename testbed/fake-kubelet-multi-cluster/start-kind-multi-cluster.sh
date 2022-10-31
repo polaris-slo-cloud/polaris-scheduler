@@ -18,8 +18,7 @@ SCRIPT_DIR=$(dirname "${BASH_SOURCE}")
 source "${SCRIPT_DIR}/config.sh"
 
 START_SINGLE_CLUSTER_SCRIPT="${SCRIPT_DIR}/../fake-kubelet-cluster/start-kind-with-fake-kubelet.sh"
-CLUSTER_AGENT_DEPLOYMENT_YAML="${SCRIPT_DIR}/../../go/cluster-agent/manifests/deployment-k8s"
-CLUSTER_AGENT_SERVICE_YAML="${SCRIPT_DIR}/deployments/polaris-cluster-agent-service.yaml"
+CLUSTER_AGENT_DEPLOYMENT_YAML="${SCRIPT_DIR}/polaris-cluster-agent"
 
 CLUSTER_AGENT_NODE_PORT=30033
 
@@ -41,7 +40,6 @@ function startCluster() {
         CONTEXT="kind-${kindClusterName}"
 
         kubectl --context $CONTEXT apply -f "$CLUSTER_AGENT_DEPLOYMENT_YAML"
-        kubectl --context $CONTEXT apply -f "$CLUSTER_AGENT_SERVICE_YAML"
     )
 }
 

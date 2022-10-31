@@ -30,8 +30,8 @@ data:
 
     # The number of Sampling Pipelines to run in parallel.
     #
-    # Default: 0 (number of CPU cores * 10)
-    parallelSamplingPipelines: 0
+    # Default: 100.
+    parallelSamplingPipelines: 100
 
     # The list of plugins for the sampling pipeline.
     plugins:

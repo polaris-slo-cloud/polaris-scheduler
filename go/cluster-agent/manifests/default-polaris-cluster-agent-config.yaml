@@ -20,8 +20,8 @@ nodesCacheUpdateQueueSize: 1000
 
 # The number of Sampling Pipelines to run in parallel.
 #
-# Default: 100.
-parallelSamplingPipelines: 100
+# Default: 0 (number of CPU cores * 10)
+parallelSamplingPipelines: 0
 
 # The list of plugins for the sampling pipeline.
 plugins:

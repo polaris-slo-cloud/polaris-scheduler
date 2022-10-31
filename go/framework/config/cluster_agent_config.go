@@ -1,10 +1,15 @@
 package config
 
+import "runtime"
+
 const (
 	DefaultClusterAgentListenAddress = "0.0.0.0:8081"
 	DefaultNodesCacheUpdateInterval  = 200
 	DefaultNodesCacheUpdateQueueSize = 1000
-	DefaultParallelSamplingPipelines = 100
+)
+
+var (
+	DefaultParallelSamplingPipelines uint32 = uint32(runtime.NumCPU()) * 10
 )
 
 // Represents the configuration of a polaris-cluster-agent instance.

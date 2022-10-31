@@ -34,10 +34,10 @@ const (
 
 var (
 	// Default number of parallel node samplers = number of CPU cores.
-	DefaultParallelNodeSamplers uint32 = uint32(runtime.NumCPU())
+	DefaultParallelNodeSamplers uint32 = uint32(runtime.NumCPU()) * 10
 
 	// Default number of parallel Scheduling Decision Pipelines = number of CPU cores.
-	DefaultParallelDecisionPipelines uint32 = uint32(runtime.NumCPU())
+	DefaultParallelDecisionPipelines uint32 = uint32(runtime.NumCPU()) * 10
 )
 
 // Represents the configuration of a polaris-scheduler instance.
