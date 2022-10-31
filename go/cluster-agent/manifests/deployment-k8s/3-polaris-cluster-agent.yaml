@@ -46,6 +46,9 @@ spec:
             # We need at least one GO environment variable to allow the Google Cloud Code VS Code extension to detect that it is a Go program.
             - name: GOTRACEBACK
               value: all
+            # Switch the Gin REST API engine to release mode.
+            - name: GIN_MODE
+              value: release
           livenessProbe:
             httpGet:
               path: /samples/status
