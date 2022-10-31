@@ -12,16 +12,16 @@ const (
 	PluginName = "BatteryLevel"
 
 	// The label that describes the current battery level in percent (as an integer).
-	NodeBatteryLevelLabel = "polaris-slo-cloud.github.io/battery/level"
+	NodeBatteryLevelLabel = "polaris-slo-cloud.github.io/battery.level"
 
 	// The label that describes the battery capacity in mAh.
-	NodeBatteryCapacityLabel = "polaris-slo-cloud.github.io/battery/capacity-mah"
+	NodeBatteryCapacityLabel = "polaris-slo-cloud.github.io/battery.capacity-mah"
 
 	// The label that describes the requested minimum battery level in percent (as an integer).
-	PodMinBatteryLevelLabel = "polaris-slo-cloud.github.io/battery/min-level"
+	PodMinBatteryLevelLabel = "polaris-slo-cloud.github.io/battery.min-level"
 
 	// The label that describes the minimum battery capacity in mAh.
-	PodMinBatteryCapacityLabel = "polaris-slo-cloud.github.io/battery/min-capacity-mah"
+	PodMinBatteryCapacityLabel = "polaris-slo-cloud.github.io/battery.min-capacity-mah"
 )
 
 var (

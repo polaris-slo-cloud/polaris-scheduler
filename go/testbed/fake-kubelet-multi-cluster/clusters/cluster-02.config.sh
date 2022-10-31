@@ -55,9 +55,9 @@ declare -A fakeNodeTypeMemory=(
 # The value for each node type has to be a string of the following format (slashes and quotes must be escaped):
 # "<domain1.io>\/<label1>: <value1>;<domain2.io>\/<label2>: <value2>;<...>"
 declare -A extraNodeLabels=(
-    ["cloud-small"]="polaris-slo-cloud.github.io\/geo-location: \"48.22066363087445, 16.403747854930955\";polaris-slo-cloud.github.io\/test-label: \"true\""
-    ["cloud-medium"]="polaris-slo-cloud.github.io\/geo-location: \"48.22066363087445, 16.403747854930955\";polaris-slo-cloud.github.io\/test-label: \"true\""
-    ["cloud-large"]="polaris-slo-cloud.github.io\/geo-location: \"48.22066363087445, 16.403747854930955\";polaris-slo-cloud.github.io\/test-label: \"true\""
+    ["cloud-small"]="polaris-slo-cloud.github.io\/geo-location: \"48.22066363087445_16.403747854930955\""
+    ["cloud-medium"]="polaris-slo-cloud.github.io\/geo-location: \"48.22066363087445_16.403747854930955\""
+    ["cloud-large"]="polaris-slo-cloud.github.io\/geo-location: \"48.22066363087445_16.403747854930955\""
 )
 
 # Extended resources.

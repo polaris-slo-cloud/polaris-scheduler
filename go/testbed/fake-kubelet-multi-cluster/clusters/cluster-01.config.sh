@@ -58,10 +58,10 @@ declare -A fakeNodeTypeMemory=(
 # The value for each node type has to be a string of the following format (slashes and quotes must be escaped):
 # "<domain1.io>\/<label1>: <value1>;<domain2.io>\/<label2>: <value2>;<...>"
 declare -A extraNodeLabels=(
-    ["raspi-3b-plus"]="polaris-slo-cloud.github.io\/battery\/capacity-mah: \"2000\";polaris-slo-cloud.github.io\/battery\/level: \"90\";polaris-slo-cloud.github.io\/geo-location: \"48.23804518049565, 16.41301756935763\""
-    ["raspi-4b-2gi"]="polaris-slo-cloud.github.io\/battery\/capacity-mah: \"4000\";polaris-slo-cloud.github.io\/battery\/level: \"50\";polaris-slo-cloud.github.io\/geo-location: \"48.23804518049565, 16.41301756935763\""
-    ["raspi-4b-4gi"]="polaris-slo-cloud.github.io\/battery\/capacity-mah: \"4000\";polaris-slo-cloud.github.io\/battery\/level: \"70\";polaris-slo-cloud.github.io\/geo-location: \"48.23804518049565, 16.41301756935763\""
-    ["cell-5g-base-station"]="polaris-slo-cloud.github.io\/base-station-5g: \"\";polaris-slo-cloud.github.io\/geo-location: \"48.23804518049565, 16.41301756935763\""
+    ["raspi-3b-plus"]="polaris-slo-cloud.github.io\/battery.capacity-mah: \"2000\";polaris-slo-cloud.github.io\/battery.level: \"90\";polaris-slo-cloud.github.io\/geo-location: \"48.23804518049565_16.41301756935763\""
+    ["raspi-4b-2gi"]="polaris-slo-cloud.github.io\/battery.capacity-mah: \"4000\";polaris-slo-cloud.github.io\/battery.level: \"50\";polaris-slo-cloud.github.io\/geo-location: \"48.23804518049565_16.41301756935763\""
+    ["raspi-4b-4gi"]="polaris-slo-cloud.github.io\/battery.capacity-mah: \"4000\";polaris-slo-cloud.github.io\/battery.level: \"70\";polaris-slo-cloud.github.io\/geo-location: \"48.23804518049565_16.41301756935763\""
+    ["cell-5g-base-station"]="polaris-slo-cloud.github.io\/base-station-5g: \"\";polaris-slo-cloud.github.io\/geo-location: \"48.23804518049565_16.41301756935763\""
 )
 
 # Extended resources.
