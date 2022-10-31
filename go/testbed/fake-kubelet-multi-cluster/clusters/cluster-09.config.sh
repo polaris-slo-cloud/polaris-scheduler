@@ -29,6 +29,9 @@ nodes:
 EOF
 )
 
+# (optional) Create a namespace with this name.
+testNamespace="test"
+
 dataCenterLocation="50.113485878139905_8.664028308860287"
 
 # Declares the types of fake nodes and how many nodes of each type to create.

@@ -2,7 +2,7 @@
     "apiVersion": "v1",
     "kind": "Pod",
     "metadata": {
-        "namespace": "default",
+        "namespace": "test",
         "name": "myapp-01",
         "labels": {
             "name": "myapp-01"

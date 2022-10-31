@@ -29,6 +29,9 @@ nodes:
 EOF
 )
 
+# (optional) Create a namespace with this name.
+testNamespace="test"
+
 locationA="40.77440617520691_-73.97282077550847"
 locationB="40.705732358858526_-73.94260837293264"
 cloudletLocation="40.705732358858526_-73.94260837293264"

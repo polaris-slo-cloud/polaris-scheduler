@@ -29,6 +29,9 @@ fakeKubeletImageVersionTag="v0.8.0"
 # EOF
 # )
 
+# (optional) Create a namespace with this name.
+testNamespace="test"
+
 # Declares the types of fake nodes and how many nodes of each type to create.
 # For each fake node type, the amount of CPUs and memory must be added to fakeNodeTypeCpus and fakeNodeTypeMemory respectively.
 declare -A fakeNodeTypes=(

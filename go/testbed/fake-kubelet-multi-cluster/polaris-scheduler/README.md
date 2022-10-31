@@ -5,7 +5,7 @@ curl -XPOST localhost:8080/pods -H "Content-Type: application/json" -d '{
     "apiVersion": "v1",
     "kind": "Pod",
     "metadata": {
-        "namespace": "default",
+        "namespace": "test",
         "name": "myapp-01",
         "labels": {
             "name": "myapp-01"

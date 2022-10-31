@@ -67,6 +67,11 @@ function startLocalCluster() {
 
     # Ensure that we do not schedule anything on the control plane node.
     kubectl taint --context $CONTEXT node "${kindClusterName}-control-plane" node-role.kubernetes.io/master=:NoSchedule
+
+    # Create namespace for the test workloads
+    if [ ! -z "$testNamespace" ]; then
+        kubectl --context $CONTEXT create namespace  $testNamespace
+    fi
 }
 
 # Deploys fake-kubelet to simulate nodes.
