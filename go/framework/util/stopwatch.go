@@ -28,15 +28,44 @@ func (me *Stopwatch) Start() {
 	me.start = time.Now()
 }
 
+// StartAt sets the specified time as the start time of the Stopwatch.
+func (me *Stopwatch) StartAt(startTime time.Time) {
+	me.isStarted = true
+	me.start = startTime
+}
+
 // Stop sets the current time as the stop time of the Stopwatch.
+//
+// It is explicitly supported to stop a stopwatch multiple times and read the
+// duration after every stoppage to get multiple time readings.
 func (me *Stopwatch) Stop() {
 	me.stop = time.Now()
 	me.isStopped = true
 }
 
+// IsStarted returns true if the stopwatch has been started.
+//
+// Note that this is not reset after the stopwatch is stopped.
+// A stopped stopwatch has both IsStarted() and IsStopped() return true.
+func (me *Stopwatch) IsStarted() bool {
+	return me.isStarted
+}
+
 // IsStopped returns true if the stopwatch has already been stopped.
 func (me *Stopwatch) IsStopped() bool {
 	return me.isStopped
+}
+
+// Returns the start time of this stopwatch.
+// Note that this value only makes sense, if the stopwatch has been started.
+func (me *Stopwatch) StartTime() time.Time {
+	return me.start
+}
+
+// Returns the stop time of this stopwatch.
+// Note that this value only makes sense, if the stopwatch has been stopped.
+func (me *Stopwatch) StopTime() time.Time {
+	return me.stop
 }
 
 // Duration returns the duration of the time that was measured by this Stopwatch.

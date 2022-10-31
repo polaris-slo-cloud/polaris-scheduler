@@ -2,6 +2,7 @@ package kubernetes
 
 import (
 	"fmt"
+	"time"
 
 	core "k8s.io/api/core/v1"
 
@@ -20,7 +21,7 @@ var (
 
 type KubernetesPodSource struct {
 	clientsMgr      *KubernetesClusterClientsManager
-	incomingPods    chan *core.Pod
+	incomingPods    chan *pipeline.IncomingPod
 	schedConfig     *config.SchedulerConfig
 	stopChan        chan struct{}
 	sharedInformers map[string]cache.SharedIndexInformer
@@ -30,7 +31,7 @@ type KubernetesPodSource struct {
 func NewKubernetesPodSource(clusterClientsMgr *KubernetesClusterClientsManager, schedConfig *config.SchedulerConfig) *KubernetesPodSource {
 	kps := KubernetesPodSource{
 		clientsMgr:      clusterClientsMgr,
-		incomingPods:    make(chan *core.Pod, schedConfig.IncomingPodsBufferSize),
+		incomingPods:    make(chan *pipeline.IncomingPod, schedConfig.IncomingPodsBufferSize),
 		schedConfig:     schedConfig,
 		sharedInformers: make(map[string]cache.SharedIndexInformer, clusterClientsMgr.ClustersCount()),
 	}
@@ -69,7 +70,7 @@ func (kps *KubernetesPodSource) StopWatching() error {
 	return nil
 }
 
-func (kps *KubernetesPodSource) IncomingPods() chan *core.Pod {
+func (kps *KubernetesPodSource) IncomingPods() chan *pipeline.IncomingPod {
 	return kps.incomingPods
 }
 
@@ -134,6 +135,10 @@ func (kps *KubernetesPodSource) onDelete(pod *core.Pod) {
 
 func (kps *KubernetesPodSource) publishPodIfUnscheduled(pod *core.Pod) {
 	if pod.Spec.NodeName == "" && pod.Spec.SchedulerName == kps.schedConfig.SchedulerName {
-		kps.incomingPods <- pod
+		incomingPod := &pipeline.IncomingPod{
+			Pod:        pod,
+			ReceivedAt: time.Now(),
+		}
+		kps.incomingPods <- incomingPod
 	}
 }

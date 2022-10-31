@@ -2,6 +2,7 @@ package podsubmission
 
 import (
 	"net/http"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	core "k8s.io/api/core/v1"
@@ -16,17 +17,17 @@ var (
 
 // A PodSource that exposes and external API for submitting pods in an orchestrator-independent manner.
 type PodSubmissionApi struct {
-	incomingPods chan *core.Pod
+	incomingPods chan *pipeline.IncomingPod
 }
 
 func NewPodSubmissionApi(schedConfig *config.SchedulerConfig) *PodSubmissionApi {
 	ps := &PodSubmissionApi{
-		incomingPods: make(chan *core.Pod, schedConfig.IncomingPodsBufferSize),
+		incomingPods: make(chan *pipeline.IncomingPod, schedConfig.IncomingPodsBufferSize),
 	}
 	return ps
 }
 
-func (ps *PodSubmissionApi) IncomingPods() chan *core.Pod {
+func (ps *PodSubmissionApi) IncomingPods() chan *pipeline.IncomingPod {
 	return ps.incomingPods
 }
 
@@ -45,6 +46,11 @@ func (ps *PodSubmissionApi) handleSubmitPodRequest(c *gin.Context) {
 		return
 	}
 
-	ps.incomingPods <- &pod
+	incomingPod := &pipeline.IncomingPod{
+		Pod:        &pod,
+		ReceivedAt: time.Now(),
+	}
+
+	ps.incomingPods <- incomingPod
 	c.JSON(http.StatusCreated, &pod)
 }

@@ -4,9 +4,9 @@ import (
 	"context"
 	"fmt"
 	"sync/atomic"
+	"time"
 
 	"github.com/go-logr/logr"
-	core "k8s.io/api/core/v1"
 
 	"polaris-slo-cloud.github.io/polaris-scheduler/v2/framework/client"
 	"polaris-slo-cloud.github.io/polaris-scheduler/v2/framework/config"
@@ -28,6 +28,9 @@ const (
 	stopped  int32 = 2
 
 	decisionPipelineQueueSize = 400
+
+	endToEndStopwatchStateKey           = util.StopwatchStateKey + ".e2e"
+	schedulingPipelineStopwatchStateKey = util.StopwatchStateKey + ".pipeline"
 )
 
 // The default implementation of the PolarisScheduler.
@@ -233,13 +236,12 @@ func (ps *DefaultPolarisScheduler) pumpIntoQueue(src pipeline.PodSource) {
 }
 
 // Creates a SchedulingContext for the pod and adds it to the scheduling queue.
-func (ps *DefaultPolarisScheduler) addPodToQueue(pod *core.Pod) {
+func (ps *DefaultPolarisScheduler) addPodToQueue(pod *pipeline.IncomingPod) {
 	schedCtx := pipeline.NewSchedulingContext(ps.ctx)
-	queuedPod := pipeline.NewQueuedPodInfo(pod, schedCtx)
+	queuedPod := pipeline.NewQueuedPodInfo(pod.Pod, schedCtx)
 
-	stopwatch := util.NewStopwatch()
-	stopwatch.Start()
-	schedCtx.Write(util.StopwatchStateKey, stopwatch)
+	ps.createAndStartStopwatch(schedCtx, schedulingPipelineStopwatchStateKey, nil)
+	ps.createAndStartStopwatch(schedCtx, endToEndStopwatchStateKey, &pod.ReceivedAt)
 
 	ps.schedQueue.Enqueue(queuedPod)
 }
@@ -325,16 +327,18 @@ func (ps *DefaultPolarisScheduler) commitSchedulingDecision(schedCtx pipeline.Sc
 		return
 	}
 
-	stopwatch := ps.stopStopwatch(schedCtx)
+	pipelineStopwatch := ps.stopStopwatch(schedCtx, schedulingPipelineStopwatchStateKey)
+	e2eStopwatch := ps.stopStopwatch(schedCtx, endToEndStopwatchStateKey)
 
-	go ps.commitSchedulingDecisionUsingClient(schedCtx, clusterClient, decision, stopwatch)
+	go ps.commitSchedulingDecisionUsingClient(schedCtx, clusterClient, decision, pipelineStopwatch, e2eStopwatch)
 }
 
 func (ps *DefaultPolarisScheduler) commitSchedulingDecisionUsingClient(
 	schedCtx pipeline.SchedulingContext,
 	clusterClient client.ClusterClient,
 	decision *pipeline.SchedulingDecision,
-	completedStopwatch *util.Stopwatch,
+	stoppedPipelineStopwatch *util.Stopwatch,
+	stoppedE2EStopwatch *util.Stopwatch,
 ) {
 	clusterSchedDecision := &client.ClusterSchedulingDecision{
 		Pod:      decision.Pod.Pod,
@@ -343,16 +347,51 @@ func (ps *DefaultPolarisScheduler) commitSchedulingDecisionUsingClient(
 
 	fullPodName := decision.Pod.Pod.Namespace + "." + decision.Pod.Pod.Name
 	targetNode := decision.TargetNode.ClusterName + "." + decision.TargetNode.Node.Name
+	pipelineDurationMs := stoppedPipelineStopwatch.Duration().Milliseconds()
+	submitPodApiQueueTimeMs := stoppedE2EStopwatch.Duration().Milliseconds() - pipelineDurationMs
 
 	if err := clusterClient.CommitSchedulingDecision(schedCtx.Context(), clusterSchedDecision); err == nil {
-		ps.logger.Info("SchedulingSuccess", "pod", fullPodName, "targetNode", targetNode, "pipelineDurationMs", completedStopwatch.Duration().Milliseconds())
+		// Stop the stopwatch again to get the full E2E scheduling time.
+		stoppedE2EStopwatch.Stop()
+
+		ps.logger.Info(
+			"SchedulingSuccess",
+			"pod", fullPodName,
+			"targetNode", targetNode,
+			"submitPodApiQueueTimeMs", submitPodApiQueueTimeMs,
+			"pipelineDurationMs", pipelineDurationMs,
+			"e2eDurationMs", stoppedE2EStopwatch.Duration().Milliseconds(),
+		)
 	} else {
-		ps.logger.Info("FailedScheduling", "pod", fullPodName, "targetNode", targetNode, "pipelineDurationMs", completedStopwatch.Duration().Milliseconds(), "reason", err)
+		// Stop the stopwatch again to get the full E2E scheduling time.
+		stoppedE2EStopwatch.Stop()
+
+		ps.logger.Info(
+			"FailedScheduling",
+			"pod", fullPodName,
+			"targetNode", targetNode,
+			"submitPodApiQueueTimeMs", submitPodApiQueueTimeMs,
+			"pipelineDurationMs", pipelineDurationMs,
+			"e2eDurationMs", stoppedE2EStopwatch.Duration().Milliseconds(),
+			"reason", err,
+		)
 	}
 }
 
-func (ps *DefaultPolarisScheduler) stopStopwatch(schedCtx pipeline.SchedulingContext) *util.Stopwatch {
-	stopwatch, ok, err := pipeline.ReadTypedStateData[*util.Stopwatch](schedCtx, util.StopwatchStateKey)
+// Creates a new stopwatch, starts it (using the specified startTime or the current time, if startTime is nil), and adds it to the SchedulingContext.
+func (ps *DefaultPolarisScheduler) createAndStartStopwatch(schedCtx pipeline.SchedulingContext, stateKey string, startTime *time.Time) *util.Stopwatch {
+	stopwatch := util.NewStopwatch()
+	if startTime != nil {
+		stopwatch.StartAt(*startTime)
+	} else {
+		stopwatch.Start()
+	}
+	schedCtx.Write(stateKey, stopwatch)
+	return stopwatch
+}
+
+func (ps *DefaultPolarisScheduler) stopStopwatch(schedCtx pipeline.SchedulingContext, stateKey string) *util.Stopwatch {
+	stopwatch, ok, err := pipeline.ReadTypedStateData[*util.Stopwatch](schedCtx, stateKey)
 	if !ok || err != nil {
 		panic("could not read Stopwatch from SchedulingContext")
 	}

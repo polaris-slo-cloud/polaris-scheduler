@@ -2,6 +2,7 @@ package pipeline
 
 import (
 	"fmt"
+	"time"
 
 	core "k8s.io/api/core/v1"
 )
@@ -30,11 +31,21 @@ type SampledPodInfo struct {
 	SampledNodes []*NodeInfo
 }
 
+// Describes a pod that has just been received and that is added to the channel of a PodSource.
+type IncomingPod struct {
+
+	// The pod that should be scheduled.
+	Pod *core.Pod
+
+	// The timestamp, when the pod was received.
+	ReceivedAt time.Time
+}
+
 // Supplies new pods that need to be scheduled to the scheduling pipeline.
 type PodSource interface {
 
 	// Returns a channel that emits the incoming pods that need to be scheduled.
-	IncomingPods() chan *core.Pod
+	IncomingPods() chan *IncomingPod
 }
 
 // Returns a key that can be used to identify this pod in a map.
