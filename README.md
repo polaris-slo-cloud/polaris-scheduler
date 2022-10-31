@@ -1,7 +1,8 @@
 # Polaris Scheduler
 
-Polaris-Scheduler is an SLO-aware Kubernetes scheduler.
+Polaris-Scheduler is an orchestrator independent distributed scheduler.
 
+# ToDo
 
 ## Documentation
 
