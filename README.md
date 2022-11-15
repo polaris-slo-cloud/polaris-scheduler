@@ -27,7 +27,8 @@ This project is realized in Go 1.19 and relies on Go workspaces to divide code i
 
 | Directory                | Contents |
 |--------------------------|----------|
-| [`docs`](./docs)         | Documentation files (Work in progress) |
+| [`deployment`](./deployment) | Configuration files for deploying Polaris Scheduler and Polaris Cluster Agent |
+| [`docs`](./docs) | Documentation files (Work in progress) |
 | [`go`](./go) | Go workspace containing all Polaris Scheduler modules |
 | [`go/cluster-agent`](./go/cluster-agent) | The polaris-cluster-agent executable module |
 | [`go/context-awareness`](./go/context-awareness) | Context-aware scheduling plugins  |
