@@ -1,0 +1,58 @@
+# Default configuration for the polaris-scheduler
+# To see all possible values or the active configuration of a scheduler, run it with the `--write-config-to` argument.
+apiVersion: kubescheduler.config.k8s.io/v1beta1
+kind: KubeSchedulerConfiguration
+clientConnection:
+  kubeconfig: /etc/kubernetes/scheduler.conf
+leaderElection:
+  leaderElect: false # Leader election requires additional privileges.
+  resourceName: polaris-scheduler
+  resourceNamespace: polaris
+# When comparing the polaris-scheduler with others, we want to make sure that all nodes are scored,
+# because some of the schedulers compared against, depend on that.
+percentageOfNodesToScore: 100
+profiles:
+  # - schedulerName: default-scheduler
+  - schedulerName: polaris-scheduler
+    plugins:
+      # This section is merged with the default configuration, so we do not need to specify the default plugins.
+      queueSort:
+        enabled:
+        - name: ServiceGraph
+        disabled:
+        - name: "*"
+      preFilter:
+        enabled:
+          - name: ServiceGraph
+          - name: NetworkQoS
+      filter:
+        enabled:
+          - name: NetworkQoS
+      postFilter:
+        enabled:
+          - name: ServiceGraph
+      preScore:
+        enabled:
+          - name: PodsPerNode
+      score:
+        enabled:
+          - name: NetworkQoS
+            weight: 10
+          - name: PodsPerNode
+            weight: 1
+          - name: NodeCost
+            weight: 1
+          - name: WorkloadType
+            weight: 1
+        disabled:
+          # These could interfere with the PodsPerNode scoring.
+          - name: NodeResourcesBalancedAllocation
+          - name: NodeResourcesLeastAllocated
+      reserve:
+        enabled:
+          - name: ServiceGraph
+      permit:
+        enabled:
+          - name: AtomicDeployment
+          - name: ServiceGraph
+

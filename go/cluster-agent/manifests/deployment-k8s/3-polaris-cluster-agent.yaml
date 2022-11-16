@@ -1,0 +1,92 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    component: polaris-cluster-agent
+    tier: control-plane
+  name: polaris-cluster-agent
+  namespace: polaris
+spec:
+  selector:
+    matchLabels:
+      component: polaris-cluster-agent
+      tier: control-plane
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        component: polaris-cluster-agent
+        tier: control-plane
+    spec:
+      serviceAccountName: polaris-cluster-agent
+      nodeSelector:
+        node-role.kubernetes.io/control-plane: ""
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  # Ensure that the scheduler pods are only scheduled on Intel 64-bit nodes.
+                  - key: kubernetes.io/arch
+                    operator: In
+                    values:
+                      - amd64
+      priorityClassName: system-node-critical
+      tolerations:
+        - key: node-role.kubernetes.io/master
+          operator: Exists
+          effect: NoSchedule
+      containers:
+        - name: polaris-cluster-agent
+          command:
+            - /usr/apps/polaris-cluster-agent/polaris-cluster-agent
+            - --config=/etc/polaris-cluster-agent/polaris-cluster-agent-config.yaml
+          image: polarissloc/polaris-cluster-agent:v2.0.0-beta.12
+          env:
+            # We need at least one GO environment variable to allow the Google Cloud Code VS Code extension to detect that it is a Go program.
+            - name: GOTRACEBACK
+              value: all
+            # Switch the Gin REST API engine to release mode.
+            - name: GIN_MODE
+              value: release
+          livenessProbe:
+            httpGet:
+              path: /samples/status
+              port: 8081
+            initialDelaySeconds: 15
+          readinessProbe:
+            httpGet:
+              path: /samples/status
+              port: 8081
+          resources:
+            limits:
+              cpu: 4000m
+              memory: 1Gi
+          securityContext:
+            privileged: false
+          ports:
+            - containerPort: 8081
+          volumeMounts:
+            - mountPath: /etc/polaris-cluster-agent
+              name: config-volume
+              readOnly: true
+      hostNetwork: false
+      hostPID: false
+      volumes:
+        - name: config-volume
+          configMap:
+            name: polaris-cluster-agent-config
+---
+apiVersion: v1
+kind: Service
+metadata:
+  namespace: polaris
+  name: polaris-cluster-agent
+spec:
+  selector:
+    component: polaris-cluster-agent
+    tier: control-plane
+  type: NodePort
+  ports:
+    - port: 8081
+      targetPort: 8081

@@ -1,48 +1,49 @@
 # Polaris Scheduler Documentation
 
-## Components
-
-The polaris-scheduler consists of the following components:
-
-* **polaris-scheduler**: fog-aware Kubernetes scheduler.
-* **Service Graph**: a Kubernetes CRD to allow modelling a microservice-based application with all its dependencies and network QoS requirements.
-* **Node Topology Graph**: a Kubernetes CRD to model the cluster and the network link qualities among the nodes.
+This documentation provides a quick overview of the Polaris Scheduler and its deployment.
 
 
-## Service Graph
+## Architecture
 
-The Service Graph is an abstraction that captures a fog application as a complete entity, with all the information needed to deploy and run all its services and maintain the desired quality of service and SLOs.
-It allows to not only model a fog application, but to use that model to deploy and manage the entire lifespan of the application and the ability to specify network QoS constraints and arbitrary SLOs that will be maintained at runtime.
+The high-level architectures of Polaris Scheduler and the Polaris Cluster Agent are shown in the diagram below.
+Both consist of the following three major layers:
 
-The Service Graph is a Directed Acyclic Graph (DAG).
-It consists of nodes and directed links (we prefer to avoid the term “edges” to evade confusion with the “network edge” in Edge Computing).
-As shown in the Figure below, each element of the Service Graph and the entire graph itself supports a set of annotations to specify properties, such as container images, constraints, or SLOs.
+1. The *Polaris Scheduler Framework* in the middle provides the object model and runtime services. It realizes the generic scheduling and sampling pipelines. To promote flexibility, sampling, filtering, and scoring policies need to be implemented as plugins.
+2. The *orchestrator-specific Connectors* at the bottom are used by the generic components in the upper layers.
+3. The *plugins* in the top layer realize scheduling and sampling policies.
 
-![](./images/service-graph.png)
+![Polaris Distributed Scheduling Framework Architecture](./images/architecture.svg)
 
-The annotations on the nodes allow specifying which containers the service consists of, what resources they require, if they can only run on a specific type of node or in certain locations, and any SLOs that need to be maintained for them.
+The central part of the architectures is the Polaris Scheduler Framework.
+All of its components are completely orchestrator-independent and only the Orchestrator Client needs to be realized by an orchestrator-specific connector.
+The Object Model provides abstractions, e.g., for nodes and jobs. The Submit Job API exposes an orchestrator-independent endpoint to submit new jobs to a scheduler instance. The Agent API of the Cluster Agent is used by the scheduler to communicate with the Cluster Agent and presents the only interface for the scheduler to a cluster.
+It provides endpoints for sampling nodes and submitting scheduling decisions and may be expanded in the future to provide further endpoints for retrieving additional cluster information.
+The Polaris Scheduler Runtime powers the scheduling process, sets up the API and pumps jobs into the scheduling pipeline.
+The Sampling Service serves an analogous purpose with respect to the sampling pipeline. The Nodes Cache is used by the Cluster Agent to cache information about the nodes in its cluster.
+It is updated at a high frequency, preferably through an event-based change notification mechanism if the underlying orchestrator supports it, to ensure that its information reflects the current state of the cluster.
 
-The link annotations allow the definition of network quality constraints and are automatically translated to network SLOs.
 
-Finally, the annotations for the Service Graph itself allow the the definition of Config Maps that can be mounted as configuration files into service containers and SLOs that apply to the application as a whole.
+## Scheduling and Sampling Pipelines
 
-Examples of a `Service Graphs` can be found [here](../go/orchestration/config/samples/fogapps_v1_servicegraph.yaml) and [here](../go/orchestration/config/samples/fogapps_v1_servicegraph.yaml).
+![Scheduling and Sampling Pipelines](./images/scheduling-and-sampling-pipeline.svg)
+
+The Scheduling Pipeline forms the centerpiece of the Polaris Distributed Scheduler and defines the scheduling and decision-making process.
+The pipeline consists of a sequence of stages, as shown in the above diagram, whose business logic is realized by plugins, which enables the realization of different scheduling polices.
+The Sort and Sample Nodes stages support only a single plugin each, while the other stages support multiple plugins.
 
 
+## Deployment
 
-## Node Topology Graph
+The [deployment](../deployment) directory of this repository contains configuration files to configure and deploy Polaris Scheduler and the Polaris Cluster Agent.
+Copy the contents of this directory to a working directory and adapt the configuration files as needed.
 
-Polaris-scheduler needs to know the node topology graph of the cluster.
-For this graph, the set of nodes and links are stored separately:
 
-* The set of nodes is the standard list of Nodes obtainable through the Kubernetes API.
-* The set of links uses the [NetworkLink CRD](../go/orchestration/apis/cluster/v1/networklink_types.go).
+### Polaris Cluster Agent
 
-Both lists together can be used to construct a node topology graph.
-The advantage of not storing one big node topology graph CRD is that the graph's elements can be updated separately whenever new metrics are available.
+For the Cluster Agent we currently provide an implementation with the Kubernetes connector and [deployment files](../deployment/cluster-agent/kubernetes) for it.
+To deploy the agent in a cluster, adapt the `1-config-map.yaml` file and then run `kubectl apply -f ./` in the same folder.
 
-Each `NetworkLink` connects two nodes that have a direct network connection to each other.
-In the CRD there are two fields `nodeA` and `nodeB`, which refer to the names of these nodes.
-Each link `nodeA <-> nodeB` exists only once - the admission webhook generates the name of a link automatically by sorting the two node names alphabetically and concatenating them, thus, ensuring that a link with `nodeA` and `nodeB` swapped is not stored as a duplicate. 
+### Polaris Scheduler
 
-An example of a set of `NetworkLinks` can be found [here](../go/orchestration/config/samples/cluster_v1_networklink.yaml).
+Since Polaris Scheduler is completely orchestrator-independent, we provide a docker-compose file for easy deployment of a single instance [here](../deployment/scheduler).
+Adapt the YAML configuration file in this directory to your needs - the default configuration will work fine in most cases, but you must configure the list of clusters in the `remoteClusters` object.

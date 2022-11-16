@@ -1,0 +1,9 @@
+go 1.19
+
+use (
+	./cluster-agent
+	./context-awareness
+	./framework
+	./k8s-connector
+	./scheduler
+)

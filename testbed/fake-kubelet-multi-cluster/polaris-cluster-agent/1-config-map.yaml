@@ -1,0 +1,71 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: polaris
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: polaris-cluster-agent-config
+  namespace: polaris
+data:
+  polaris-cluster-agent-config.yaml: |
+    # The list of addresses and ports that the cluster-agent should listen on
+    # in the format "<IP>:<PORT>"
+    #
+    # Default: [ "0.0.0.0:8081" ]
+    submitPodListenOn:
+      - "0.0.0.0:8081"
+
+    # The update interval for the nodes cache in milliseconds.
+    #
+    # Default: 200
+    nodesCacheUpdateIntervalMs: 200
+
+    # The size of the update queue in the nodes cache.
+    # The update queue caches watch events that arrive between the update intervals.
+    #
+    # Default: 1000
+    nodesCacheUpdateQueueSize: 1000
+
+    # The number of Sampling Pipelines to run in parallel.
+    #
+    # Default: 100.
+    parallelSamplingPipelines: 100
+
+    # The list of plugins for the sampling pipeline.
+    plugins:
+      # Only one sampling strategy is used for a pod in the sampling pipeline.
+      # However, multiple sampling strategy plugins can be configured, which will then be exposed
+      # as different sampling endpoints.
+      samplingStrategies:
+        - name: RandomSamplingStrategy
+        - name: RoundRobinSamplingStrategy
+
+      preFilter:
+        - name: ResourcesFit
+        - name: GeoLocation
+        - name: BatteryLevel
+
+      filter:
+        - name: ResourcesFit
+        - name: GeoLocation
+        - name: BatteryLevel
+
+      # preScore:
+      #   - name: Plugin1
+      #   - name: Plugin2
+
+      score:
+        - name: ResourcesFit
+          weight: 1
+        - name: GeoLocation
+          weight: 1
+
+
+    # (optional) Allows specifying configuration parameters for each plugin.
+    pluginsConfig:
+      - name: ResourcesFit
+        config:
+          scoringMode: LeastAllocated
+

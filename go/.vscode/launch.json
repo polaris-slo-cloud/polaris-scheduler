@@ -1,0 +1,42 @@
+{
+    "configurations": [
+        {
+            // Runs the scheduler on the local machine in debug mode, using the configuration in bin/config/kubernetes.
+            "name": "Local: Debug Scheduler",
+            "type": "go",
+            "preLaunchTask": "build-scheduler-debug",
+            "request": "launch",
+            "mode": "exec",
+            "program": "${workspaceFolder}/bin/polaris-scheduler",
+            "args": [
+                "--config=${workspaceFolder}/bin/default-polaris-scheduler-config.yaml",
+                // "--v=4"
+            ]
+        },
+        {
+            // Runs the scheduler on the local machine in debug mode, using the configuration in testbed/fake-kubelet-multi-cluster/polaris-scheduler/polaris-scheduler-config.yaml.
+            "name": "Local: Debug Scheduler (testbed config)",
+            "type": "go",
+            "preLaunchTask": "build-scheduler-debug",
+            "request": "launch",
+            "mode": "exec",
+            "program": "${workspaceFolder}/bin/polaris-scheduler",
+            "args": [
+                "--config=${workspaceFolder}/testbed/fake-kubelet-multi-cluster/polaris-scheduler/polaris-scheduler-config.yaml",
+                // "--v=4"
+            ]
+        },
+        {
+            // Runs the cluster-agent on the local machine in debug mode.
+            "name": "Local: Debug Cluster Agent",
+            "type": "go",
+            "preLaunchTask": "build-cluster-agent-debug",
+            "request": "launch",
+            "mode": "exec",
+            "program": "${workspaceFolder}/bin/polaris-cluster-agent",
+            "args": [
+                "--config=${workspaceFolder}/bin/default-polaris-cluster-agent-config.yaml"
+            ]
+        }
+    ]
+}

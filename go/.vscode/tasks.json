@@ -1,0 +1,17 @@
+{
+    // See https://go.microsoft.com/fwlink/?LinkId=733558
+    // for the documentation about the tasks.json format
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "build-scheduler-debug",
+            "type": "shell",
+            "command": "make build-scheduler-debug"
+        },
+        {
+            "label": "build-cluster-agent-debug",
+            "type": "shell",
+            "command": "make build-cluster-agent-debug"
+        }
+    ]
+}

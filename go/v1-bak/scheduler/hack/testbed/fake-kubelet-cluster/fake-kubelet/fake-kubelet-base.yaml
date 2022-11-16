@@ -1,0 +1,74 @@
+# This YAML files in this folder are based on https://github.com/wzshiming/fake-kubelet/blob/a2f3ebfe711245a243906f021a24297f62f4b0aa/deploy.yaml
+# The file fake-kubelet-base.yaml creates the RBAC objects needed for deploying fake-kubelet.
+# The file fake-kubelet-nodes-template.yaml provides a template for creating the ConfigMap and deployment for the actual nodes.
+#
+# A pod that should be schedulable on one of the fake nodes needs to have the following annotation toleration:
+# tolerations:
+#   - key: "fake-kubelet/provider"
+#     operator: "Exists"
+#     effect: "NoSchedule"
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: fake-kubelet
+  namespace: kube-system
+  labels:
+    app: fake-kubelet
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: fake-kubelet
+  labels:
+    app: fake-kubelet
+rules:
+  - apiGroups:
+      - ""
+    resources:
+      - nodes
+    verbs:
+      - watch
+      - list
+      - create
+      - get
+  - apiGroups:
+      - ""
+    resources:
+      - nodes/status
+    verbs:
+      - update
+      - patch
+  - apiGroups:
+      - ""
+    resources:
+      - pods
+    verbs:
+      - watch
+      - list
+      - delete
+      - update
+      - patch
+  - apiGroups:
+      - ""
+    resources:
+      - pods/status
+    verbs:
+      - update
+      - patch
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: fake-kubelet
+  labels:
+    app: fake-kubelet
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: fake-kubelet
+subjects:
+  - kind: ServiceAccount
+    name: fake-kubelet
+    namespace: kube-system
+---
