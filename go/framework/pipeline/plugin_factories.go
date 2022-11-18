@@ -1,11 +1,16 @@
 package pipeline
 
 import (
+	"polaris-slo-cloud.github.io/polaris-scheduler/v2/framework/clusteragent"
 	"polaris-slo-cloud.github.io/polaris-scheduler/v2/framework/config"
 )
 
 // Interface for the owner of a Polaris plugin.
 type PolarisPluginOwner interface{}
+
+// ToDo: Refactor the most important parts of all plugin owners into distinct interfaces, so that
+// both the plugin owners and the plugins can reference them and that the current plugin owners
+// can be easily moved to their own packages without creating circular dependencies.
 
 // Defines a factory function for creating Polaris plugins with a generic owner type.
 type PluginFactoryFunc[O PolarisPluginOwner] func(pluginConfig config.PluginConfig, owner O) (Plugin, error)
@@ -15,6 +20,9 @@ type SchedulingPluginFactoryFunc PluginFactoryFunc[PolarisScheduler]
 
 // Defines a factory function for creating Polaris sampling pipeline plugins.
 type SamplingPluginFactoryFunc PluginFactoryFunc[PolarisNodeSampler]
+
+// Defines a factory function for creating Polaris binding pipeline plugins.
+type BindingPluginFactoryFunc PluginFactoryFunc[clusteragent.PolarisClusterAgent]
 
 // Combines a ScorePlugin with its ScoreExtensions.
 type ScorePluginWithExtensions struct {

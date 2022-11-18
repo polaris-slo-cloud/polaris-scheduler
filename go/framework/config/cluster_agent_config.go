@@ -38,7 +38,10 @@ type ClusterAgentConfig struct {
 	ParallelSamplingPipelines uint32 `json:"parallelSamplingPipelines" yaml:"parallelSamplingPipelines"`
 
 	// The list of plugins for the sampling pipeline.
-	Plugins SamplingPluginsList `json:"plugins" yaml:"plugins"`
+	SamplingPlugins SamplingPluginsList `json:"samplingPlugins" yaml:"samplingPlugins"`
+
+	// The list of plugins for the binding pipeline.
+	BindingPlugins BindingPluginsList `json:"bindingPlugins" yaml:"bindingPlugins"`
 
 	// (optional) Allows specifying configuration parameters for each plugin.
 	PluginsConfig []*PluginsConfigListEntry `json:"pluginsConfig" yaml:"pluginsConfig"`

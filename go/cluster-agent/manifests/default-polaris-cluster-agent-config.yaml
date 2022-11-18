@@ -24,7 +24,7 @@ nodesCacheUpdateQueueSize: 1000
 parallelSamplingPipelines: 0
 
 # The list of plugins for the sampling pipeline.
-plugins:
+samplingPlugins:
   # Only one sampling strategy is used for a pod in the sampling pipeline.
   # However, multiple sampling strategy plugins can be configured, which will then be exposed
   # as different sampling endpoints.
@@ -52,6 +52,10 @@ plugins:
     - name: GeoLocation
       weight: 1
 
+# The list of plugins for the binding pipeline.
+bindingPlugins:
+  checkConflicts:
+    - name: ResourcesFit
 
 # (optional) Allows specifying configuration parameters for each plugin.
 pluginsConfig:

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"math"
 
+	"polaris-slo-cloud.github.io/polaris-scheduler/v2/framework/clusteragent"
 	"polaris-slo-cloud.github.io/polaris-scheduler/v2/framework/config"
 	"polaris-slo-cloud.github.io/polaris-scheduler/v2/framework/pipeline"
 	"polaris-slo-cloud.github.io/polaris-scheduler/v2/framework/util"
@@ -13,8 +14,10 @@ var (
 	_ pipeline.PreFilterPlugin             = (*ResourcesFitPlugin)(nil)
 	_ pipeline.FilterPlugin                = (*ResourcesFitPlugin)(nil)
 	_ pipeline.ScorePlugin                 = (*ResourcesFitPlugin)(nil)
+	_ pipeline.CheckConflictsPlugin        = (*ResourcesFitPlugin)(nil)
 	_ pipeline.SchedulingPluginFactoryFunc = NewResourcesFitSchedulingPlugin
 	_ pipeline.SamplingPluginFactoryFunc   = NewResourcesFitSamplingPlugin
+	_ pipeline.BindingPluginFactoryFunc    = NewResourcesFitBindingPlugin
 )
 
 const (
@@ -42,6 +45,7 @@ type scoringFn func(state *resourcesFitState, podInfo *pipeline.PodInfo, nodeInf
 // - PreFilter
 // - Filter
 // - Score
+// - CheckConflicts
 type ResourcesFitPlugin struct {
 	scoringFn scoringFn
 }
@@ -51,6 +55,10 @@ func NewResourcesFitSchedulingPlugin(configMap config.PluginConfig, scheduler pi
 }
 
 func NewResourcesFitSamplingPlugin(configMap config.PluginConfig, nodeSampler pipeline.PolarisNodeSampler) (pipeline.Plugin, error) {
+	return newResourcesFitPlugin(configMap)
+}
+
+func NewResourcesFitBindingPlugin(configMap config.PluginConfig, clusterAgent clusteragent.PolarisClusterAgent) (pipeline.Plugin, error) {
 	return newResourcesFitPlugin(configMap)
 }
 
@@ -112,6 +120,16 @@ func (rf *ResourcesFitPlugin) Score(ctx pipeline.SchedulingContext, podInfo *pip
 	}
 	score := rf.scoringFn(state, podInfo, nodeInfo)
 	return score, pipeline.NewSuccessStatus()
+}
+
+func (rf *ResourcesFitPlugin) CheckForConflicts(ctx pipeline.SchedulingContext, decision *pipeline.SchedulingDecision) pipeline.Status {
+	// To check for conflicts we simply rerun the PreFilter and Filter stages.
+	// If the selected node no longer has enough resources, we have found a scheduling conflict.
+	status := rf.PreFilter(ctx, decision.Pod)
+	if !pipeline.IsSuccessStatus(status) {
+		return status
+	}
+	return rf.Filter(ctx, decision.Pod, decision.TargetNode)
 }
 
 func (rf *ResourcesFitPlugin) readState(ctx pipeline.SchedulingContext) (*resourcesFitState, error) {

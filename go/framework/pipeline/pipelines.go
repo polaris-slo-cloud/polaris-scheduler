@@ -18,9 +18,16 @@ const (
 	SamplingStrategyStage = "SamplingStrategy" // Sampling pipeline only
 )
 
-// Plugin is the parent interface for all Polaris scheduling pipeline and Polaris sampling pipeline plugins
+// Plugin is the parent interface for all Polaris pipeline plugins.
+// In the Polaris Distributed Scheduling Framework, there are three pipelines:
+//   - Scheduling pipeline
+//   - Sampling pipeline
+//   - Binding pipeline
 //
-// The Polaris scheduling pipeline consists of the following stages:
+// The Polaris scheduling pipeline runs as part of the Polaris Scheduler. It is the main pipeline of the Scheduling Framework and is
+// responsible for sorting the incoming pods and for each pod obtain node samples from all clusters (using the sampling pipeline in the Cluster Agents),
+// and decide on which node to schedule the pod.
+// The scheduling pipeline and consists of the following stages:
 //   - Sort (one plugin only)
 //   - SampleNodes (one plugin only)
 //   - PreFilter
@@ -37,12 +44,22 @@ const (
 // Multiple Decision Pipeline instances may execute in parallel, but each instance will
 // execute on a single goroutine and only be traversed by a single pod at a time.
 //
-// The Polaris sampling pipeline consists of the following stages:
+// The Polaris sampling pipeline runs as part of the Polaris Cluster Agent. It is responsible for collecting a set of nodes (the sample),
+// which are capable of running the pod, for which they are requested.
+// The sampling pipeline consists of the following stages:
 //   - SamplingStrategy (one plugin only)
 //   - PreFilter
 //   - Filter
 //   - PreScore
 //   - Score
+//
+// The Polaris binding pipeline runs as part of the Polaris Cluster Agent. It is responsible for detecting any conflicts that a scheduling
+// decision may create on the target node (e.g., overprovisioning of resources).
+// The binding pipeline consists of the following stages:
+//   - CheckConflicts
+//
+// ToDo: Extend binding pipeline with stages that allow provisioning of a volume (this
+// may require multiple stages, e.g., before creating the pod in the orchestrator and after creating the pod).
 type Plugin interface {
 	// Gets the name of this plugin.
 	//
@@ -167,6 +184,16 @@ type SamplingStrategyPlugin interface {
 	SampleNodes(ctx SchedulingContext, podInfo *PodInfo, sampleSize int) ([]*NodeInfo, Status)
 }
 
+// A CheckConflictsPlugin is used by the binding pipeline to check if committing this scheduling decision would cause any conflicts
+// (e.g., overprovisioning of resources).
+type CheckConflictsPlugin interface {
+	Plugin
+
+	// Checks if committing this scheduling decision would cause any conflicts (e.g., overprovisioning of resources).
+	// All CheckConflicts plugins must return a success status for the binding to proceed.
+	CheckForConflicts(ctx SchedulingContext, decision *SchedulingDecision) Status
+}
+
 // Represents a scheduling decision made by the Decision Pipeline.
 type SchedulingDecision struct {
 
@@ -174,6 +201,9 @@ type SchedulingDecision struct {
 	Pod *PodInfo
 
 	// The node that has been selected for the pod.
+	//
+	// Binding pipeline plugins can assume that this NodeInfo has been updated at the beginning
+	// of the binding pipeline.
 	TargetNode *NodeInfo
 }
 
@@ -189,7 +219,7 @@ type DecisionPipeline interface {
 	SchedulePod(podInfo *SampledPodInfo) (*SchedulingDecision, Status)
 }
 
-// Represents an instance of the Polaris Scheduler Sampling Pipeline,
+// Represents an instance of the Polaris ClusterAgent Sampling Pipeline,
 // encompassing all its stages.
 //
 // A Sampling Pipeline executes on a single goroutine and there is only
@@ -204,4 +234,16 @@ type SamplingPipeline interface {
 	// Executes the sampling pipeline for the specified pod using the specified sampling strategy.
 	// The number of nodes to be sampled is specified as basis points (bp) of the total number of nodes.
 	SampleNodes(ctx SchedulingContext, samplingStrategy SamplingStrategyPlugin, podInfo *PodInfo, nodesToSampleBp int) ([]*NodeInfo, Status)
+}
+
+// Represents an instance of the Polaris ClusterAgent Binding Pipeline, encompassing all its stages.
+//
+// A Binding Pipeline executes on a single goroutine and there is only
+// a single pod traversing the pipeline at a time.
+type BindingPipeline interface {
+
+	// Runs the binding pipeline stages and, if all stages succeed, commits the scheduling decision to the cluster.
+	//
+	// The SchedulingDecision.TargetNode will be updated by this method with up-to-date information.
+	CommitSchedulingDecision(ctx SchedulingContext, decision *SchedulingDecision) Status
 }

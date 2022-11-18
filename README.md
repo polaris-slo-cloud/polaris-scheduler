@@ -39,6 +39,17 @@ This project is realized in Go 1.19 and relies on Go workspaces to divide code i
 
 
 
+ToDo:
+- Add Binding pipeline
+    - PreFilter
+    - Filter
+
+Affinity requires:
+- AffinitySet (groups pods with similar affinity requirements)
+    - add this as a reference to every PodInfo (may be nil)
+- Reusing the same sample for one AffinitySet
+
+
 ## Acknowledgement
 
 Polaris-scheduler is a fork and evolution of the rainbow-scheduler the [orchestration repository](https://gitlab.com/rainbow-project1/rainbow-orchestration) of the [RAINBOW](https://rainbow-h2020.eu/) project.

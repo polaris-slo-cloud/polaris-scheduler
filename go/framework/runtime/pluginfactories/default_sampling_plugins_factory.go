@@ -23,7 +23,7 @@ func NewDefaultSamplingPluginsFactory(registry *pipeline.PluginsRegistry[pipelin
 func (f *DefaultSamplingPluginsFactory) NewSamplingStrategiesPlugins(nodeSampler pipeline.PolarisNodeSampler) ([]pipeline.SamplingStrategyPlugin, error) {
 	clusterAgentConfig := nodeSampler.Config()
 	pluginsConfig := clusterAgentConfig.PluginsConfig
-	pluginsList := clusterAgentConfig.Plugins.SamplingStrategies
+	pluginsList := clusterAgentConfig.SamplingPlugins.SamplingStrategies
 	pluginInstances := make(map[string]pipeline.Plugin, 0)
 
 	if plugins, err := setUpPlugins[pipeline.SamplingStrategyPlugin](pluginsList, f.pluginsRegistry, nodeSampler, pluginInstances, pipeline.SamplingStrategyStage, pluginsConfig); err == nil {
@@ -36,7 +36,7 @@ func (f *DefaultSamplingPluginsFactory) NewSamplingStrategiesPlugins(nodeSampler
 func (f *DefaultSamplingPluginsFactory) NewSamplingPipelinePlugins(nodeSampler pipeline.PolarisNodeSampler) (*pipeline.SamplingPipelinePlugins, error) {
 	clusterAgentConfig := nodeSampler.Config()
 	pluginsConfig := clusterAgentConfig.PluginsConfig
-	pluginsList := clusterAgentConfig.Plugins
+	pluginsList := clusterAgentConfig.SamplingPlugins
 
 	samplingPipelinePlugins := pipeline.SamplingPipelinePlugins{}
 	pluginInstances := make(map[string]pipeline.Plugin, 0)
