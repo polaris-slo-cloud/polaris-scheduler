@@ -14,7 +14,7 @@ data:
     # in the format "<IP>:<PORT>"
     #
     # Default: [ "0.0.0.0:8081" ]
-    submitPodListenOn:
+    listenOn:
       - "0.0.0.0:8081"
 
     # The update interval for the nodes cache in milliseconds.
