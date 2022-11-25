@@ -11,8 +11,8 @@ import (
 )
 
 var (
-	_ pipeline.SamplingStrategyPlugin    = (*RoundRobinSamplingStrategy)(nil)
-	_ pipeline.SamplingPluginFactoryFunc = NewRoundRobinSamplingStrategy
+	_ pipeline.SamplingStrategyPlugin        = (*RoundRobinSamplingStrategy)(nil)
+	_ pipeline.ClusterAgentPluginFactoryFunc = NewRoundRobinSamplingStrategy
 )
 
 const (
@@ -32,7 +32,7 @@ type roundRobinSampleRange struct {
 }
 
 type RoundRobinSamplingStrategy struct {
-	polarisNodeSampler pipeline.PolarisNodeSampler
+	clusterAgentServices pipeline.ClusterAgentServices
 
 	// Stores the last index from which a node was taken for a sample.
 	// Access to this is controller by the mutex.
@@ -40,11 +40,11 @@ type RoundRobinSamplingStrategy struct {
 	mutex         *sync.Mutex
 }
 
-func NewRoundRobinSamplingStrategy(pluginConfig config.PluginConfig, polarisNodeSampler pipeline.PolarisNodeSampler) (pipeline.Plugin, error) {
+func NewRoundRobinSamplingStrategy(pluginConfig config.PluginConfig, clusterAgentServices pipeline.ClusterAgentServices) (pipeline.Plugin, error) {
 	rr := &RoundRobinSamplingStrategy{
-		polarisNodeSampler: polarisNodeSampler,
-		lastNodeIndex:      -1,
-		mutex:              &sync.Mutex{},
+		clusterAgentServices: clusterAgentServices,
+		lastNodeIndex:        -1,
+		mutex:                &sync.Mutex{},
 	}
 	return rr, nil
 }
@@ -58,7 +58,7 @@ func (rr *RoundRobinSamplingStrategy) StrategyName() string {
 }
 
 func (rr *RoundRobinSamplingStrategy) SampleNodes(ctx pipeline.SchedulingContext, podInfo *pipeline.PodInfo, sampleSize int) ([]*pipeline.NodeInfo, pipeline.Status) {
-	storeReader := rr.polarisNodeSampler.NodesCache().Nodes().ReadLock()
+	storeReader := rr.clusterAgentServices.NodesCache().Nodes().ReadLock()
 	defer storeReader.Unlock()
 
 	sampleRange := rr.computeSampleRange(sampleSize, storeReader)
@@ -104,7 +104,7 @@ func (rr *RoundRobinSamplingStrategy) getNodesSample(
 	sampleRange roundRobinSampleRange,
 	storeReader collections.ConcurrentObjectStoreReader[*core.Node],
 ) []*pipeline.NodeInfo {
-	clusterName := rr.polarisNodeSampler.ClusterClient().ClusterName()
+	clusterName := rr.clusterAgentServices.ClusterClient().ClusterName()
 	sampledNodes := make([]*pipeline.NodeInfo, sampleRange.requiredNodesCount)
 	sampleIndex := 0
 

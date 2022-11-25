@@ -4,20 +4,18 @@ import (
 	"fmt"
 	"math"
 
-	"polaris-slo-cloud.github.io/polaris-scheduler/v2/framework/clusteragent"
 	"polaris-slo-cloud.github.io/polaris-scheduler/v2/framework/config"
 	"polaris-slo-cloud.github.io/polaris-scheduler/v2/framework/pipeline"
 	"polaris-slo-cloud.github.io/polaris-scheduler/v2/framework/util"
 )
 
 var (
-	_ pipeline.PreFilterPlugin             = (*ResourcesFitPlugin)(nil)
-	_ pipeline.FilterPlugin                = (*ResourcesFitPlugin)(nil)
-	_ pipeline.ScorePlugin                 = (*ResourcesFitPlugin)(nil)
-	_ pipeline.CheckConflictsPlugin        = (*ResourcesFitPlugin)(nil)
-	_ pipeline.SchedulingPluginFactoryFunc = NewResourcesFitSchedulingPlugin
-	_ pipeline.SamplingPluginFactoryFunc   = NewResourcesFitSamplingPlugin
-	_ pipeline.BindingPluginFactoryFunc    = NewResourcesFitBindingPlugin
+	_ pipeline.PreFilterPlugin               = (*ResourcesFitPlugin)(nil)
+	_ pipeline.FilterPlugin                  = (*ResourcesFitPlugin)(nil)
+	_ pipeline.ScorePlugin                   = (*ResourcesFitPlugin)(nil)
+	_ pipeline.CheckConflictsPlugin          = (*ResourcesFitPlugin)(nil)
+	_ pipeline.SchedulingPluginFactoryFunc   = NewResourcesFitSchedulingPlugin
+	_ pipeline.ClusterAgentPluginFactoryFunc = NewResourcesFitClusterAgentPlugin
 )
 
 const (
@@ -54,11 +52,7 @@ func NewResourcesFitSchedulingPlugin(configMap config.PluginConfig, scheduler pi
 	return newResourcesFitPlugin(configMap)
 }
 
-func NewResourcesFitSamplingPlugin(configMap config.PluginConfig, nodeSampler pipeline.PolarisNodeSampler) (pipeline.Plugin, error) {
-	return newResourcesFitPlugin(configMap)
-}
-
-func NewResourcesFitBindingPlugin(configMap config.PluginConfig, clusterAgent clusteragent.PolarisClusterAgent) (pipeline.Plugin, error) {
+func NewResourcesFitClusterAgentPlugin(configMap config.PluginConfig, clusterAgentServices pipeline.ClusterAgentServices) (pipeline.Plugin, error) {
 	return newResourcesFitPlugin(configMap)
 }
 

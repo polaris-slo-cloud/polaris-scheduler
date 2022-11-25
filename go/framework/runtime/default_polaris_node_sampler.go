@@ -71,7 +71,7 @@ func NewDefaultPolarisNodeSampler(
 	ginEngine *gin.Engine,
 	clusterClient client.ClusterClient,
 	nodesCache client.NodesCache,
-	pluginsRegistry *pipeline.PluginsRegistry[pipeline.PolarisNodeSampler],
+	pluginsRegistry *pipeline.PluginsRegistry[pipeline.ClusterAgentServices],
 	logger *logr.Logger,
 ) *DefaultPolarisNodeSampler {
 	sampler := &DefaultPolarisNodeSampler{

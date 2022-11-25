@@ -17,11 +17,11 @@ func findPluginConfig(pluginName string, pluginsConfig []*config.PluginsConfigLi
 	return nil
 }
 
-// Creates an instance of the specified plugin with the specified owner.
-func createPluginInstance[T pipeline.Plugin, O pipeline.PolarisPluginOwner](
+// Creates an instance of the specified plugin with the specified owner services.
+func createPluginInstance[T pipeline.Plugin, O pipeline.PolarisPluginOwnerServices](
 	pluginName string,
 	pluginsRegistry *pipeline.PluginsRegistry[O],
-	owner O,
+	ownerServices O,
 	pluginInterfaceName string,
 	pluginsConfig []*config.PluginsConfigListEntry,
 ) (T, error) {
@@ -34,7 +34,7 @@ func createPluginInstance[T pipeline.Plugin, O pipeline.PolarisPluginOwner](
 
 	pluginConfig := findPluginConfig(pluginName, pluginsConfig)
 
-	pluginInstance, err := factoryFn(pluginConfig, owner)
+	pluginInstance, err := factoryFn(pluginConfig, ownerServices)
 	if err != nil {
 		return nilValue, err
 	}
@@ -46,10 +46,10 @@ func createPluginInstance[T pipeline.Plugin, O pipeline.PolarisPluginOwner](
 	}
 }
 
-func getExistingOrCreateNewPlugin[T pipeline.Plugin, O pipeline.PolarisPluginOwner](
+func getExistingOrCreateNewPlugin[T pipeline.Plugin, O pipeline.PolarisPluginOwnerServices](
 	pluginName string,
 	pluginsRegistry *pipeline.PluginsRegistry[O],
-	owner O,
+	ownerServices O,
 	existingInstances map[string]pipeline.Plugin,
 	pluginInterfaceName string,
 	pluginsConfig []*config.PluginsConfigListEntry,
@@ -62,17 +62,17 @@ func getExistingOrCreateNewPlugin[T pipeline.Plugin, O pipeline.PolarisPluginOwn
 		}
 	}
 
-	pluginInstance, err := createPluginInstance[T](pluginName, pluginsRegistry, owner, pluginInterfaceName, pluginsConfig)
+	pluginInstance, err := createPluginInstance[T](pluginName, pluginsRegistry, ownerServices, pluginInterfaceName, pluginsConfig)
 	if err == nil {
 		existingInstances[pluginName] = pluginInstance
 	}
 	return pluginInstance, err
 }
 
-func setUpPlugins[T pipeline.Plugin, O pipeline.PolarisPluginOwner](
+func setUpPlugins[T pipeline.Plugin, O pipeline.PolarisPluginOwnerServices](
 	list []*config.PluginListEntry,
 	pluginsRegistry *pipeline.PluginsRegistry[O],
-	owner O,
+	ownerServices O,
 	existingInstances map[string]pipeline.Plugin,
 	pluginInterfaceName string,
 	pluginsConfig []*config.PluginsConfigListEntry,
@@ -80,7 +80,7 @@ func setUpPlugins[T pipeline.Plugin, O pipeline.PolarisPluginOwner](
 	pluginInstances := make([]T, len(list))
 
 	for i, pluginEntry := range list {
-		instance, err := getExistingOrCreateNewPlugin[T](pluginEntry.Name, pluginsRegistry, owner, existingInstances, pluginInterfaceName, pluginsConfig)
+		instance, err := getExistingOrCreateNewPlugin[T](pluginEntry.Name, pluginsRegistry, ownerServices, existingInstances, pluginInterfaceName, pluginsConfig)
 		if err != nil {
 			return nil, err
 		}

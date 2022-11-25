@@ -2,17 +2,16 @@ package pipeline
 
 import (
 	"context"
-
-	"github.com/go-logr/logr"
-
-	"polaris-slo-cloud.github.io/polaris-scheduler/v2/framework/client"
-	"polaris-slo-cloud.github.io/polaris-scheduler/v2/framework/config"
 )
+
+// ToDo: Move this out from the pipeline package, because
+// plugins get a ClusterAgentServices reference.
 
 // Main service that is responsible for sampling nodes.
 //
 // This service is responsible for managing the REST interface and the nodes watch.
 type PolarisNodeSampler interface {
+	ClusterAgentServices
 
 	// Starts the node sampler service.
 	//
@@ -23,18 +22,6 @@ type PolarisNodeSampler interface {
 	// Returns nil if the sampler has started successfully.
 	Start(ctx context.Context) error
 
-	// Gets the config used by this sampler.
-	Config() *config.ClusterAgentConfig
-
-	// Gets the ClusterClient used by this sampler.
-	ClusterClient() client.ClusterClient
-
-	// The nodes cache used by this sampler.
-	NodesCache() client.NodesCache
-
 	// Gets the sampling strategies available in this sampler.
 	SamplingStrategies() []SamplingStrategyPlugin
-
-	// Gets the logger used by this sampler.
-	Logger() *logr.Logger
 }

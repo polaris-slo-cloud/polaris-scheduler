@@ -31,7 +31,7 @@ type commandLineArgs struct {
 }
 
 // Creates a new polaris-cluster-agent command.
-func NewPolarisClusterAgentCmd(ctx context.Context, pluginRegistry *pipeline.PluginsRegistry[pipeline.PolarisNodeSampler]) *cobra.Command {
+func NewPolarisClusterAgentCmd(ctx context.Context, pluginRegistry *pipeline.PluginsRegistry[pipeline.ClusterAgentServices]) *cobra.Command {
 	cmdLineArgs := commandLineArgs{}
 
 	logger := initLogger()
@@ -121,7 +121,7 @@ func startNodeSampler(
 	clusterAgentConfig *config.ClusterAgentConfig,
 	k8sClusterClient kubernetes.KubernetesClusterClient,
 	ginEngine *gin.Engine,
-	pluginRegistry *pipeline.PluginsRegistry[pipeline.PolarisNodeSampler],
+	pluginRegistry *pipeline.PluginsRegistry[pipeline.ClusterAgentServices],
 	logger *logr.Logger,
 ) (pipeline.PolarisNodeSampler, error) {
 	nodesCache, err := setUpNodesCache(clusterAgentConfig, k8sClusterClient)
@@ -157,7 +157,7 @@ func startClusterAgent(
 func runNodeSampler(
 	ctx context.Context,
 	clusterAgentConfig *config.ClusterAgentConfig,
-	pluginRegistry *pipeline.PluginsRegistry[pipeline.PolarisNodeSampler],
+	pluginRegistry *pipeline.PluginsRegistry[pipeline.ClusterAgentServices],
 	logger *logr.Logger,
 	cmdLineArgs *commandLineArgs,
 ) error {

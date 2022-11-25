@@ -15,8 +15,8 @@ const (
 )
 
 var (
-	_ pipeline.SamplingStrategyPlugin    = (*RandomSamplingStrategy)(nil)
-	_ pipeline.SamplingPluginFactoryFunc = NewRandomSamplingStrategy
+	_ pipeline.SamplingStrategyPlugin        = (*RandomSamplingStrategy)(nil)
+	_ pipeline.ClusterAgentPluginFactoryFunc = NewRandomSamplingStrategy
 )
 
 const (
@@ -25,17 +25,17 @@ const (
 )
 
 type RandomSamplingStrategy struct {
-	polarisNodeSampler pipeline.PolarisNodeSampler
+	clusterAgentServices pipeline.ClusterAgentServices
 
 	// A pool of rand.Rand objects, each of them to be used by a single goroutine.
 	// rand.Rand is not thread-safe and the global rand.Int() function uses a mutex to sync access to a single Rand.
 	randPool chan *rand.Rand
 }
 
-func NewRandomSamplingStrategy(pluginConfig config.PluginConfig, polarisNodeSampler pipeline.PolarisNodeSampler) (pipeline.Plugin, error) {
+func NewRandomSamplingStrategy(pluginConfig config.PluginConfig, clusterAgentServices pipeline.ClusterAgentServices) (pipeline.Plugin, error) {
 	rs := &RandomSamplingStrategy{
-		polarisNodeSampler: polarisNodeSampler,
-		randPool:           make(chan *rand.Rand, randomPoolSize),
+		clusterAgentServices: clusterAgentServices,
+		randPool:             make(chan *rand.Rand, randomPoolSize),
 	}
 
 	for i := 0; i < randomPoolSize; i++ {
@@ -59,7 +59,7 @@ func (rs *RandomSamplingStrategy) SampleNodes(ctx pipeline.SchedulingContext, po
 	nodes := rs.sampleNodesInternal(podInfo, sampleSize, random)
 	rs.randPool <- random
 
-	clusterName := rs.polarisNodeSampler.ClusterClient().ClusterName()
+	clusterName := rs.clusterAgentServices.ClusterClient().ClusterName()
 	nodeInfos := make([]*pipeline.NodeInfo, len(nodes))
 	for i, node := range nodes {
 		nodeInfos[i] = pipeline.NewNodeInfo(clusterName, node)
@@ -69,7 +69,7 @@ func (rs *RandomSamplingStrategy) SampleNodes(ctx pipeline.SchedulingContext, po
 }
 
 func (rs *RandomSamplingStrategy) sampleNodesInternal(podInfo *pipeline.PodInfo, reqNodesCount int, random *rand.Rand) []*core.Node {
-	storeReader := rs.polarisNodeSampler.NodesCache().Nodes().ReadLock()
+	storeReader := rs.clusterAgentServices.NodesCache().Nodes().ReadLock()
 	defer storeReader.Unlock()
 
 	totalNodesCount := storeReader.Len()
