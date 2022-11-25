@@ -1,5 +1,9 @@
 package pipeline
 
+import (
+	"polaris-slo-cloud.github.io/polaris-scheduler/v2/framework/client"
+)
+
 const (
 	// The minimum node score that may be returned by a ScorePlugin (after NormalizeScore).
 	MinNodeScore int64 = 0
@@ -246,7 +250,5 @@ type SamplingPipeline interface {
 type BindingPipeline interface {
 
 	// Runs the binding pipeline stages and, if all stages succeed, commits the scheduling decision to the cluster.
-	//
-	// The SchedulingDecision.TargetNode will be updated by this method with up-to-date information.
-	CommitSchedulingDecision(ctx SchedulingContext, decision *SchedulingDecision) Status
+	CommitSchedulingDecision(ctx SchedulingContext, schedDecision *client.ClusterSchedulingDecision) Status
 }

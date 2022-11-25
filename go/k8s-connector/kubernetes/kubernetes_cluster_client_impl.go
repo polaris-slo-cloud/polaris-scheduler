@@ -116,6 +116,10 @@ func (c *KubernetesClusterClientImpl) CommitSchedulingDecision(ctx context.Conte
 	return nil
 }
 
+func (c *KubernetesClusterClientImpl) FetchNode(ctx context.Context, name string) (*core.Node, error) {
+	return c.k8sClientSet.CoreV1().Nodes().Get(ctx, name, meta.GetOptions{})
+}
+
 func (c *KubernetesClusterClientImpl) createPod(ctx context.Context, pod *core.Pod) (*core.Pod, error) {
 	pod.Spec.SchedulerName = polarisClusterAgentSchedulerName
 	return c.k8sClientSet.CoreV1().Pods(pod.Namespace).Create(ctx, pod, meta.CreateOptions{})

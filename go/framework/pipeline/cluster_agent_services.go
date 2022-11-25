@@ -12,8 +12,8 @@ type ClusterAgentServices interface {
 	// Gets the config used by this ClusterAgent.
 	Config() *config.ClusterAgentConfig
 
-	// Gets the ClusterClient used by this ClusterAgent.
-	ClusterClient() client.ClusterClient
+	// Gets the LocalClusterClient used by this ClusterAgent.
+	ClusterClient() client.LocalClusterClient
 
 	// The nodes cache used by this ClusterAgent.
 	NodesCache() client.NodesCache

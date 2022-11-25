@@ -33,6 +33,11 @@ data:
     # Default: 0 (number of CPU cores * 10)
     parallelSamplingPipelines: 0
 
+    # The number of Binding Pipelines to run in parallel.
+    #
+    # Default: 0 (number of CPU cores * 10)
+    parallelBindingPipelines: 0
+
     # The list of plugins for the sampling pipeline.
     samplingPlugins:
       # Only one sampling strategy is used for a pod in the sampling pipeline.
