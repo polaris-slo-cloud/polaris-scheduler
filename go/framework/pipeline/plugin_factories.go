@@ -87,6 +87,20 @@ type SamplingPluginsFactory interface {
 	NewSamplingPipelinePlugins(clusterAgentServices ClusterAgentServices) (*SamplingPipelinePlugins, error)
 }
 
+// Contains plugin instances for a single BindingPipeline instance.
+//
+// If a plugin ties into multiple stages, the same plugin instance is used for all of them.
+type BindingPipelinePlugins struct {
+	CheckConflicts []CheckConflictsPlugin
+}
+
+// Used to instantiate binding plugins.
+type BindingPluginsFactory interface {
+
+	// Creates a new set of instances of the plugins configured for the binding Pipeline.
+	NewBindingPipelinePlugins(clusterAgentServices ClusterAgentServices) (*BindingPipelinePlugins, error)
+}
+
 // Contains the factory functions for all available plugins.
 // The generic type parameter O defines the owner services type of the created plugins (i.e., PolarisScheduler or PolarisNodeSampler).
 type PluginsRegistry[O PolarisPluginOwnerServices] struct {

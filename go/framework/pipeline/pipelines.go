@@ -16,6 +16,9 @@ const (
 	ReserveStage     = "Reserve"
 
 	SamplingStrategyStage = "SamplingStrategy" // Sampling pipeline only
+
+	// Binding Pipeline stages
+	CheckConflictsStage = "CheckConflicts"
 )
 
 // Plugin is the parent interface for all Polaris pipeline plugins.
