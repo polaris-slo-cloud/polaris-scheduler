@@ -4,6 +4,8 @@ import (
 	"runtime"
 )
 
+// ToDo: Remove the local cluster operation mode (the one without a ClusterAgent) from the scheduler config
+
 // Defines the mode ("singleCluster" or "multiCluster") in which to operate the scheduler.
 //
 //   - In "singleCluster" mode, the scheduler connects directly interacts with cluster's orchestrator to

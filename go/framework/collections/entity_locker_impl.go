@@ -104,6 +104,9 @@ func (locker *EntityLockerImpl) getOrCreateLock(name string) *entityLockImpl {
 					lock.mutex.Unlock()
 					lock = nil
 				}
+			} else {
+				// We have stored our new lock.
+				lock = newLock
 			}
 		}
 	}
