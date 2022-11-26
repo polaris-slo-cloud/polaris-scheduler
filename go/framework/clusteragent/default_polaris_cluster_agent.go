@@ -11,6 +11,7 @@ import (
 	core "k8s.io/api/core/v1"
 
 	"polaris-slo-cloud.github.io/polaris-scheduler/v2/framework/client"
+	"polaris-slo-cloud.github.io/polaris-scheduler/v2/framework/collections"
 	"polaris-slo-cloud.github.io/polaris-scheduler/v2/framework/config"
 	"polaris-slo-cloud.github.io/polaris-scheduler/v2/framework/pipeline"
 	"polaris-slo-cloud.github.io/polaris-scheduler/v2/framework/runtime"
@@ -52,6 +53,9 @@ type DefaultPolarisClusterAgent struct {
 	// queue of idle binding pipelines, which can be obtained by a gin handler function.
 	bindingPipelines chan pipeline.BindingPipeline
 
+	// Used by the binding pipelines to obtain mutually exclusive access to a node.
+	nodesLocker collections.EntityLocker
+
 	// The global cache of nodes in the cluster.
 	nodesCache client.NodesCache
 
@@ -78,6 +82,7 @@ func NewDefaultPolarisClusterAgent(
 		ginEngine:        ginEngine,
 		clusterClient:    clusterClient,
 		bindingPipelines: make(chan pipeline.BindingPipeline, clusterAgentConfig.ParallelBindingPipelines),
+		nodesLocker:      collections.NewEntityLockerImpl(),
 		nodesCache:       nodesCache,
 		pluginsFactory:   pluginfactories.NewDefaultBindingPluginsFactory(pluginRegistry),
 		logger:           logger,
@@ -127,7 +132,7 @@ func (ca *DefaultPolarisClusterAgent) createBindingPipelines() error {
 		if err != nil {
 			return err
 		}
-		bindingPipeline := runtime.NewDefaultBindingPipeline(i, bindingPlugins, ca)
+		bindingPipeline := runtime.NewDefaultBindingPipeline(i, bindingPlugins, ca, ca.nodesLocker)
 		ca.bindingPipelines <- bindingPipeline
 	}
 	return nil
@@ -183,6 +188,7 @@ func (ca *DefaultPolarisClusterAgent) logStopwatches(pod *core.Pod, stopwatches 
 		"pod", fullPodName,
 		"status", pipeline.StatusCodeAsString(status),
 		"queueTimeMs", stopwatches.QueueTime.Duration().Milliseconds(),
+		"nodeLockTimeMs", stopwatches.NodeLockTime.Duration().Milliseconds(),
 		"fetchNodeMs", stopwatches.FetchNodeInfo.Duration().Milliseconds(),
 		"bindingPipelineMs", stopwatches.BindingPipeline.Duration().Milliseconds(),
 		"commitMs", stopwatches.CommitDecision.Duration().Milliseconds(),

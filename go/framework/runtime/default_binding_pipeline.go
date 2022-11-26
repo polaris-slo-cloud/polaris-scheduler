@@ -3,6 +3,7 @@ package runtime
 import (
 	"github.com/go-logr/logr"
 	"polaris-slo-cloud.github.io/polaris-scheduler/v2/framework/client"
+	"polaris-slo-cloud.github.io/polaris-scheduler/v2/framework/collections"
 	"polaris-slo-cloud.github.io/polaris-scheduler/v2/framework/pipeline"
 	"polaris-slo-cloud.github.io/polaris-scheduler/v2/framework/util"
 )
@@ -20,6 +21,7 @@ type DefaultBindingPipeline struct {
 	id                   int
 	plugins              *pipeline.BindingPipelinePlugins
 	clusterAgentServices pipeline.ClusterAgentServices
+	nodesLocker          collections.EntityLocker
 	logger               *logr.Logger
 }
 
@@ -28,6 +30,7 @@ type DefaultBindingPipeline struct {
 // ToDo: find a better way to handle the responsibilities for timing other than this shared struct.
 type BindingPipelineStopwatches struct {
 	QueueTime       *util.Stopwatch
+	NodeLockTime    *util.Stopwatch
 	FetchNodeInfo   *util.Stopwatch
 	BindingPipeline *util.Stopwatch
 	CommitDecision  *util.Stopwatch
@@ -38,11 +41,13 @@ func NewDefaultBindingPipeline(
 	id int,
 	plugins *pipeline.BindingPipelinePlugins,
 	clusterAgentServices pipeline.ClusterAgentServices,
+	nodesLocker collections.EntityLocker,
 ) *DefaultBindingPipeline {
 	bp := &DefaultBindingPipeline{
 		id:                   id,
 		plugins:              plugins,
 		clusterAgentServices: clusterAgentServices,
+		nodesLocker:          nodesLocker,
 		logger:               clusterAgentServices.Logger(),
 	}
 	return bp
@@ -52,6 +57,7 @@ func NewBindingPipelineStopwatches() *BindingPipelineStopwatches {
 	stopwatches := &BindingPipelineStopwatches{
 		QueueTime:       util.NewStopwatch(),
 		FetchNodeInfo:   util.NewStopwatch(),
+		NodeLockTime:    util.NewStopwatch(),
 		BindingPipeline: util.NewStopwatch(),
 		CommitDecision:  util.NewStopwatch(),
 	}
@@ -60,6 +66,11 @@ func NewBindingPipelineStopwatches() *BindingPipelineStopwatches {
 
 func (bp *DefaultBindingPipeline) CommitSchedulingDecision(schedCtx pipeline.SchedulingContext, schedDecision *client.ClusterSchedulingDecision) pipeline.Status {
 	stopwatches := bp.getStopwatches(schedCtx)
+
+	stopwatches.NodeLockTime.Start()
+	nodeLock := bp.nodesLocker.Lock(schedDecision.NodeName)
+	defer nodeLock.Unlock()
+	stopwatches.NodeLockTime.Stop()
 
 	// Fetch the NodeInfo.
 	stopwatches.FetchNodeInfo.Start()
