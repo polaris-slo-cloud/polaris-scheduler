@@ -103,6 +103,33 @@ func (r *Resources) LessThanOrEqual(other *Resources) bool {
 	return true
 }
 
+// Returns true if the values in this object are the same as in the other resources object.
+func (r *Resources) Equals(other *Resources) bool {
+	if r.MilliCPU != other.MilliCPU {
+		return false
+	}
+	if r.MemoryBytes != other.MemoryBytes {
+		return false
+	}
+	if r.EphemeralStorage != other.EphemeralStorage {
+		return false
+	}
+	if r.ExtendedResources != nil && other.ExtendedResources == nil {
+		return false
+	}
+	if len(r.ExtendedResources) != len(other.ExtendedResources) {
+		return false
+	}
+
+	for name, rQuantity := range r.ExtendedResources {
+		if otherQuantity, ok := other.ExtendedResources[name]; !ok || rQuantity != otherQuantity {
+			return false
+		}
+	}
+
+	return true
+}
+
 // Creates a deep copy of this Resources object.
 func (r *Resources) DeepCopy() *Resources {
 	ret := NewResources()

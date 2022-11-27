@@ -207,6 +207,7 @@ func (knc *KubernetesNodesCache) applyNodeUpdate(cacheUpdate *nodesCacheUpdate, 
 	case removal:
 		storeWriter.Remove(cacheUpdate.node.Name)
 	case update:
+		// This seems to happen quite frequently in Kubernetes, probably due to heartbeats from the nodes.
 		clusterNode := knc.createUpdatedClusterNode(cacheUpdate.node, storeWriter)
 		storeWriter.Set(cacheUpdate.node.Name, clusterNode)
 	}
@@ -214,16 +215,16 @@ func (knc *KubernetesNodesCache) applyNodeUpdate(cacheUpdate *nodesCacheUpdate, 
 
 // Creates an updated version of a ClusterNode that already exists in the cache.
 func (knc *KubernetesNodesCache) createUpdatedClusterNode(updatedNode *core.Node, storeReader collections.ConcurrentObjectStoreWriter[*client.ClusterNode]) *client.ClusterNode {
-	var existingPods []*client.ClusterPod
+	var updatedClusterNode *client.ClusterNode
+
 	if oldClusterNode, ok := storeReader.GetByKey(updatedNode.Name); ok {
-		existingPods = make([]*client.ClusterPod, len(oldClusterNode.Pods))
-		copy(existingPods, oldClusterNode.Pods)
+		// No need to copy the pods slice, because the ClusterNodes should be treated as immutable anyway.
+		updatedClusterNode = client.NewClusterNodeWithPods(updatedNode, oldClusterNode.Pods)
 	} else {
-		existingPods = make([]*client.ClusterPod, 0)
+		updatedClusterNode = client.NewClusterNode(updatedNode)
 	}
 
-	newClusterNode := client.NewClusterNodeWithPods(updatedNode, existingPods)
-	return newClusterNode
+	return updatedClusterNode
 }
 
 func (knc *KubernetesNodesCache) applyPodUpdate(cacheUpdate *nodesCacheUpdate, storeWriter collections.ConcurrentObjectStoreWriter[*client.ClusterNode]) {
