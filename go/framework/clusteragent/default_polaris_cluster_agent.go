@@ -8,7 +8,6 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/go-logr/logr"
-	core "k8s.io/api/core/v1"
 
 	"polaris-slo-cloud.github.io/polaris-scheduler/v2/framework/client"
 	"polaris-slo-cloud.github.io/polaris-scheduler/v2/framework/collections"
@@ -177,15 +176,16 @@ func (ca *DefaultPolarisClusterAgent) runBindingPipeline(schedDecision *client.C
 	}()
 
 	status := bindingPipeline.CommitSchedulingDecision(schedCtx, schedDecision)
-	ca.logStopwatches(schedDecision.Pod, stopwatches, status)
+	ca.logStopwatches(schedDecision, stopwatches, status)
 	return status
 }
 
-func (ca *DefaultPolarisClusterAgent) logStopwatches(pod *core.Pod, stopwatches *runtime.BindingPipelineStopwatches, status pipeline.Status) {
-	fullPodName := fmt.Sprintf("%s.%s", pod.Namespace, pod.Name)
+func (ca *DefaultPolarisClusterAgent) logStopwatches(schedDecision *client.ClusterSchedulingDecision, stopwatches *runtime.BindingPipelineStopwatches, status pipeline.Status) {
+	fullPodName := fmt.Sprintf("%s.%s", schedDecision.Pod.Namespace, schedDecision.Pod.Name)
 	ca.logger.Info(
 		"BindingComplete",
 		"pod", fullPodName,
+		"node", schedDecision.NodeName,
 		"status", pipeline.StatusCodeAsString(status),
 		"queueTimeMs", stopwatches.QueueTime.Duration().Milliseconds(),
 		"nodeLockTimeMs", stopwatches.NodeLockTime.Duration().Milliseconds(),
