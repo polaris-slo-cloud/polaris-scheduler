@@ -4,8 +4,7 @@ import (
 	"fmt"
 	"math/rand"
 
-	core "k8s.io/api/core/v1"
-
+	"polaris-slo-cloud.github.io/polaris-scheduler/v2/framework/client"
 	"polaris-slo-cloud.github.io/polaris-scheduler/v2/framework/config"
 	"polaris-slo-cloud.github.io/polaris-scheduler/v2/framework/pipeline"
 )
@@ -68,16 +67,16 @@ func (rs *RandomSamplingStrategy) SampleNodes(ctx pipeline.SchedulingContext, po
 	return nodeInfos, pipeline.NewSuccessStatus()
 }
 
-func (rs *RandomSamplingStrategy) sampleNodesInternal(podInfo *pipeline.PodInfo, reqNodesCount int, random *rand.Rand) []*core.Node {
+func (rs *RandomSamplingStrategy) sampleNodesInternal(podInfo *pipeline.PodInfo, reqNodesCount int, random *rand.Rand) []*client.ClusterNode {
 	storeReader := rs.clusterAgentServices.NodesCache().Nodes().ReadLock()
 	defer storeReader.Unlock()
 
 	totalNodesCount := storeReader.Len()
 	if totalNodesCount == 0 {
-		return make([]*core.Node, 0)
+		return make([]*client.ClusterNode, 0)
 	}
 
-	sampledNodes := make([]*core.Node, reqNodesCount)
+	sampledNodes := make([]*client.ClusterNode, reqNodesCount)
 	chosenIndices := make(map[int]bool, reqNodesCount)
 
 	for i := 0; i < reqNodesCount; i++ {

@@ -3,8 +3,6 @@ package client
 import (
 	"context"
 
-	core "k8s.io/api/core/v1"
-
 	"polaris-slo-cloud.github.io/polaris-scheduler/v2/framework/collections"
 )
 
@@ -19,5 +17,5 @@ type NodesCache interface {
 	StartWatch(ctx context.Context) error
 
 	// Gets the cache of all nodes.
-	Nodes() collections.ConcurrentObjectStore[*core.Node]
+	Nodes() collections.ConcurrentObjectStore[*ClusterNode]
 }

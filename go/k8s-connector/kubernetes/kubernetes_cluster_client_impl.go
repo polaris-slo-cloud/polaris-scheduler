@@ -8,6 +8,7 @@ import (
 
 	core "k8s.io/api/core/v1"
 	meta "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/fields"
 	clientset "k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/kubernetes/scheme"
 	coreclient "k8s.io/client-go/kubernetes/typed/core/v1"
@@ -118,6 +119,20 @@ func (c *KubernetesClusterClientImpl) CommitSchedulingDecision(ctx context.Conte
 
 func (c *KubernetesClusterClientImpl) FetchNode(ctx context.Context, name string) (*core.Node, error) {
 	return c.k8sClientSet.CoreV1().Nodes().Get(ctx, name, meta.GetOptions{})
+}
+
+func (c *KubernetesClusterClientImpl) FetchPodsScheduledOnNode(ctx context.Context, nodeName string) ([]core.Pod, error) {
+	// Based on how kubectl does this: https://github.com/kubernetes/kubernetes/blob/85f1205efa89008e6e94a92d66a9dd691cb59825/pkg/kubectl/describe/versioned/describe.go#L2819
+	fieldSelector, err := fields.ParseSelector("spec.nodeName=" + nodeName + ",status.phase!=" + string(core.PodSucceeded) + ",status.phase!=" + string(core.PodFailed))
+	if err != nil {
+		return nil, err
+	}
+
+	podsList, err := c.k8sClientSet.CoreV1().Pods("").List(ctx, meta.ListOptions{FieldSelector: fieldSelector.String()})
+	if err != nil {
+		return nil, err
+	}
+	return podsList.Items, nil
 }
 
 func (c *KubernetesClusterClientImpl) createPod(ctx context.Context, pod *core.Pod) (*core.Pod, error) {

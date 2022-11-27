@@ -26,6 +26,11 @@ type LocalClusterClient interface {
 
 	// Fetches the node with the specified name.
 	FetchNode(ctx context.Context, name string) (*core.Node, error)
+
+	// Fetches all pods that are currently scheduled on the node with the specified name.
+	//
+	// ToDo: Refactor this into a fetch method with more generic search criteria and maybe return an array of pointers.
+	FetchPodsScheduledOnNode(ctx context.Context, nodeName string) ([]core.Pod, error)
 }
 
 // Manages the clients for multiple clusters.

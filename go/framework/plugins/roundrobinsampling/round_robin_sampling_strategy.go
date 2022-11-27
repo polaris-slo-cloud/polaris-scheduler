@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"sync"
 
-	core "k8s.io/api/core/v1"
+	"polaris-slo-cloud.github.io/polaris-scheduler/v2/framework/client"
 	"polaris-slo-cloud.github.io/polaris-scheduler/v2/framework/collections"
 	"polaris-slo-cloud.github.io/polaris-scheduler/v2/framework/config"
 	"polaris-slo-cloud.github.io/polaris-scheduler/v2/framework/pipeline"
@@ -69,7 +69,7 @@ func (rr *RoundRobinSamplingStrategy) SampleNodes(ctx pipeline.SchedulingContext
 
 func (rr *RoundRobinSamplingStrategy) computeSampleRange(
 	sampleSize int,
-	storeReader collections.ConcurrentObjectStoreReader[*core.Node],
+	storeReader collections.ConcurrentObjectStoreReader[*client.ClusterNode],
 ) roundRobinSampleRange {
 	totalNodesCount := storeReader.Len()
 	ret := roundRobinSampleRange{
@@ -102,7 +102,7 @@ func (rr *RoundRobinSamplingStrategy) computeSampleRange(
 
 func (rr *RoundRobinSamplingStrategy) getNodesSample(
 	sampleRange roundRobinSampleRange,
-	storeReader collections.ConcurrentObjectStoreReader[*core.Node],
+	storeReader collections.ConcurrentObjectStoreReader[*client.ClusterNode],
 ) []*pipeline.NodeInfo {
 	clusterName := rr.clusterAgentServices.ClusterClient().ClusterName()
 	sampledNodes := make([]*pipeline.NodeInfo, sampleRange.requiredNodesCount)

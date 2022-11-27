@@ -82,7 +82,7 @@ func (rf *ResourcesFitPlugin) Name() string {
 }
 
 func (*ResourcesFitPlugin) PreFilter(ctx pipeline.SchedulingContext, podInfo *pipeline.PodInfo) pipeline.Status {
-	reqResources := calculateTotalResources(podInfo)
+	reqResources := util.CalculateTotalPodResources(podInfo.Pod)
 	state := resourcesFitState{
 		reqResources: reqResources,
 	}
@@ -97,7 +97,7 @@ func (rf *ResourcesFitPlugin) Filter(ctx pipeline.SchedulingContext, podInfo *pi
 		return pipeline.NewInternalErrorStatus(err)
 	}
 
-	if state.reqResources.LessThanOrEqual(nodeInfo.AllocatableResources) {
+	if state.reqResources.LessThanOrEqual(nodeInfo.Node.AvailableResources) {
 		return pipeline.NewSuccessStatus()
 	}
 	return pipeline.NewStatus(pipeline.Unschedulable, fmt.Sprintf("node %s does not have enough resources", nodeInfo.Node.Name))
@@ -138,23 +138,12 @@ func (rf *ResourcesFitPlugin) readState(ctx pipeline.SchedulingContext) (*resour
 	return resState, nil
 }
 
-func calculateTotalResources(podInfo *pipeline.PodInfo) *util.Resources {
-	podSpec := podInfo.Pod.Spec
-	reqResources := util.NewResources()
-
-	for _, container := range podSpec.Containers {
-		reqResources.Add(container.Resources.Limits)
-	}
-
-	return reqResources
-}
-
 // Calculates the percentage of resources used on the node as an integer between 0 and 100.
 // Only resources requested by the pod are considered.
 func calculateResourcesUsedPercentage(podResources *util.Resources, nodeInfo *pipeline.NodeInfo) int64 {
 	var usedPercentagesSum float64 = 0.0
-	nodeAllocatableRes := nodeInfo.AllocatableResources
-	nodeTotalRes := nodeInfo.TotalResources
+	nodeAllocatableRes := nodeInfo.Node.AvailableResources
+	nodeTotalRes := nodeInfo.Node.TotalResources
 
 	// We assume that CPU and memory are always used (even though some pods might not specify them).
 	resourceTypesCount := 2

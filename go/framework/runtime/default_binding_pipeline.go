@@ -1,7 +1,11 @@
 package runtime
 
 import (
+	"sync"
+
 	"github.com/go-logr/logr"
+	core "k8s.io/api/core/v1"
+
 	"polaris-slo-cloud.github.io/polaris-scheduler/v2/framework/client"
 	"polaris-slo-cloud.github.io/polaris-scheduler/v2/framework/collections"
 	"polaris-slo-cloud.github.io/polaris-scheduler/v2/framework/pipeline"
@@ -108,13 +112,38 @@ func (bp *DefaultBindingPipeline) getStopwatches(schedCtx pipeline.SchedulingCon
 
 func (bp *DefaultBindingPipeline) fetchNodeInfo(schedCtx pipeline.SchedulingContext, nodeName string) (*pipeline.NodeInfo, error) {
 	clusterClient := bp.clusterAgentServices.ClusterClient()
+	var node *core.Node
+	var podsOnNode []core.Pod
+	var nodeFetchErr, podsFetchErr error
 
-	node, err := clusterClient.FetchNode(schedCtx.Context(), nodeName)
-	if err != nil {
-		return nil, err
+	wg := sync.WaitGroup{}
+	wg.Add(2)
+
+	go func() {
+		node, nodeFetchErr = clusterClient.FetchNode(schedCtx.Context(), nodeName)
+		wg.Done()
+	}()
+
+	go func() {
+		podsOnNode, podsFetchErr = clusterClient.FetchPodsScheduledOnNode(schedCtx.Context(), nodeName)
+		wg.Done()
+	}()
+
+	wg.Wait()
+	if nodeFetchErr != nil {
+		return nil, nodeFetchErr
+	}
+	if podsFetchErr != nil {
+		return nil, podsFetchErr
 	}
 
-	return pipeline.NewNodeInfo(clusterClient.ClusterName(), node), nil
+	clusterNode := &client.ClusterNode{
+		Node:               node,
+		AvailableResources: util.CalculateNodeAvailableResources(node, podsOnNode),
+		TotalResources:     util.NewResourcesFromList(node.Status.Capacity),
+	}
+
+	return pipeline.NewNodeInfo(clusterClient.ClusterName(), clusterNode), nil
 }
 
 func (bp *DefaultBindingPipeline) runCheckConflictsPlugins(schedCtx pipeline.SchedulingContext, decision *pipeline.SchedulingDecision) pipeline.Status {

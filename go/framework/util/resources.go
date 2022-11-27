@@ -2,7 +2,6 @@ package util
 
 import (
 	core "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/api/resource"
 )
 
 // Represents a set of resources requested or consumed by a Pod.
@@ -21,12 +20,23 @@ func NewResources() *Resources {
 // Creates a Resources object and initializes it with the specified ResourceList.
 func NewResourcesFromList(rl core.ResourceList) *Resources {
 	resources := NewResources()
-	resources.Add(rl)
+	resources.AddResourceList(rl)
 	return resources
 }
 
+// Adds the values in the specified Resources object to this Resources object.
+func (r *Resources) Add(other *Resources) {
+	r.MilliCPU += other.MilliCPU
+	r.MemoryBytes += other.MemoryBytes
+	r.EphemeralStorage += other.EphemeralStorage
+
+	for resName, value := range other.ExtendedResources {
+		r.addExtendedResource(resName, value)
+	}
+}
+
 // Adds the specified ResourceList to this Resources object.
-func (r *Resources) Add(rl core.ResourceList) {
+func (r *Resources) AddResourceList(rl core.ResourceList) {
 	for name, quantity := range rl {
 		switch name {
 		case core.ResourceCPU:
@@ -36,7 +46,34 @@ func (r *Resources) Add(rl core.ResourceList) {
 		case core.ResourceEphemeralStorage:
 			r.EphemeralStorage += quantity.Value()
 		default:
-			r.addExtendedResource(name, quantity)
+			r.addExtendedResource(name, quantity.Value())
+		}
+	}
+}
+
+// Subtracts the values in the specified Resources object from this Resources object.
+func (r *Resources) Subtract(other *Resources) {
+	r.MilliCPU -= other.MilliCPU
+	r.MemoryBytes -= other.MemoryBytes
+	r.EphemeralStorage -= other.EphemeralStorage
+
+	for resName, value := range other.ExtendedResources {
+		r.addExtendedResource(resName, -value)
+	}
+}
+
+// Subtracts the specified ResourceList from this Resources object.
+func (r *Resources) SubtractResourceList(rl core.ResourceList) {
+	for name, quantity := range rl {
+		switch name {
+		case core.ResourceCPU:
+			r.MilliCPU -= quantity.MilliValue()
+		case core.ResourceMemory:
+			r.MemoryBytes -= quantity.Value()
+		case core.ResourceEphemeralStorage:
+			r.EphemeralStorage -= quantity.Value()
+		default:
+			r.addExtendedResource(name, -quantity.Value())
 		}
 	}
 }
@@ -66,16 +103,23 @@ func (r *Resources) LessThanOrEqual(other *Resources) bool {
 	return true
 }
 
-func (r *Resources) addExtendedResource(name core.ResourceName, quantity resource.Quantity) {
+// Creates a deep copy of this Resources object.
+func (r *Resources) DeepCopy() *Resources {
+	ret := NewResources()
+	ret.Add(r)
+	return ret
+}
+
+func (r *Resources) addExtendedResource(name core.ResourceName, rQuantityValue int64) {
 	if r.ExtendedResources == nil {
 		r.ExtendedResources = make(map[core.ResourceName]int64)
 	}
 
 	var newValue int64
 	if existingValue, ok := r.ExtendedResources[name]; ok {
-		newValue = existingValue + quantity.Value()
+		newValue = existingValue + rQuantityValue
 	} else {
-		newValue = quantity.Value()
+		newValue = rQuantityValue
 	}
 
 	r.ExtendedResources[name] = newValue
