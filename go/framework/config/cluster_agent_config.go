@@ -10,6 +10,7 @@ const (
 
 var (
 	DefaultParallelSamplingPipelines uint32 = uint32(runtime.NumCPU()) * 10
+	DefaultParallelBindingPipelines  uint32 = uint32(runtime.NumCPU()) * 10
 )
 
 // Represents the configuration of a polaris-cluster-agent instance.
@@ -34,11 +35,19 @@ type ClusterAgentConfig struct {
 
 	// The number of Sampling Pipelines to run in parallel.
 	//
-	// Default: 100.
+	// Default: number of CPUs * 10
 	ParallelSamplingPipelines uint32 `json:"parallelSamplingPipelines" yaml:"parallelSamplingPipelines"`
 
+	// The number of Binding Pipelines to run in parallel.
+	//
+	// Default: number of CPUs * 10
+	ParallelBindingPipelines uint32 `json:"parallelBindingPipelines" yaml:"parallelBindingPipelines"`
+
 	// The list of plugins for the sampling pipeline.
-	Plugins SamplingPluginsList `json:"plugins" yaml:"plugins"`
+	SamplingPlugins SamplingPluginsList `json:"samplingPlugins" yaml:"samplingPlugins"`
+
+	// The list of plugins for the binding pipeline.
+	BindingPlugins BindingPluginsList `json:"bindingPlugins" yaml:"bindingPlugins"`
 
 	// (optional) Allows specifying configuration parameters for each plugin.
 	PluginsConfig []*PluginsConfigListEntry `json:"pluginsConfig" yaml:"pluginsConfig"`
@@ -57,5 +66,8 @@ func SetDefaultsClusterAgentConfig(config *ClusterAgentConfig) {
 	}
 	if config.ParallelSamplingPipelines == 0 {
 		config.ParallelSamplingPipelines = DefaultParallelSamplingPipelines
+	}
+	if config.ParallelBindingPipelines == 0 {
+		config.ParallelBindingPipelines = DefaultParallelBindingPipelines
 	}
 }

@@ -62,3 +62,13 @@ type Status interface {
 func IsSuccessStatus(status Status) bool {
 	return status == nil || status.Code() == Success
 }
+
+// Returns the string version of the specified Status' statusCode.
+// This also works if status is nil (which also represents a Success status).
+func StatusCodeAsString(status Status) string {
+	if status != nil {
+		return status.CodeAsString()
+	} else {
+		return statusCodeStrings[Success]
+	}
+}

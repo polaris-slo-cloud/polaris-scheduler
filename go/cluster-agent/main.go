@@ -20,12 +20,12 @@ func main() {
 	rand.Seed(time.Now().UnixNano())
 	ctx := util.SetupSignalHandlingContext()
 
-	pluginsRegistry := pipeline.NewPluginsRegistry(map[string]pipeline.PluginFactoryFunc[pipeline.PolarisNodeSampler]{
+	pluginsRegistry := pipeline.NewPluginsRegistry(map[string]pipeline.PluginFactoryFunc[pipeline.ClusterAgentServices]{
 		randomsampling.PluginName:     randomsampling.NewRandomSamplingStrategy,
 		roundrobinsampling.PluginName: roundrobinsampling.NewRoundRobinSamplingStrategy,
-		resourcesfit.PluginName:       resourcesfit.NewResourcesFitSamplingPlugin,
-		geolocation.PluginName:        resourcesfit.NewResourcesFitSamplingPlugin,
-		batterylevel.PluginName:       batterylevel.NewBatteryLevelSamplingPlugin,
+		resourcesfit.PluginName:       resourcesfit.NewResourcesFitClusterAgentPlugin,
+		geolocation.PluginName:        resourcesfit.NewResourcesFitClusterAgentPlugin,
+		batterylevel.PluginName:       batterylevel.NewBatteryLevelClusterAgentPlugin,
 	})
 
 	nodeSamplerCmd := cmd.NewPolarisClusterAgentCmd(ctx, pluginsRegistry)

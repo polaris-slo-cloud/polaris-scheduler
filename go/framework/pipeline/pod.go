@@ -12,6 +12,9 @@ type PodInfo struct {
 
 	// The Pod to be scheduled.
 	Pod *core.Pod `json:"pod" yaml:"pod"`
+
+	// The number of times, we had to retry scheduling this pod after committing the scheduling decision had failed.
+	SchedulingRetryCount int
 }
 
 // Represents information about a queued pod.
@@ -55,10 +58,11 @@ func (q *QueuedPodInfo) GetKey() string {
 }
 
 // Creates a new QueuedPodInfo from a pod.
-func NewQueuedPodInfo(pod *core.Pod, ctx SchedulingContext) *QueuedPodInfo {
+func NewQueuedPodInfo(pod *core.Pod, ctx SchedulingContext, schedulingRetryCount int) *QueuedPodInfo {
 	return &QueuedPodInfo{
 		PodInfo: &PodInfo{
-			Pod: pod,
+			Pod:                  pod,
+			SchedulingRetryCount: schedulingRetryCount,
 		},
 		Ctx: ctx,
 	}

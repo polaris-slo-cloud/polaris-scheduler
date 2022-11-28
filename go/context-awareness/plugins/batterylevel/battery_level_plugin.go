@@ -25,9 +25,9 @@ const (
 )
 
 var (
-	_ pipeline.PreFilterPlugin           = (*BatteryLevelPlugin)(nil)
-	_ pipeline.FilterPlugin              = (*BatteryLevelPlugin)(nil)
-	_ pipeline.SamplingPluginFactoryFunc = NewBatteryLevelSamplingPlugin
+	_ pipeline.PreFilterPlugin               = (*BatteryLevelPlugin)(nil)
+	_ pipeline.FilterPlugin                  = (*BatteryLevelPlugin)(nil)
+	_ pipeline.ClusterAgentPluginFactoryFunc = NewBatteryLevelClusterAgentPlugin
 )
 
 // The BatteryLevelPlugin ensures that a node meets certain battery level requirements requested by a pod.
@@ -39,7 +39,7 @@ type nodeBatteryInfo struct {
 	batteryCapacityMilliAmpereHours int64
 }
 
-func NewBatteryLevelSamplingPlugin(configMap config.PluginConfig, nodeSampler pipeline.PolarisNodeSampler) (pipeline.Plugin, error) {
+func NewBatteryLevelClusterAgentPlugin(configMap config.PluginConfig, clusterAgentServices pipeline.ClusterAgentServices) (pipeline.Plugin, error) {
 	return &BatteryLevelPlugin{}, nil
 }
 

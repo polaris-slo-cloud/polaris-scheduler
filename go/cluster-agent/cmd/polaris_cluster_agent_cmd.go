@@ -31,7 +31,7 @@ type commandLineArgs struct {
 }
 
 // Creates a new polaris-cluster-agent command.
-func NewPolarisClusterAgentCmd(ctx context.Context, pluginRegistry *pipeline.PluginsRegistry[pipeline.PolarisNodeSampler]) *cobra.Command {
+func NewPolarisClusterAgentCmd(ctx context.Context, pluginRegistry *pipeline.PluginsRegistry[pipeline.ClusterAgentServices]) *cobra.Command {
 	cmdLineArgs := commandLineArgs{}
 
 	logger := initLogger()
@@ -121,7 +121,7 @@ func startNodeSampler(
 	clusterAgentConfig *config.ClusterAgentConfig,
 	k8sClusterClient kubernetes.KubernetesClusterClient,
 	ginEngine *gin.Engine,
-	pluginRegistry *pipeline.PluginsRegistry[pipeline.PolarisNodeSampler],
+	pluginRegistry *pipeline.PluginsRegistry[pipeline.ClusterAgentServices],
 	logger *logr.Logger,
 ) (pipeline.PolarisNodeSampler, error) {
 	nodesCache, err := setUpNodesCache(clusterAgentConfig, k8sClusterClient)
@@ -142,10 +142,12 @@ func startClusterAgent(
 	ctx context.Context,
 	clusterAgentConfig *config.ClusterAgentConfig,
 	k8sClusterClient kubernetes.KubernetesClusterClient,
+	nodesCache client.NodesCache,
 	ginEngine *gin.Engine,
+	pluginRegistry *pipeline.PluginsRegistry[pipeline.ClusterAgentServices],
 	logger *logr.Logger,
 ) (clusteragent.PolarisClusterAgent, error) {
-	clusterAgent := clusteragent.NewDefaultPolarisClusterAgent(clusterAgentConfig, ginEngine, k8sClusterClient, logger)
+	clusterAgent := clusteragent.NewDefaultPolarisClusterAgent(clusterAgentConfig, ginEngine, k8sClusterClient, nodesCache, pluginRegistry, logger)
 
 	if err := clusterAgent.Start(ctx); err != nil {
 		return nil, err
@@ -157,7 +159,7 @@ func startClusterAgent(
 func runNodeSampler(
 	ctx context.Context,
 	clusterAgentConfig *config.ClusterAgentConfig,
-	pluginRegistry *pipeline.PluginsRegistry[pipeline.PolarisNodeSampler],
+	pluginRegistry *pipeline.PluginsRegistry[pipeline.ClusterAgentServices],
 	logger *logr.Logger,
 	cmdLineArgs *commandLineArgs,
 ) error {
@@ -173,11 +175,12 @@ func runNodeSampler(
 	ginEngine := gin.Default()
 	ginEngine.SetTrustedProxies(nil)
 
-	if _, err := startNodeSampler(ctx, clusterAgentConfig, k8sClusterClient, ginEngine, pluginRegistry, logger); err != nil {
+	nodeSampler, err := startNodeSampler(ctx, clusterAgentConfig, k8sClusterClient, ginEngine, pluginRegistry, logger)
+	if err != nil {
 		return err
 	}
 
-	if _, err := startClusterAgent(ctx, clusterAgentConfig, k8sClusterClient, ginEngine, logger); err != nil {
+	if _, err := startClusterAgent(ctx, clusterAgentConfig, k8sClusterClient, nodeSampler.NodesCache(), ginEngine, pluginRegistry, logger); err != nil {
 		return err
 	}
 

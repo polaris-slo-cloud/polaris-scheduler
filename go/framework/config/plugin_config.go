@@ -49,6 +49,11 @@ type SamplingPluginsList struct {
 	Score []*PluginListEntry `json:"score" yaml:"score"`
 }
 
+// Used to configure the plugins in the binding pipeline.
+type BindingPluginsList struct {
+	CheckConflicts []*PluginListEntry `json:"checkConflicts" yaml:"checkConflicts"`
+}
+
 // Stores configuration for a specific plugin in the PluginsList.
 type PluginsConfigListEntry struct {
 

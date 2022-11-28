@@ -29,6 +29,8 @@ const (
 
 	decisionPipelineQueueSize = 400
 
+	maxRetrySchedulingCount = 10
+
 	// State key for the stopwatch that measures the time from the arrival of the pod through the API until
 	// it enters the SampleNodes stage of the scheduling queue.
 	queueStopwatchStateKey = util.StopwatchStateKey + ".queue"
@@ -232,7 +234,7 @@ func (ps *DefaultPolarisScheduler) pumpIntoQueue(src pipeline.PodSource) {
 		select {
 		case pod, ok := <-incomingPods:
 			if ok {
-				ps.addPodToQueue(pod)
+				ps.addPodToQueue(pod, 0)
 			} else {
 				ps.Stop()
 			}
@@ -244,9 +246,10 @@ func (ps *DefaultPolarisScheduler) pumpIntoQueue(src pipeline.PodSource) {
 }
 
 // Creates a SchedulingContext for the pod and adds it to the scheduling queue.
-func (ps *DefaultPolarisScheduler) addPodToQueue(pod *pipeline.IncomingPod) {
+// The retryCount indicates how many times this pod has been re-added to the queue after failing scheduling due to a commit failure (count starts at 0 for a newly submitted pod).
+func (ps *DefaultPolarisScheduler) addPodToQueue(pod *pipeline.IncomingPod, schedulingRetryCount int) {
 	schedCtx := pipeline.NewSchedulingContext(ps.ctx)
-	queuedPod := pipeline.NewQueuedPodInfo(pod.Pod, schedCtx)
+	queuedPod := pipeline.NewQueuedPodInfo(pod.Pod, schedCtx, schedulingRetryCount)
 
 	ps.createAndStartStopwatch(schedCtx, queueStopwatchStateKey, &pod.ReceivedAt)
 	ps.createAndStartStopwatch(schedCtx, endToEndStopwatchStateKey, &pod.ReceivedAt)
@@ -374,6 +377,7 @@ func (ps *DefaultPolarisScheduler) commitSchedulingDecisionUsingClient(
 		)
 	} else {
 		e2eStopwatch := ps.stopStopwatch(schedCtx, endToEndStopwatchStateKey)
+		retryScheduling := decision.Pod.SchedulingRetryCount < maxRetrySchedulingCount
 
 		ps.logger.Info(
 			"FailedScheduling",
@@ -383,7 +387,17 @@ func (ps *DefaultPolarisScheduler) commitSchedulingDecisionUsingClient(
 			"pipelineDurationMs", pipelineStopwatch.Duration().Milliseconds(),
 			"e2eDurationMs", e2eStopwatch.Duration().Milliseconds(),
 			"reason", err,
+			"retryCount", decision.Pod.SchedulingRetryCount,
+			"retryingScheduling", retryScheduling,
 		)
+
+		if retryScheduling {
+			podToRetry := &pipeline.IncomingPod{
+				Pod:        decision.Pod.Pod,
+				ReceivedAt: time.Now(),
+			}
+			ps.addPodToQueue(podToRetry, decision.Pod.SchedulingRetryCount+1)
+		}
 	}
 }
 

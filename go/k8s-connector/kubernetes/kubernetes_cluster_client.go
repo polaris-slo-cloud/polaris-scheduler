@@ -9,7 +9,7 @@ import (
 
 // Kubernetes-specific extension of the ClusterClient.
 type KubernetesClusterClient interface {
-	client.ClusterClient
+	client.LocalClusterClient
 
 	// Gets the ClientSet for communicating with a Kubernetes cluster.
 	ClientSet() clientset.Interface

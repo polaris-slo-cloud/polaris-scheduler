@@ -26,11 +26,11 @@ const (
 )
 
 var (
-	_ pipeline.PreFilterPlugin             = (*GeoLocationPlugin)(nil)
-	_ pipeline.FilterPlugin                = (*GeoLocationPlugin)(nil)
-	_ pipeline.ScorePlugin                 = (*GeoLocationPlugin)(nil)
-	_ pipeline.SchedulingPluginFactoryFunc = NewGeoLocationSchedulingPlugin
-	_ pipeline.SamplingPluginFactoryFunc   = NewGeoLocationSamplingPlugin
+	_ pipeline.PreFilterPlugin               = (*GeoLocationPlugin)(nil)
+	_ pipeline.FilterPlugin                  = (*GeoLocationPlugin)(nil)
+	_ pipeline.ScorePlugin                   = (*GeoLocationPlugin)(nil)
+	_ pipeline.SchedulingPluginFactoryFunc   = NewGeoLocationSchedulingPlugin
+	_ pipeline.ClusterAgentPluginFactoryFunc = NewGeoLocationClusterAgentPlugin
 )
 
 // This GeoLocationPlugin ensures that a pod is placed in or close to its specified target geo-location.
@@ -44,7 +44,7 @@ func NewGeoLocationSchedulingPlugin(configMap config.PluginConfig, scheduler pip
 	return &GeoLocationPlugin{}, nil
 }
 
-func NewGeoLocationSamplingPlugin(configMap config.PluginConfig, nodeSampler pipeline.PolarisNodeSampler) (pipeline.Plugin, error) {
+func NewGeoLocationClusterAgentPlugin(configMap config.PluginConfig, clusterAgentServices pipeline.ClusterAgentServices) (pipeline.Plugin, error) {
 	return &GeoLocationPlugin{}, nil
 }
 

@@ -4,17 +4,22 @@ import (
 	"polaris-slo-cloud.github.io/polaris-scheduler/v2/framework/config"
 )
 
-// Interface for the owner of a Polaris plugin.
-type PolarisPluginOwner interface{}
+// Interface for services provided by the owner of a Polaris plugin.
+type PolarisPluginOwnerServices interface{}
 
-// Defines a factory function for creating Polaris plugins with a generic owner type.
-type PluginFactoryFunc[O PolarisPluginOwner] func(pluginConfig config.PluginConfig, owner O) (Plugin, error)
+// ToDo: Extract PolarisSchedulerServices from PolarisScheduler (akin to PolarisClusterAgentServices)
+// and move PolarisScheduler and PolarisNodeSampler to distinct packages.
+// Extracting the Services interface allows us to do this without creating circular dependencies.
+// This could also allow us to move the various implementations from the runtime package to distinct packages.
+
+// Defines a factory function for creating Polaris plugins with a generic owner services type.
+type PluginFactoryFunc[O PolarisPluginOwnerServices] func(pluginConfig config.PluginConfig, ownerServices O) (Plugin, error)
 
 // Defines a factory function for creating Polaris scheduling pipeline plugins.
 type SchedulingPluginFactoryFunc PluginFactoryFunc[PolarisScheduler]
 
-// Defines a factory function for creating Polaris sampling pipeline plugins.
-type SamplingPluginFactoryFunc PluginFactoryFunc[PolarisNodeSampler]
+// Defines a factory function for creating plugins for the PolarisClusterAgent, i.e., sampling and binding pipeline plugins.
+type ClusterAgentPluginFactoryFunc PluginFactoryFunc[ClusterAgentServices]
 
 // Combines a ScorePlugin with its ScoreExtensions.
 type ScorePluginWithExtensions struct {
@@ -72,23 +77,37 @@ type SamplingPipelinePlugins struct {
 	Score []*ScorePluginWithExtensions
 }
 
-// Used to instantiate sampling plugins
+// Used to instantiate sampling plugins.
 type SamplingPluginsFactory interface {
 
 	// Creates instances of all configured SamplingStrategyPlugins.
-	NewSamplingStrategiesPlugins(nodeSampler PolarisNodeSampler) ([]SamplingStrategyPlugin, error)
+	NewSamplingStrategiesPlugins(clusterAgentServices ClusterAgentServices) ([]SamplingStrategyPlugin, error)
 
 	// Creates a new set of instances of the plugins configured for the Sampling Pipeline.
-	NewSamplingPipelinePlugins(nodeSampler PolarisNodeSampler) (*SamplingPipelinePlugins, error)
+	NewSamplingPipelinePlugins(clusterAgentServices ClusterAgentServices) (*SamplingPipelinePlugins, error)
+}
+
+// Contains plugin instances for a single BindingPipeline instance.
+//
+// If a plugin ties into multiple stages, the same plugin instance is used for all of them.
+type BindingPipelinePlugins struct {
+	CheckConflicts []CheckConflictsPlugin
+}
+
+// Used to instantiate binding plugins.
+type BindingPluginsFactory interface {
+
+	// Creates a new set of instances of the plugins configured for the binding Pipeline.
+	NewBindingPipelinePlugins(clusterAgentServices ClusterAgentServices) (*BindingPipelinePlugins, error)
 }
 
 // Contains the factory functions for all available plugins.
-// The generic type parameter O defines the owner type of the created plugins (i.e., PolarisScheduler or PolarisNodeSampler).
-type PluginsRegistry[O PolarisPluginOwner] struct {
+// The generic type parameter O defines the owner services type of the created plugins (i.e., PolarisScheduler or PolarisNodeSampler).
+type PluginsRegistry[O PolarisPluginOwnerServices] struct {
 	registry map[string]PluginFactoryFunc[O]
 }
 
-func NewPluginsRegistry[O PolarisPluginOwner](factories map[string]PluginFactoryFunc[O]) *PluginsRegistry[O] {
+func NewPluginsRegistry[O PolarisPluginOwnerServices](factories map[string]PluginFactoryFunc[O]) *PluginsRegistry[O] {
 	reg := PluginsRegistry[O]{
 		registry: factories,
 	}

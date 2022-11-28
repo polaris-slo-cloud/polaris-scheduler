@@ -37,7 +37,7 @@ type DefaultPolarisNodeSampler struct {
 	config *config.ClusterAgentConfig
 
 	// The client used to access the cluster.
-	clusterClient client.ClusterClient
+	clusterClient client.LocalClusterClient
 
 	// The factory for creating the sampling plugins.
 	pluginsFactory pipeline.SamplingPluginsFactory
@@ -69,9 +69,9 @@ type defaultPolarisNodeSamplerStatus struct {
 func NewDefaultPolarisNodeSampler(
 	clusterAgentConfig *config.ClusterAgentConfig,
 	ginEngine *gin.Engine,
-	clusterClient client.ClusterClient,
+	clusterClient client.LocalClusterClient,
 	nodesCache client.NodesCache,
-	pluginsRegistry *pipeline.PluginsRegistry[pipeline.PolarisNodeSampler],
+	pluginsRegistry *pipeline.PluginsRegistry[pipeline.ClusterAgentServices],
 	logger *logr.Logger,
 ) *DefaultPolarisNodeSampler {
 	sampler := &DefaultPolarisNodeSampler{
@@ -90,7 +90,7 @@ func (sampler *DefaultPolarisNodeSampler) Config() *config.ClusterAgentConfig {
 	return sampler.config
 }
 
-func (sampler *DefaultPolarisNodeSampler) ClusterClient() client.ClusterClient {
+func (sampler *DefaultPolarisNodeSampler) ClusterClient() client.LocalClusterClient {
 	return sampler.clusterClient
 }
 
