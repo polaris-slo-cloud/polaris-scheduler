@@ -9,10 +9,15 @@
 #     effect: "NoSchedule"
 ---
 apiVersion: v1
+kind: Namespace
+metadata:
+  name: fake-kubelet
+---
+apiVersion: v1
 kind: ServiceAccount
 metadata:
   name: fake-kubelet
-  namespace: kube-system
+  namespace: fake-kubelet
   labels:
     app: fake-kubelet
 ---
@@ -70,5 +75,5 @@ roleRef:
 subjects:
   - kind: ServiceAccount
     name: fake-kubelet
-    namespace: kube-system
+    namespace: fake-kubelet
 ---

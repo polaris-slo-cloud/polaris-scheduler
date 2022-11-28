@@ -38,9 +38,16 @@ function printUsage() {
 
 # Prints an error and exits if the configuration is not valid.
 function validateConfig() {
-    if [ "${kindImage}" == "" ]; then
-        echo "Error: The kindImage has not been set in the configuration!"
-        exit
+    if [ "${skipKindClusterSetup}" == true ]; then
+        if [ "${CONTEXT}" == "" ]; then
+            echo "Error: skipKindClusterSetup is true, but no kubectl CONTEXT has been set in the configuration!"
+            exit 1
+        fi
+    else
+        if [ "${kindImage}" == "" ]; then
+            echo "Error: The kindImage has not been set in the configuration!"
+            exit 1
+        fi
     fi
     for fakeNodeType in "${!fakeNodeTypes[@]}"; do
         if [ "${fakeNodeTypeCpus[$fakeNodeType]}" == "" ]; then
@@ -167,11 +174,17 @@ fi
 # For an example config file see: cluster.config.sh
 source "$1"
 
-# Set the kubectl context according to the cluster name.
-CONTEXT="kind-${kindClusterName}"
 
 validateConfig
-startLocalCluster
+
+if [ "${skipKindClusterSetup}" != true ]; then
+    # Set the kubectl context according to the cluster name.
+    CONTEXT="kind-${kindClusterName}"
+
+    # Start the kind cluster
+    startLocalCluster
+fi
+
 deployFakeKubelet
 
 echo "Successfully created cluster with ${RET} fake-kubelet nodes."
