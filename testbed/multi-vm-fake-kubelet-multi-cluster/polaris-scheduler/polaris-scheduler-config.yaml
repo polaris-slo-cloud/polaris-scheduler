@@ -53,25 +53,25 @@ submitPodListenOn:
 #     baseUri: "https://sampler.cluster-b:8888/v1"
 remoteClusters:
   kind-01-edge-vienna:
-    baseUri: "http://localhost:30001/"
+    baseUri: "http://polaris-scheduler-cluster-node-01.europe-west1-b:30033/"
   kind-02-cloud-vienna:
-    baseUri: "http://localhost:30002/"
+    baseUri: "http://polaris-scheduler-cluster-node-02.europe-west1-b:30033/"
   kind-03-edge-salzburg:
-    baseUri: "http://localhost:30003/"
+    baseUri: "http://polaris-scheduler-cluster-node-03.europe-west4-a:30033/"
   kind-04-edge-rome:
-    baseUri: "http://localhost:30004/"
+    baseUri: "http://polaris-scheduler-cluster-node-04.europe-west3-c:30033/"
   kind-05-edge-new-york:
-    baseUri: "http://localhost:30005/"
+    baseUri: "http://polaris-scheduler-cluster-node-05.northamerica-northeast1-a:30033/"
   kind-06-edge-san-francisco:
-    baseUri: "http://localhost:30006/"
+    baseUri: "http://polaris-scheduler-cluster-node-06.us-west1-b:30033/"
   kind-07-edge-frankfurt:
-    baseUri: "http://localhost:30007/"
+    baseUri: "http://polaris-scheduler-cluster-node-07.europe-north1-a:30033/"
   kind-08-cloud-san-francisco:
-    baseUri: "http://localhost:30008/"
+    baseUri: "http://polaris-scheduler-cluster-node-08.us-west1-b:30033/"
   kind-09-cloud-frankfurt:
-    baseUri: "http://localhost:30009/"
+    baseUri: "http://polaris-scheduler-cluster-node-09.europe-north1-a:30033/"
   kind-10-edge-dallas:
-    baseUri: "http://localhost:30010/"
+    baseUri: "http://polaris-scheduler-cluster-node-10.us-central1-a:30033/"
 
 # The list of plugins for the scheduling pipeline.
 plugins:
