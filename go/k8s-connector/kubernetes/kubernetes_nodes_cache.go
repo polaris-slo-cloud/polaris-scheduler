@@ -15,7 +15,8 @@ import (
 )
 
 var (
-	_ client.NodesCache = (*KubernetesNodesCache)(nil)
+	_ client.NodesCache      = (*KubernetesNodesCache)(nil)
+	_ client.PodQueuedOnNode = (*podQueuedOnNode)(nil)
 )
 
 // Describes the possible types of cache updates in the updateQueue.
@@ -33,6 +34,13 @@ type nodesCacheUpdate struct {
 	updateType updateType
 	node       *core.Node
 	pod        *core.Pod
+}
+
+type podQueuedOnNode struct {
+	clusterPod *client.ClusterPod
+	nativePod  *core.Pod
+	nodeName   string
+	nodesCache *KubernetesNodesCache
 }
 
 // NodesCache implementation for Kubernetes.
@@ -65,6 +73,10 @@ func NewKubernetesNodesCache(
 
 func (knc *KubernetesNodesCache) Nodes() collections.ConcurrentObjectStore[*client.ClusterNode] {
 	return knc.store
+}
+
+func (knc *KubernetesNodesCache) QueuePodOnNode(pod *core.Pod, nodeName string) client.PodQueuedOnNode {
+	return knc.addQueuedPodToNode(nodeName, pod)
 }
 
 func (knc *KubernetesNodesCache) StartWatch(ctx context.Context) error {
@@ -218,8 +230,8 @@ func (knc *KubernetesNodesCache) createUpdatedClusterNode(updatedNode *core.Node
 	var updatedClusterNode *client.ClusterNode
 
 	if oldClusterNode, ok := storeReader.GetByKey(updatedNode.Name); ok {
-		// No need to copy the pods slice, because the ClusterNodes should be treated as immutable anyway.
-		updatedClusterNode = client.NewClusterNodeWithPods(updatedNode, oldClusterNode.Pods)
+		// No need to copy the pods slices, because the ClusterNodes should be treated as immutable anyway.
+		updatedClusterNode = client.NewClusterNodeWithPods(updatedNode, oldClusterNode.Pods, oldClusterNode.QueuedPods)
 	} else {
 		updatedClusterNode = client.NewClusterNode(updatedNode)
 	}
@@ -237,31 +249,37 @@ func (knc *KubernetesNodesCache) applyPodUpdate(cacheUpdate *nodesCacheUpdate, s
 
 	switch cacheUpdate.updateType {
 	case addition:
-		updatedClusterNode = knc.addPodToNode(oldClusterNode, cacheUpdate.pod)
+		updatedClusterNode = knc.addOrUpdatePodOnNode(oldClusterNode, cacheUpdate.pod, false)
 	case removal:
 		updatedClusterNode = knc.removePodFromNode(oldClusterNode, cacheUpdate.pod)
 	case update:
-		updatedClusterNode = knc.updatePodOnNode(oldClusterNode, cacheUpdate.pod)
+		updatedClusterNode = knc.addOrUpdatePodOnNode(oldClusterNode, cacheUpdate.pod, false)
 	}
 
 	storeWriter.Set(updatedClusterNode.Name, updatedClusterNode)
 }
 
-// Adds the specified pod to a copy of the clusterNode and returns that updated copy.
-func (knc *KubernetesNodesCache) addPodToNode(oldNode *client.ClusterNode, pod *core.Pod) *client.ClusterNode {
-	updatedNode := &client.ClusterNode{
-		Node:               oldNode.Node,
-		AvailableResources: oldNode.AvailableResources.DeepCopy(),
-		TotalResources:     oldNode.TotalResources.DeepCopy(),
-		Pods:               make([]*client.ClusterPod, len(oldNode.Pods), len(oldNode.Pods)+1),
-	}
-	copy(updatedNode.Pods, oldNode.Pods)
-
+// Adds or updates the specified pod to/on a copy of the clusterNode and returns that updated copy.
+//
+// We unify addition and update in one method, because if the pod was previously a PodQueuedOnNode and marked as committed,
+// it will already be present in the node's list of pods.
+// If removeFromQueuedPods is true, the pod will also be removed from the QueuedPods list.
+func (knc *KubernetesNodesCache) addOrUpdatePodOnNode(oldNode *client.ClusterNode, pod *core.Pod, removeFromQueuedPods bool) *client.ClusterNode {
 	clusterPod := client.NewClusterPod(pod)
-	updatedNode.Pods = append(updatedNode.Pods, clusterPod)
-	updatedNode.AvailableResources.Subtract(clusterPod.TotalResources)
 
-	return updatedNode
+	newPods := make([]*client.ClusterPod, len(oldNode.Pods), len(oldNode.Pods)+1)
+	podUpdated := copyPodsAndUpdateItem(newPods, oldNode.Pods, clusterPod)
+	if !podUpdated {
+		newPods = append(newPods, clusterPod)
+	}
+
+	newQueuedPods := oldNode.QueuedPods
+	if removeFromQueuedPods {
+		newQueuedPods = make([]*client.ClusterPod, len(oldNode.QueuedPods)-1)
+		copyPodsAndRemoveItem(newQueuedPods, oldNode.QueuedPods, pod)
+	}
+
+	return client.NewClusterNodeWithPods(oldNode.Node, newPods, newQueuedPods)
 }
 
 // Removes the specified pod to a copy of the clusterNode and returns that updated copy.
@@ -271,44 +289,50 @@ func (knc *KubernetesNodesCache) removePodFromNode(oldNode *client.ClusterNode, 
 		AvailableResources: oldNode.AvailableResources.DeepCopy(),
 		TotalResources:     oldNode.TotalResources.DeepCopy(),
 		Pods:               make([]*client.ClusterPod, len(oldNode.Pods)-1),
+		QueuedPods:         oldNode.QueuedPods,
 	}
 
-	var removedPod *client.ClusterPod
-	destIndex := 0
-	for _, currPod := range oldNode.Pods {
-		if currPod.Name != podToRemove.Name || currPod.Namespace != podToRemove.Namespace {
-			updatedNode.Pods[destIndex] = currPod
-			destIndex++
-		} else {
-			removedPod = currPod
-		}
-	}
-
+	removedPod := copyPodsAndRemoveItem(updatedNode.Pods, oldNode.Pods, podToRemove)
 	updatedNode.AvailableResources.Add(removedPod.TotalResources)
 	return updatedNode
 }
 
-// Updates the specified pod on a copy of the clusterNode and returns that updated copy.
-func (knc *KubernetesNodesCache) updatePodOnNode(oldNode *client.ClusterNode, podToUpdate *core.Pod) *client.ClusterNode {
-	updatedPod := client.NewClusterPod(podToUpdate)
-	newPods := make([]*client.ClusterPod, len(oldNode.Pods), len(oldNode.Pods)+1)
+// Adds the specified pod to the node's queue and updates its resources.
+// To avoid cache staleness when the number of scheduling commits is high, we execute this operation immediately and do not queue it.
+func (knc *KubernetesNodesCache) addQueuedPodToNode(nodeName string, pod *core.Pod) *podQueuedOnNode {
+	storeWriter := knc.store.WriteLock()
+	defer storeWriter.Unlock()
 
-	podUpdated := false
-	for i, currPod := range oldNode.Pods {
-		if currPod.Name != podToUpdate.Name || currPod.Namespace != podToUpdate.Namespace {
-			newPods[i] = currPod
-		} else {
-			newPods[i] = updatedPod
-			podUpdated = true
-		}
+	oldNode, ok := storeWriter.GetByKey(nodeName)
+	if !ok {
+		return nil
 	}
 
-	// Ensure that we also handle the strange case, where client-go calls the update callback also for additions.
-	if !podUpdated {
-		newPods = append(newPods, updatedPod)
+	updatedNode := &client.ClusterNode{
+		Node:               oldNode.Node,
+		AvailableResources: oldNode.AvailableResources.DeepCopy(),
+		TotalResources:     oldNode.TotalResources.DeepCopy(),
+		Pods:               oldNode.Pods,
+		QueuedPods:         make([]*client.ClusterPod, len(oldNode.QueuedPods), len(oldNode.QueuedPods)+1),
 	}
+	copy(updatedNode.QueuedPods, oldNode.QueuedPods)
 
-	return client.NewClusterNodeWithPods(oldNode.Node, newPods)
+	clusterPod := client.NewClusterPod(pod)
+	updatedNode.QueuedPods = append(updatedNode.QueuedPods, clusterPod)
+	updatedNode.AvailableResources.Subtract(clusterPod.TotalResources)
+
+	storeWriter.Set(nodeName, updatedNode)
+	return knc.createPodQueuedOnNode(clusterPod, pod, nodeName)
+}
+
+func (knc *KubernetesNodesCache) createPodQueuedOnNode(clusterPod *client.ClusterPod, nativePod *core.Pod, nodeName string) *podQueuedOnNode {
+	queuedPod := &podQueuedOnNode{
+		clusterPod: clusterPod,
+		nativePod:  nativePod,
+		nodeName:   nodeName,
+		nodesCache: knc,
+	}
+	return queuedPod
 }
 
 func coerceToNodeOrPanic(obj interface{}) *core.Node {
@@ -325,4 +349,78 @@ func coerceToPodOrPanic(obj interface{}) *core.Pod {
 		panic("PodInformer received a non Pod object")
 	}
 	return node
+}
+
+// Copies the pods from src to dest, removing the podToRemove.
+// Returns the ClusterPod that was removed (not copied) or nil, if this pod could not be found.
+func copyPodsAndRemoveItem(dest []*client.ClusterPod, src []*client.ClusterPod, podToRemove *core.Pod) *client.ClusterPod {
+	var removedPod *client.ClusterPod
+	destIndex := 0
+	for _, currPod := range src {
+		if currPod.Name != podToRemove.Name || currPod.Namespace != podToRemove.Namespace {
+			dest[destIndex] = currPod
+			destIndex++
+		} else {
+			removedPod = currPod
+		}
+	}
+	return removedPod
+}
+
+// Copies the pods from src to dest, replacing the pod, whose name and namespace matches podToUpdate with podToUpdate.
+// Returns true, if the pod was updated, or false if this pod could not be found.
+func copyPodsAndUpdateItem(dest []*client.ClusterPod, src []*client.ClusterPod, podToUpdate *client.ClusterPod) bool {
+	podUpdated := false
+	for i, currPod := range src {
+		if currPod.Name != podToUpdate.Name || currPod.Namespace != podToUpdate.Namespace {
+			dest[i] = currPod
+		} else {
+			dest[i] = podToUpdate
+			podUpdated = true
+		}
+	}
+	return podUpdated
+}
+
+func (p *podQueuedOnNode) NodeName() string {
+	return p.nodeName
+}
+
+func (p *podQueuedOnNode) Pod() *client.ClusterPod {
+	return p.clusterPod
+}
+
+func (p *podQueuedOnNode) MarkAsCommitted() {
+	storeWriter := p.nodesCache.store.WriteLock()
+	defer storeWriter.Unlock()
+
+	oldNode, ok := storeWriter.GetByKey(p.nodeName)
+	if !ok {
+		return
+	}
+
+	updatedNode := p.nodesCache.addOrUpdatePodOnNode(oldNode, p.nativePod, true)
+	storeWriter.Set(p.nodeName, updatedNode)
+}
+
+func (p *podQueuedOnNode) RemoveFromQueue() {
+	storeWriter := p.nodesCache.store.WriteLock()
+	defer storeWriter.Unlock()
+
+	oldNode, ok := storeWriter.GetByKey(p.nodeName)
+	if !ok {
+		return
+	}
+
+	updatedNode := &client.ClusterNode{
+		Node:               oldNode.Node,
+		AvailableResources: oldNode.AvailableResources.DeepCopy(),
+		TotalResources:     oldNode.TotalResources.DeepCopy(),
+		Pods:               oldNode.Pods,
+		QueuedPods:         make([]*client.ClusterPod, len(oldNode.QueuedPods)-1),
+	}
+
+	removedPod := copyPodsAndRemoveItem(updatedNode.QueuedPods, oldNode.QueuedPods, p.nativePod)
+	updatedNode.AvailableResources.Add(removedPod.TotalResources)
+	storeWriter.Set(p.nodeName, updatedNode)
 }

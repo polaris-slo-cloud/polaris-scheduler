@@ -22,8 +22,13 @@ type ClusterSchedulingDecision struct {
 type ClusterNode struct {
 	*core.Node `json:",inline" yaml:",inline"`
 
-	// The pods that are already scheduled on this node.
+	// The pods that are already scheduled on (bound to) this node.
 	Pods []*ClusterPod
+
+	// The pods that are queued to be bound to this node.
+	// These pods are currently in the binding pipeline, but their resources are already accounted for in
+	// the node's AvailableResources, because committing a scheduling decision may take some time.
+	QueuedPods []*ClusterPod
 
 	// The resources that are currently available for allocation on the node.
 	//
@@ -43,20 +48,25 @@ func NewClusterNode(node *core.Node) *ClusterNode {
 		AvailableResources: util.NewResourcesFromList(node.Status.Allocatable),
 		TotalResources:     util.NewResourcesFromList(node.Status.Allocatable),
 		Pods:               make([]*ClusterPod, 0),
+		QueuedPods:         make([]*ClusterPod, 0),
 	}
 	return cn
 }
 
-// Creates a new cluster node, based on the specified node object and the pods that are already scheduled on it.
-func NewClusterNodeWithPods(node *core.Node, pods []*ClusterPod) *ClusterNode {
+// Creates a new cluster node, based on the specified node object and the pods that are already scheduled and queued on it.
+func NewClusterNodeWithPods(node *core.Node, pods []*ClusterPod, queuedPods []*ClusterPod) *ClusterNode {
 	cn := &ClusterNode{
 		Node:               node,
 		AvailableResources: util.NewResourcesFromList(node.Status.Allocatable),
 		TotalResources:     util.NewResourcesFromList(node.Status.Allocatable),
 		Pods:               pods,
+		QueuedPods:         queuedPods,
 	}
 
 	for _, pod := range pods {
+		cn.AvailableResources.Subtract(pod.TotalResources)
+	}
+	for _, pod := range queuedPods {
 		cn.AvailableResources.Subtract(pod.TotalResources)
 	}
 
