@@ -41,7 +41,7 @@ spec:
           command:
             - /usr/apps/polaris-cluster-agent/polaris-cluster-agent
             - --config=/etc/polaris-cluster-agent/polaris-cluster-agent-config.yaml
-          image: polarissloc/polaris-cluster-agent:v2.0.0-beta.16
+          image: polarissloc/polaris-cluster-agent:v2.0.0-beta.17
           env:
             # We need at least one GO environment variable to allow the Google Cloud Code VS Code extension to detect that it is a Go program.
             - name: GOTRACEBACK
