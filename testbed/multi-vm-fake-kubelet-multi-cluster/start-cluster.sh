@@ -53,6 +53,9 @@ function startCluster() {
         fi
 
         kubectl --context $CONTEXT apply -f "$CLUSTER_AGENT_DEPLOYMENT_YAML"
+
+        # Create the test namespace
+        kubectl --context $CONTEXT create namespace test
     )
 }
 
