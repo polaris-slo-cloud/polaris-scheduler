@@ -363,8 +363,11 @@ func (ps *DefaultPolarisScheduler) commitSchedulingDecisionUsingClient(
 
 	queueStopwatch := ps.getStopwatch(schedCtx, queueStopwatchStateKey)
 	pipelineStopwatch := ps.getStopwatch(schedCtx, schedulingPipelineStopwatchStateKey)
+	commitStopwatch := util.NewStopwatch()
+	commitStopwatch.Start()
 
 	if err := clusterClient.CommitSchedulingDecision(schedCtx.Context(), clusterSchedDecision); err == nil {
+		commitStopwatch.Stop()
 		e2eStopwatch := ps.stopStopwatch(schedCtx, endToEndStopwatchStateKey)
 
 		ps.logger.Info(
@@ -373,9 +376,11 @@ func (ps *DefaultPolarisScheduler) commitSchedulingDecisionUsingClient(
 			"targetNode", targetNode,
 			"queueTimeMs", queueStopwatch.Duration().Milliseconds(),
 			"pipelineDurationMs", pipelineStopwatch.Duration().Milliseconds(),
+			"commitDurationMs", commitStopwatch.Duration().Milliseconds(),
 			"e2eDurationMs", e2eStopwatch.Duration().Milliseconds(),
 		)
 	} else {
+		commitStopwatch.Stop()
 		e2eStopwatch := ps.stopStopwatch(schedCtx, endToEndStopwatchStateKey)
 		retryScheduling := decision.Pod.SchedulingRetryCount < maxRetrySchedulingCount
 
@@ -385,6 +390,7 @@ func (ps *DefaultPolarisScheduler) commitSchedulingDecisionUsingClient(
 			"targetNode", targetNode,
 			"queueTimeMs", queueStopwatch.Duration().Milliseconds(),
 			"pipelineDurationMs", pipelineStopwatch.Duration().Milliseconds(),
+			"commitDurationMs", commitStopwatch.Duration().Milliseconds(),
 			"e2eDurationMs", e2eStopwatch.Duration().Milliseconds(),
 			"reason", err,
 			"retryCount", decision.Pod.SchedulingRetryCount,
