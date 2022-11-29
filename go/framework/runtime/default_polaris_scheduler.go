@@ -35,6 +35,9 @@ const (
 	// it enters the SampleNodes stage of the scheduling queue.
 	queueStopwatchStateKey = util.StopwatchStateKey + ".queue"
 
+	// State key for the stopwatch that measures the time taken by the SampleNodes stage.
+	sampleNodesStopwatchStateKey = util.StopwatchStateKey + ".pipeline"
+
 	// State key for the stopwatch that measures the time from the beginning of the SampleNodes stage until the end of the scheduling pipeline.
 	schedulingPipelineStopwatchStateKey = util.StopwatchStateKey + ".pipeline"
 
@@ -282,7 +285,10 @@ func (ps *DefaultPolarisScheduler) executeSamplingLoop(id int, sampler pipeline.
 // Uses the SampleNodesPlugin (sampler) to sample nodes for the specified pod and, if successful, adds the sampled pod info
 // to the decisionPipelineQueue. If an error occurs, the error information is committed to the Pod object in the cluster.
 func (ps *DefaultPolarisScheduler) sampleNodesForPod(pod *pipeline.QueuedPodInfo, sampler pipeline.SampleNodesPlugin) error {
+	sampleNodesStopwatch := ps.createAndStartStopwatch(pod.Ctx, sampleNodesStopwatchStateKey, nil)
 	candidateNodes, status := sampler.SampleNodes(pod.Ctx, pod.PodInfo)
+	sampleNodesStopwatch.Stop()
+
 	if !pipeline.IsSuccessStatus(status) {
 		return ps.handleFailureStatus(pipeline.SampleNodesStage, sampler, pod.Ctx, pod.PodInfo, status)
 	}
@@ -362,6 +368,7 @@ func (ps *DefaultPolarisScheduler) commitSchedulingDecisionUsingClient(
 	targetNode := decision.TargetNode.ClusterName + "." + decision.TargetNode.Node.Name
 
 	queueStopwatch := ps.getStopwatch(schedCtx, queueStopwatchStateKey)
+	sampleNodesStopwatch := ps.getStopwatch(schedCtx, sampleNodesStopwatchStateKey)
 	pipelineStopwatch := ps.getStopwatch(schedCtx, schedulingPipelineStopwatchStateKey)
 	commitStopwatch := util.NewStopwatch()
 	commitStopwatch.Start()
@@ -375,6 +382,7 @@ func (ps *DefaultPolarisScheduler) commitSchedulingDecisionUsingClient(
 			"pod", fullPodName,
 			"targetNode", targetNode,
 			"queueTimeMs", queueStopwatch.Duration().Milliseconds(),
+			"samplingDurationMs", sampleNodesStopwatch.Duration().Milliseconds(),
 			"pipelineDurationMs", pipelineStopwatch.Duration().Milliseconds(),
 			"commitDurationMs", commitStopwatch.Duration().Milliseconds(),
 			"e2eDurationMs", e2eStopwatch.Duration().Milliseconds(),
@@ -389,6 +397,7 @@ func (ps *DefaultPolarisScheduler) commitSchedulingDecisionUsingClient(
 			"pod", fullPodName,
 			"targetNode", targetNode,
 			"queueTimeMs", queueStopwatch.Duration().Milliseconds(),
+			"samplingDurationMs", sampleNodesStopwatch.Duration().Milliseconds(),
 			"pipelineDurationMs", pipelineStopwatch.Duration().Milliseconds(),
 			"commitDurationMs", commitStopwatch.Duration().Milliseconds(),
 			"e2eDurationMs", e2eStopwatch.Duration().Milliseconds(),
