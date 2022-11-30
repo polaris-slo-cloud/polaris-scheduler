@@ -38,9 +38,11 @@ type RemoteSamplerClient interface {
 // Facilitates the use of multiple RemoteSamplerClients.
 type RemoteSamplerClientsManager interface {
 
-	// Executes a request to all configured remote samplers to obtain node samples.
+	// Executes a request to the specified percentage of all configured remote samplers to obtain node samples.
+	//
+	// The percentageOfClustersToSample needs to be specified as a percentage in the range (0.0, 1.0].
 	//
 	// Returns a map of responses indexed by cluster name or an error.
 	// Note that an error is only returned in case of a fatal issue - if single clusters return an error, they will be contained in the results map.
-	SampleNodesFromAllClusters(ctx context.Context, request *RemoteNodesSamplerRequest) (map[string]*RemoteNodesSamplerResult, error)
+	SampleNodesFromClusters(ctx context.Context, request *RemoteNodesSamplerRequest, percentageOfClustersToSample float64) (map[string]*RemoteNodesSamplerResult, error)
 }

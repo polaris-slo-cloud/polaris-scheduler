@@ -3,6 +3,7 @@ package remotesampling
 import (
 	"context"
 	"math"
+	"math/rand"
 	"sync"
 
 	"github.com/go-logr/logr"
@@ -30,8 +31,10 @@ type queuedSamplingRequest struct {
 // Default implementation of RemoteSamplerClientsManager.
 type DefaultRemoteSamplerClientsManager struct {
 	remoteSamplers        map[string]RemoteSamplerClient
+	remoteSamplersList    []RemoteSamplerClient
 	maxConcurrentRequests int
 	samplingReqQueue      chan *queuedSamplingRequest
+	random                *rand.Rand
 	logger                *logr.Logger
 }
 
@@ -60,25 +63,35 @@ func NewDefaultRemoteSamplerClientsManager(
 	logger *logr.Logger,
 ) *DefaultRemoteSamplerClientsManager {
 	remoteSamplers := make(map[string]RemoteSamplerClient, len(remoteClusters))
+	remoteSamplersList := make([]RemoteSamplerClient, 0, len(remoteClusters))
 	for clusterName, clusterConfig := range remoteClusters {
-		remoteSamplers[clusterName] = NewDefaultRemoteSamplerClient(clusterName, clusterConfig.BaseURI, samplingStrategy, logger)
+		samplerClient := NewDefaultRemoteSamplerClient(clusterName, clusterConfig.BaseURI, samplingStrategy, logger)
+		remoteSamplers[clusterName] = samplerClient
+		remoteSamplersList = append(remoteSamplersList, samplerClient)
 	}
 
 	scm := &DefaultRemoteSamplerClientsManager{
 		remoteSamplers:        remoteSamplers,
+		remoteSamplersList:    remoteSamplersList,
 		maxConcurrentRequests: maxConcurrentRequests,
+		random:                rand.New(rand.NewSource(rand.Int63())),
 		logger:                logger,
 	}
 
 	return scm
 }
 
-func (scm *DefaultRemoteSamplerClientsManager) SampleNodesFromAllClusters(ctx context.Context, request *RemoteNodesSamplerRequest) (map[string]*RemoteNodesSamplerResult, error) {
+func (scm *DefaultRemoteSamplerClientsManager) SampleNodesFromClusters(
+	ctx context.Context,
+	request *RemoteNodesSamplerRequest,
+	percentageOfClustersToSample float64,
+) (map[string]*RemoteNodesSamplerResult, error) {
 	scm.ensureSamplingRoutinesStarted()
 	samplingCtx := newSamplingContext(ctx, request, len(scm.remoteSamplers))
 	defer samplingCtx.cancelFn()
 
-	for _, clusterSampler := range scm.remoteSamplers {
+	remoteSamplers := scm.compileClusterSamplersList(percentageOfClustersToSample)
+	for _, clusterSampler := range remoteSamplers {
 		queuedReq := &queuedSamplingRequest{
 			ctx:            samplingCtx,
 			clusterSampler: clusterSampler,
@@ -88,6 +101,34 @@ func (scm *DefaultRemoteSamplerClientsManager) SampleNodesFromAllClusters(ctx co
 
 	samplingCtx.waitGroup.Wait()
 	return samplingCtx.results, nil
+}
+
+func (scm *DefaultRemoteSamplerClientsManager) compileClusterSamplersList(percentageOfClustersToSample float64) []RemoteSamplerClient {
+	totalClustersCount := len(scm.remoteSamplersList)
+	reqSamplersCount := int(math.Ceil(percentageOfClustersToSample * float64(totalClustersCount)))
+	if reqSamplersCount == 0 {
+		reqSamplersCount = 1
+	}
+	if reqSamplersCount == totalClustersCount {
+		return scm.remoteSamplersList
+	}
+
+	samplers := make([]RemoteSamplerClient, reqSamplersCount)
+	chosenIndices := make(map[int]bool, reqSamplersCount)
+
+	for i := 0; i < reqSamplersCount; i++ {
+		var randIndex int
+		for {
+			randIndex = scm.random.Intn(totalClustersCount)
+			if _, exists := chosenIndices[randIndex]; !exists {
+				break
+			}
+		}
+		chosenIndices[randIndex] = true
+		samplers[i] = scm.remoteSamplersList[randIndex]
+	}
+
+	return samplers
 }
 
 func (scm *DefaultRemoteSamplerClientsManager) sampleSingleCluster(samplingCtx *samplingContext, clusterSampler RemoteSamplerClient) {

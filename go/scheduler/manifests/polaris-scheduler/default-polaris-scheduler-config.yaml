@@ -101,6 +101,8 @@ pluginsConfig:
       samplingStrategy: random
       # These requests apply to each instance of the RemoteNodesSampler plugin (see parallelNodeSamplers).
       maxConcurrentRequestsPerInstance: 50
+      # Specifies how many clusters should be sampled for a pod (percentage value from 1-100).
+      percentageOfClustersToSample: 33
 
   - name: Plugin1
     config:

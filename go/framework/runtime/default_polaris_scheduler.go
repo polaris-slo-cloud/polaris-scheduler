@@ -262,6 +262,7 @@ func (ps *DefaultPolarisScheduler) addPodToQueue(pod *pipeline.IncomingPod, sche
 
 // Continuously retrieves pods from the scheduling queue, samples nodes for each pod,
 // and then adds the pod to the decisionPipelineQueue.
+// Entry point for the sampling goroutines.
 func (ps *DefaultPolarisScheduler) executeSamplingLoop(id int, sampler pipeline.SampleNodesPlugin) {
 	ps.logger.Info("starting SampleNodesPlugin", "id", id)
 
@@ -308,6 +309,7 @@ func (ps *DefaultPolarisScheduler) sampleNodesForPod(pod *pipeline.QueuedPodInfo
 
 // Continuously retrieves pods from the decision pipeline queue and pumps each of them through
 // a single decision pipeline.
+// Entry point for the decision pipeline goroutines.
 func (ps *DefaultPolarisScheduler) executeDecisionPipelinePump(id int, decisionPipeline pipeline.DecisionPipeline) {
 	ps.logger.Info("starting DefaultPolarisScheduler DecisionPipeline", "id", id)
 

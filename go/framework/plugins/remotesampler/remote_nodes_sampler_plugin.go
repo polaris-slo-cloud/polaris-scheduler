@@ -19,8 +19,9 @@ const (
 
 // This SampleNodesPlugin contacts a remote sampling services to get the nodes sample.
 type RemoteNodesSamplerPlugin struct {
-	remoteSamplersMgr remotesampling.RemoteSamplerClientsManager
-	nodesToSampleBp   uint32
+	remoteSamplersMgr       remotesampling.RemoteSamplerClientsManager
+	nodesToSampleBp         uint32
+	clustersToSamplePercent float64
 }
 
 func NewRemoteNodesSamplerPlugin(pluginConfig config.PluginConfig, scheduler pipeline.PolarisScheduler) (pipeline.Plugin, error) {
@@ -38,8 +39,9 @@ func NewRemoteNodesSamplerPlugin(pluginConfig config.PluginConfig, scheduler pip
 	)
 
 	plugin := &RemoteNodesSamplerPlugin{
-		remoteSamplersMgr: remoteSamplersMgr,
-		nodesToSampleBp:   schedulerConfig.NodesToSampleBp,
+		remoteSamplersMgr:       remoteSamplersMgr,
+		nodesToSampleBp:         schedulerConfig.NodesToSampleBp,
+		clustersToSamplePercent: float64(parsedConfig.PercentageOfClustersToSample) / 100.0,
 	}
 
 	return plugin, nil
@@ -55,7 +57,7 @@ func (rs *RemoteNodesSamplerPlugin) SampleNodes(ctx pipeline.SchedulingContext, 
 		NodesToSampleBp: rs.nodesToSampleBp,
 	}
 
-	results, err := rs.remoteSamplersMgr.SampleNodesFromAllClusters(ctx.Context(), req)
+	results, err := rs.remoteSamplersMgr.SampleNodesFromClusters(ctx.Context(), req, rs.clustersToSamplePercent)
 	if err != nil {
 		return nil, pipeline.NewInternalErrorStatus(err)
 	}
@@ -100,6 +102,13 @@ func parseAndValidateConfig(rawConfig config.PluginConfig, schedulerConfig *conf
 	} else {
 		// This value is optional, so we provide a default, if it is not set.
 		pluginConfig.MaxConcurrentRequestsPerInstance = DefaultMaxConcurrentRequestsPerInstance
+	}
+
+	if clustersToSamplePercent, err := config.ReadInt32FromPluginConfig(rawConfig, "percentageOfClustersToSample"); err == nil {
+		pluginConfig.PercentageOfClustersToSample = clustersToSamplePercent
+	} else {
+		// This value is optional, so we provide a default, if it is not set.
+		pluginConfig.PercentageOfClustersToSample = DefaultPercentageOfClustersToSample
 	}
 
 	return pluginConfig, nil

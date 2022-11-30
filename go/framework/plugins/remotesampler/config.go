@@ -2,6 +2,7 @@ package remotesampler
 
 const (
 	DefaultMaxConcurrentRequestsPerInstance = 50
+	DefaultPercentageOfClustersToSample     = 33
 )
 
 // Configuration data for the RemoteNodesSamplerPlugin.
@@ -17,4 +18,9 @@ type RemoteNodesSamplerPluginConfig struct {
 	//
 	// Default: 50
 	MaxConcurrentRequestsPerInstance int32 `json:"maxConcurrentRequestsPerInstance" yaml:"maxConcurrentRequestsPerInstance"`
+
+	// Defines the percentage (from 1-100) of all clusters that should be sampled for a pod.
+	//
+	// Default: 33
+	PercentageOfClustersToSample int32 `json:"percentageOfClustersToSample" yaml:"percentageOfClustersToSample"`
 }
