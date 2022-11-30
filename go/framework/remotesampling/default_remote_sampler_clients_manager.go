@@ -87,10 +87,11 @@ func (scm *DefaultRemoteSamplerClientsManager) SampleNodesFromClusters(
 	percentageOfClustersToSample float64,
 ) (map[string]*RemoteNodesSamplerResult, error) {
 	scm.ensureSamplingRoutinesStarted()
-	samplingCtx := newSamplingContext(ctx, request, len(scm.remoteSamplers))
-	defer samplingCtx.cancelFn()
 
 	remoteSamplers := scm.compileClusterSamplersList(percentageOfClustersToSample)
+	samplingCtx := newSamplingContext(ctx, request, len(remoteSamplers))
+	defer samplingCtx.cancelFn()
+
 	for _, clusterSampler := range remoteSamplers {
 		queuedReq := &queuedSamplingRequest{
 			ctx:            samplingCtx,
