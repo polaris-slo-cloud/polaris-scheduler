@@ -158,6 +158,8 @@ type ScorePlugin interface {
 
 // A ReservePlugin is called after the scheduling pipeline has chosen the final target node after the Score stage.
 // It may be used to update 3rd party data structures.
+//
+// ToDo: ReservePlugin_MultiBind - Modify ReservePlugin to account for the new MultiBinding mechanism. Currently the ReserveStage is disabled.
 type ReservePlugin interface {
 	Plugin
 
@@ -221,9 +223,9 @@ type SchedulingDecision struct {
 // a single pod traversing the pipeline at a time.
 type DecisionPipeline interface {
 
-	// Executes the Decision Pipeline and returns a SchedulingDecision and a Status.
-	// The SchedulingDecision is nil in case the pod could not be scheduled or if an error occurred.
-	SchedulePod(podInfo *SampledPodInfo) (*SchedulingDecision, Status)
+	// Executes the Decision Pipeline and returns a sorted list of SchedulingDecisions, i.e., the commit candidates, and a Status.
+	// The SchedulingDecisions are nil in case the pod could not be scheduled or if an error occurred.
+	DecideCommitCandidates(podInfo *SampledPodInfo, commitCandidatesCount int) ([]*SchedulingDecision, Status)
 }
 
 // Represents an instance of the Polaris ClusterAgent Sampling Pipeline,

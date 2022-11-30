@@ -22,7 +22,7 @@
             "mode": "exec",
             "program": "${workspaceFolder}/bin/polaris-scheduler",
             "args": [
-                "--config=${workspaceFolder}/testbed/fake-kubelet-multi-cluster/polaris-scheduler/polaris-scheduler-config.yaml",
+                "--config=${workspaceFolder}/../testbed/fake-kubelet-multi-cluster/polaris-scheduler/polaris-scheduler-config.yaml",
                 // "--v=4"
             ]
         },

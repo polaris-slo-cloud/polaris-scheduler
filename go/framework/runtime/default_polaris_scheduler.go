@@ -318,11 +318,11 @@ func (ps *DefaultPolarisScheduler) executeDecisionPipelinePump(id int, decisionP
 		case pod := <-ps.decisionPipelineQueue:
 			atomic.AddInt32(&ps.podsInDecisionPipeline, 1)
 
-			decision, status := decisionPipeline.SchedulePod(pod)
+			candidateDecisions, status := decisionPipeline.DecideCommitCandidates(pod, int(ps.config.CommitCandidateNodes))
 			ps.stopStopwatch(pod.Ctx, schedulingPipelineStopwatchStateKey)
 
 			if pipeline.IsSuccessStatus(status) {
-				ps.commitSchedulingDecision(pod.Ctx, decision)
+				go ps.commitFirstPossibleSchedulingDecision(pod.Ctx, candidateDecisions)
 			} else {
 				ps.handleFailureStatus(status.FailedStage(), status.FailedPlugin(), pod.Ctx, pod.PodInfo, status)
 			}
@@ -345,40 +345,24 @@ func (ps *DefaultPolarisScheduler) handleFailureStatus(stage string, plugin pipe
 	return nil
 }
 
-// Commits the decision of the scheduling pipeline to the orchestrator.
-func (ps *DefaultPolarisScheduler) commitSchedulingDecision(schedCtx pipeline.SchedulingContext, decision *pipeline.SchedulingDecision) {
-	clusterClient, err := ps.clusterClientsMgr.GetClusterClient(decision.TargetNode.ClusterName)
-	if err != nil {
-		ps.logger.Error(err, "commitSchedulingDecision() could not obtain ClusterClient")
-		return
-	}
-
-	go ps.commitSchedulingDecisionUsingClient(schedCtx, clusterClient, decision)
-}
-
-func (ps *DefaultPolarisScheduler) commitSchedulingDecisionUsingClient(
-	schedCtx pipeline.SchedulingContext,
-	clusterClient client.ClusterClient,
-	decision *pipeline.SchedulingDecision,
-) {
-	clusterSchedDecision := &client.ClusterSchedulingDecision{
-		Pod:      decision.Pod.Pod,
-		NodeName: decision.TargetNode.Node.Name,
-	}
-
-	fullPodName := decision.Pod.Pod.Namespace + "." + decision.Pod.Pod.Name
-	targetNode := decision.TargetNode.ClusterName + "." + decision.TargetNode.Node.Name
+// Commits the decision of the scheduling pipeline to the orchestrator, starting with the first candidate decision and returning if it succeeds.
+// If the first candidate decision fails, we iteratively try the next decision, continuing until one decision commits successfully or we run out of decisions.
+// If we run out of decisions, we try rescheduling the pod completely, if it has not reached it max retries limit.
+func (ps *DefaultPolarisScheduler) commitFirstPossibleSchedulingDecision(schedCtx pipeline.SchedulingContext, candidateDecisions []*pipeline.SchedulingDecision) {
+	podInfo := candidateDecisions[0].Pod
+	fullPodName := podInfo.Pod.Namespace + "." + podInfo.Pod.Name
 
 	queueStopwatch := ps.getStopwatch(schedCtx, queueStopwatchStateKey)
 	sampleNodesStopwatch := ps.getStopwatch(schedCtx, sampleNodesStopwatchStateKey)
 	pipelineStopwatch := ps.getStopwatch(schedCtx, schedulingPipelineStopwatchStateKey)
 	commitStopwatch := util.NewStopwatch()
+
 	commitStopwatch.Start()
+	targetNode, commitErrors := ps.tryCommitFirstPossibleSchedulingDecision(schedCtx, candidateDecisions)
+	commitStopwatch.Stop()
+	e2eStopwatch := ps.stopStopwatch(schedCtx, endToEndStopwatchStateKey)
 
-	if err := clusterClient.CommitSchedulingDecision(schedCtx.Context(), clusterSchedDecision); err == nil {
-		commitStopwatch.Stop()
-		e2eStopwatch := ps.stopStopwatch(schedCtx, endToEndStopwatchStateKey)
-
+	if len(commitErrors) < len(candidateDecisions) {
 		ps.logger.Info(
 			"SchedulingSuccess",
 			"pod", fullPodName,
@@ -388,34 +372,68 @@ func (ps *DefaultPolarisScheduler) commitSchedulingDecisionUsingClient(
 			"pipelineDurationMs", pipelineStopwatch.Duration().Milliseconds(),
 			"commitDurationMs", commitStopwatch.Duration().Milliseconds(),
 			"e2eDurationMs", e2eStopwatch.Duration().Milliseconds(),
+			"commitRetries", len(commitErrors),
 		)
 	} else {
-		commitStopwatch.Stop()
-		e2eStopwatch := ps.stopStopwatch(schedCtx, endToEndStopwatchStateKey)
-		retryScheduling := decision.Pod.SchedulingRetryCount < maxRetrySchedulingCount
+		retryScheduling := podInfo.SchedulingRetryCount < maxRetrySchedulingCount
 
 		ps.logger.Info(
 			"FailedScheduling",
 			"pod", fullPodName,
-			"targetNode", targetNode,
 			"queueTimeMs", queueStopwatch.Duration().Milliseconds(),
 			"samplingDurationMs", sampleNodesStopwatch.Duration().Milliseconds(),
 			"pipelineDurationMs", pipelineStopwatch.Duration().Milliseconds(),
 			"commitDurationMs", commitStopwatch.Duration().Milliseconds(),
 			"e2eDurationMs", e2eStopwatch.Duration().Milliseconds(),
-			"reason", err,
-			"retryCount", decision.Pod.SchedulingRetryCount,
+			"reasons", commitErrors,
+			"retryCount", podInfo.SchedulingRetryCount,
 			"retryingScheduling", retryScheduling,
 		)
 
 		if retryScheduling {
 			podToRetry := &pipeline.IncomingPod{
-				Pod:        decision.Pod.Pod,
+				Pod:        podInfo.Pod,
 				ReceivedAt: time.Now(),
 			}
-			ps.addPodToQueue(podToRetry, decision.Pod.SchedulingRetryCount+1)
+			ps.addPodToQueue(podToRetry, podInfo.SchedulingRetryCount+1)
 		}
 	}
+}
+
+// Tries to commit the first possible candidate decision.
+// Returns the name of the targetNode that the pod was committed to and the list of errors that occurred on failed commits.
+func (ps *DefaultPolarisScheduler) tryCommitFirstPossibleSchedulingDecision(schedCtx pipeline.SchedulingContext, candidateDecisions []*pipeline.SchedulingDecision) (string, []error) {
+	var commitErrors []error
+	for _, decision := range candidateDecisions {
+		if err := ps.commitSchedulingDecision(schedCtx, decision); err == nil {
+			targetNode := decision.TargetNode.ClusterName + "." + decision.TargetNode.Node.Name
+			return targetNode, commitErrors
+		} else {
+			if commitErrors == nil {
+				commitErrors = make([]error, 0, len(candidateDecisions))
+			}
+			commitErrors = append(commitErrors, err)
+		}
+	}
+	return "", commitErrors
+}
+
+func (ps *DefaultPolarisScheduler) commitSchedulingDecision(
+	schedCtx pipeline.SchedulingContext,
+	decision *pipeline.SchedulingDecision,
+) error {
+	clusterClient, err := ps.clusterClientsMgr.GetClusterClient(decision.TargetNode.ClusterName)
+	if err != nil {
+		ps.logger.Error(err, "commitSchedulingDecision() could not obtain ClusterClient")
+		return err
+	}
+
+	clusterSchedDecision := &client.ClusterSchedulingDecision{
+		Pod:      decision.Pod.Pod,
+		NodeName: decision.TargetNode.Node.Name,
+	}
+
+	return clusterClient.CommitSchedulingDecision(schedCtx.Context(), clusterSchedDecision)
 }
 
 // Creates a new stopwatch, starts it (using the specified startTime or the current time, if startTime is nil), and adds it to the SchedulingContext.
