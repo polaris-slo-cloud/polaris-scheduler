@@ -49,27 +49,27 @@ func (cbc *RemoteClusterAgentClient) ClusterName() string {
 	return cbc.clusterName
 }
 
-func (cbc *RemoteClusterAgentClient) CommitSchedulingDecision(ctx context.Context, schedulingDecision *client.ClusterSchedulingDecision) error {
+func (cbc *RemoteClusterAgentClient) CommitSchedulingDecision(ctx context.Context, schedulingDecision *client.ClusterSchedulingDecision) (*client.CommitSchedulingDecisionSuccess, error) {
 	httpReq, err := cbc.createPostRequest(ctx, cbc.commitSchedulingDecisionURI, schedulingDecision)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	httpResp, err := cbc.httpClient.Do(httpReq)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	if httpResp.Body != nil {
 		defer httpResp.Body.Close()
 	}
 
 	if httpResp.StatusCode == http.StatusCreated {
-		return nil
+		return parseResponseBody[client.CommitSchedulingDecisionSuccess](httpResp)
 	} else {
-		if agentError, err := cbc.parseErrorResponseBody(httpResp); err == nil {
-			return agentError.Error
+		if agentError, err := parseResponseBody[PolarisClusterAgentError](httpResp); err == nil {
+			return nil, agentError.Error
 		} else {
-			return err
+			return nil, err
 		}
 	}
 }
@@ -90,6 +90,20 @@ func (cbc *RemoteClusterAgentClient) createPostRequest(ctx context.Context, requ
 	httpReq.Header["Accept"] = []string{"application/json"}
 
 	return httpReq, nil
+}
+
+func parseResponseBody[T any](httpResp *http.Response) (*T, error) {
+	body, err := io.ReadAll(httpResp.Body)
+	if err != nil {
+		return nil, err
+	}
+
+	responseObj := new(T)
+	if err := json.Unmarshal(body, responseObj); err != nil {
+		return nil, err
+	}
+
+	return responseObj, nil
 }
 
 func (cbc *RemoteClusterAgentClient) parseErrorResponseBody(httpResp *http.Response) (*PolarisClusterAgentError, error) {

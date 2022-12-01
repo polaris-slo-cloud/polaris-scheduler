@@ -358,20 +358,27 @@ func (ps *DefaultPolarisScheduler) commitFirstPossibleSchedulingDecision(schedCt
 	commitStopwatch := util.NewStopwatch()
 
 	commitStopwatch.Start()
-	targetNode, commitErrors := ps.tryCommitFirstPossibleSchedulingDecision(schedCtx, candidateDecisions)
+	result, commitErrors := ps.tryCommitFirstPossibleSchedulingDecision(schedCtx, candidateDecisions)
 	commitStopwatch.Stop()
 	e2eStopwatch := ps.stopStopwatch(schedCtx, endToEndStopwatchStateKey)
 
-	if len(commitErrors) < len(candidateDecisions) {
+	if result != nil {
 		ps.logger.Info(
 			"SchedulingSuccess",
 			"pod", fullPodName,
-			"targetNode", targetNode,
+			"targetNode", result.NodeName,
 			"queueTimeMs", queueStopwatch.Duration().Milliseconds(),
 			"samplingDurationMs", sampleNodesStopwatch.Duration().Milliseconds(),
 			"pipelineDurationMs", pipelineStopwatch.Duration().Milliseconds(),
 			"commitDurationMs", commitStopwatch.Duration().Milliseconds(),
 			"e2eDurationMs", e2eStopwatch.Duration().Milliseconds(),
+			"agentQueueTimeMs", result.Timings.QueueTime,
+			"agentNodeLockTimeMs", result.Timings.NodeLockTime,
+			"agentFetchNodeInfoMs", result.Timings.FetchNodeInfo,
+			"agentBindingPipelineMs", result.Timings.BindingPipeline,
+			"agentCreatePodMs", result.Timings.CreatePod,
+			"agentCreateBindingMs", result.Timings.CreateBinding,
+			"agentCommitDecisionMs", result.Timings.CommitDecision,
 			"commitRetries", len(commitErrors),
 		)
 	} else {
@@ -402,12 +409,12 @@ func (ps *DefaultPolarisScheduler) commitFirstPossibleSchedulingDecision(schedCt
 
 // Tries to commit the first possible candidate decision.
 // Returns the name of the targetNode that the pod was committed to and the list of errors that occurred on failed commits.
-func (ps *DefaultPolarisScheduler) tryCommitFirstPossibleSchedulingDecision(schedCtx pipeline.SchedulingContext, candidateDecisions []*pipeline.SchedulingDecision) (string, []error) {
+func (ps *DefaultPolarisScheduler) tryCommitFirstPossibleSchedulingDecision(schedCtx pipeline.SchedulingContext, candidateDecisions []*pipeline.SchedulingDecision) (*client.CommitSchedulingDecisionSuccess, []error) {
 	var commitErrors []error
 	for _, decision := range candidateDecisions {
-		if err := ps.commitSchedulingDecision(schedCtx, decision); err == nil {
-			targetNode := decision.TargetNode.ClusterName + "." + decision.TargetNode.Node.Name
-			return targetNode, commitErrors
+		if result, err := ps.commitSchedulingDecision(schedCtx, decision); err == nil {
+			result.NodeName = decision.TargetNode.ClusterName + "." + result.NodeName
+			return result, commitErrors
 		} else {
 			if commitErrors == nil {
 				commitErrors = make([]error, 0, len(candidateDecisions))
@@ -415,17 +422,17 @@ func (ps *DefaultPolarisScheduler) tryCommitFirstPossibleSchedulingDecision(sche
 			commitErrors = append(commitErrors, err)
 		}
 	}
-	return "", commitErrors
+	return nil, commitErrors
 }
 
 func (ps *DefaultPolarisScheduler) commitSchedulingDecision(
 	schedCtx pipeline.SchedulingContext,
 	decision *pipeline.SchedulingDecision,
-) error {
+) (*client.CommitSchedulingDecisionSuccess, error) {
 	clusterClient, err := ps.clusterClientsMgr.GetClusterClient(decision.TargetNode.ClusterName)
 	if err != nil {
 		ps.logger.Error(err, "commitSchedulingDecision() could not obtain ClusterClient")
-		return err
+		return nil, err
 	}
 
 	clusterSchedDecision := &client.ClusterSchedulingDecision{

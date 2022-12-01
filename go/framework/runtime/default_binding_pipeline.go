@@ -68,7 +68,7 @@ func NewBindingPipelineStopwatches() *BindingPipelineStopwatches {
 	return stopwatches
 }
 
-func (bp *DefaultBindingPipeline) CommitSchedulingDecision(schedCtx pipeline.SchedulingContext, schedDecision *client.ClusterSchedulingDecision) pipeline.Status {
+func (bp *DefaultBindingPipeline) CommitSchedulingDecision(schedCtx pipeline.SchedulingContext, schedDecision *client.ClusterSchedulingDecision) (*client.CommitSchedulingDecisionSuccess, pipeline.Status) {
 	stopwatches := bp.getStopwatches(schedCtx)
 
 	stopwatches.NodeLockTime.Start()
@@ -81,7 +81,7 @@ func (bp *DefaultBindingPipeline) CommitSchedulingDecision(schedCtx pipeline.Sch
 	updatedNodeInfo, err := bp.fetchNodeInfo(schedCtx, schedDecision.NodeName)
 	stopwatches.FetchNodeInfo.Stop()
 	if err != nil {
-		return pipeline.NewStatus(pipeline.Unschedulable, "error fetching node information", err.Error())
+		return nil, pipeline.NewStatus(pipeline.Unschedulable, "error fetching node information", err.Error())
 	}
 	decision := &pipeline.SchedulingDecision{
 		Pod:        &pipeline.PodInfo{Pod: schedDecision.Pod},
@@ -93,13 +93,16 @@ func (bp *DefaultBindingPipeline) CommitSchedulingDecision(schedCtx pipeline.Sch
 	status := bp.runCheckConflictsPlugins(schedCtx, decision)
 	stopwatches.BindingPipeline.Stop()
 	if !pipeline.IsSuccessStatus(status) {
-		return status
+		return nil, status
 	}
 
 	stopwatches.CommitDecision.Start()
-	status = bp.commitSchedulingDecision(schedCtx, decision)
+	result, status := bp.commitSchedulingDecision(schedCtx, decision)
 	stopwatches.CommitDecision.Stop()
-	return status
+	if result != nil {
+		bp.setTimings(result, stopwatches)
+	}
+	return result, status
 }
 
 func (bp *DefaultBindingPipeline) getStopwatches(schedCtx pipeline.SchedulingContext) *BindingPipelineStopwatches {
@@ -160,14 +163,23 @@ func (bp *DefaultBindingPipeline) runCheckConflictsPlugins(schedCtx pipeline.Sch
 	return status
 }
 
-func (bp *DefaultBindingPipeline) commitSchedulingDecision(schedCtx pipeline.SchedulingContext, decision *pipeline.SchedulingDecision) pipeline.Status {
+func (bp *DefaultBindingPipeline) commitSchedulingDecision(schedCtx pipeline.SchedulingContext, decision *pipeline.SchedulingDecision) (*client.CommitSchedulingDecisionSuccess, pipeline.Status) {
 	clusterSchedDecision := &client.ClusterSchedulingDecision{
 		Pod:      decision.Pod.Pod,
 		NodeName: decision.TargetNode.Node.Name,
 	}
 
-	if err := bp.clusterAgentServices.ClusterClient().CommitSchedulingDecision(schedCtx.Context(), clusterSchedDecision); err != nil {
-		return pipeline.NewStatus(pipeline.Unschedulable, "error committing scheduling decision", err.Error())
+	result, err := bp.clusterAgentServices.ClusterClient().CommitSchedulingDecision(schedCtx.Context(), clusterSchedDecision)
+	if err != nil {
+		return nil, pipeline.NewStatus(pipeline.Unschedulable, "error committing scheduling decision", err.Error())
 	}
-	return pipeline.NewSuccessStatus()
+	return result, pipeline.NewSuccessStatus()
+}
+
+func (bp *DefaultBindingPipeline) setTimings(result *client.CommitSchedulingDecisionSuccess, stopwatches *BindingPipelineStopwatches) {
+	result.Timings.QueueTime = stopwatches.QueueTime.Duration().Milliseconds()
+	result.Timings.NodeLockTime = stopwatches.NodeLockTime.Duration().Milliseconds()
+	result.Timings.FetchNodeInfo = stopwatches.FetchNodeInfo.Duration().Milliseconds()
+	result.Timings.BindingPipeline = stopwatches.BindingPipeline.Duration().Milliseconds()
+	result.Timings.CommitDecision = stopwatches.CommitDecision.Duration().Milliseconds()
 }

@@ -252,5 +252,5 @@ type SamplingPipeline interface {
 type BindingPipeline interface {
 
 	// Runs the binding pipeline stages and, if all stages succeed, commits the scheduling decision to the cluster.
-	CommitSchedulingDecision(ctx SchedulingContext, schedDecision *client.ClusterSchedulingDecision) Status
+	CommitSchedulingDecision(ctx SchedulingContext, schedDecision *client.ClusterSchedulingDecision) (*client.CommitSchedulingDecisionSuccess, Status)
 }

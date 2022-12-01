@@ -101,6 +101,48 @@ func NewClusterPod(pod *core.Pod) *ClusterPod {
 	return cp
 }
 
+// Describes timings (in milliseconds) of various phases of the CommitSchedulingDecision operation on the polaris-cluster-agent.
+type CommitSchedulingDecisionTimings struct {
+	// The time spent in the queue waiting for a binding pipeline to become available.
+	QueueTime int64 `json:"queueTime" yaml:"queueTime"`
+
+	// The time spent waiting for the node to be locked for binding.
+	NodeLockTime int64 `json:"nodeLockTime" yaml:"nodeLockTime"`
+
+	// The time it takes to fetch the target node and its assigned pods.
+	FetchNodeInfo int64 `json:"fetchNodeInfo" yaml:"fetchNodeInfo"`
+
+	// The duration of the binding pipeline
+	BindingPipeline int64 `json:"bindingPipeline" yaml:"bindingPipeline"`
+
+	// Commit decision is the entire time it takes to commit a decision using the local cluster client.
+	// The commit involves CreatePod, CreateBinding, and any calling overheads.
+	CommitDecision int64 `json:"commitDecision" yaml:"commitDecision"`
+
+	// The duration of the request to create a Pod in the orchestrator.
+	CreatePod int64 `json:"createPod" yaml:"createPod"`
+
+	// The duration of the request to bind the pod to the target node in the orchestrator.
+	CreateBinding int64 `json:"createBinding" yaml:"createBinding"`
+}
+
+// Encapsulates the success result of committing a SchedulingDecision.
+type CommitSchedulingDecisionSuccess struct {
+
+	// The namespace of the pod.
+	Namespace string `json:"namespace" yaml:"namespace"`
+
+	// The name of the pod.
+	PodName string `json:"podName" yaml:"podName"`
+
+	// The name of the target node, to which the pod was bound.
+	NodeName string `json:"nodeName" yaml:"nodeName"`
+
+	// Timings of the commit operation on the polaris-cluster-agent.
+	// Note that when using a LocalClusterClient, only the CreatePod and CreateBinding fields are filled.
+	Timings *CommitSchedulingDecisionTimings `json:"timings" yaml:"timings"`
+}
+
 // A generic DTO for transmitting error information.
 type PolarisErrorDto struct {
 	Message string `json:"message" yaml:"message"`

@@ -87,14 +87,14 @@ func (c *KubernetesClusterClientImpl) EventRecorder() record.EventRecorder {
 	return c.eventRecorder
 }
 
-func (c *KubernetesClusterClientImpl) CommitSchedulingDecision(ctx context.Context, schedulingDecision *client.ClusterSchedulingDecision) error {
+func (c *KubernetesClusterClientImpl) CommitSchedulingDecision(ctx context.Context, schedulingDecision *client.ClusterSchedulingDecision) (*client.CommitSchedulingDecisionSuccess, error) {
 	// ToDo: check if pod already exists, before trying to create it.
 	createPodStopwatch := util.NewStopwatch()
 	createPodStopwatch.Start()
 	pod, err := c.createPod(ctx, schedulingDecision.Pod)
 	createPodStopwatch.Stop()
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	binding := &core.Binding{
@@ -116,7 +116,17 @@ func (c *KubernetesClusterClientImpl) CommitSchedulingDecision(ctx context.Conte
 	if err != nil {
 		c.logger.Error(err, "could not bind Pod", "pod", pod, "binding", binding)
 		c.eventRecorder.Eventf(pod, core.EventTypeWarning, "FailedScheduling", "Could not bind pod to node %s", &binding.Target.Name)
-		return err
+		return nil, err
+	}
+
+	result := &client.CommitSchedulingDecisionSuccess{
+		Namespace: pod.Namespace,
+		PodName:   pod.Name,
+		NodeName:  schedulingDecision.NodeName,
+		Timings: &client.CommitSchedulingDecisionTimings{
+			CreatePod:     createPodStopwatch.Duration().Milliseconds(),
+			CreateBinding: createBindingStopwatch.Duration().Milliseconds(),
+		},
 	}
 
 	fullyQualifiedPodName := pod.Namespace + "." + pod.Name
@@ -125,10 +135,10 @@ func (c *KubernetesClusterClientImpl) CommitSchedulingDecision(ctx context.Conte
 		"pod", fullyQualifiedPodName,
 		"cluster", c.clusterName,
 		"node", binding.Target.Name,
-		"createPodDurationMs", createPodStopwatch.Duration().Milliseconds(),
-		"createBindingDurationMs", createBindingStopwatch.Duration().Milliseconds(),
+		"createPodDurationMs", result.Timings.CreatePod,
+		"createBindingDurationMs", result.Timings.CreateBinding,
 	)
-	return nil
+	return result, nil
 }
 
 func (c *KubernetesClusterClientImpl) FetchNode(ctx context.Context, name string) (*core.Node, error) {
