@@ -136,7 +136,8 @@ func (bp *DefaultBindingPipeline) fetchNodeInfo(schedCtx pipeline.SchedulingCont
 	clusterClient := bp.clusterAgentServices.ClusterClient()
 	nodeName := schedDecision.NodeName
 	var node *core.Node
-	var podsOnNode []core.Pod
+	var fetchedPodsOnNode []core.Pod
+	var cachedPodsOnNode []*client.ClusterPod
 	var nodeFetchErr, podsFetchErr error
 
 	wg := sync.WaitGroup{}
@@ -148,12 +149,16 @@ func (bp *DefaultBindingPipeline) fetchNodeInfo(schedCtx pipeline.SchedulingCont
 	}()
 
 	go func() {
-		// ToDo: fetching pods will miss those pods, whose nodeName has not been set yet by K8s,
-		// so we need to combine this with info from the cache as well. We cannot set the nodeName in client.CreatePod(),
-		// because then binding would fail.
-		podsOnNode, podsFetchErr = clusterClient.FetchPodsScheduledOnNode(schedCtx.Context(), nodeName)
+		fetchedPodsOnNode, podsFetchErr = clusterClient.FetchPodsScheduledOnNode(schedCtx.Context(), nodeName)
 		wg.Done()
 	}()
+
+	// Fetching pods may miss those pods, whose nodeName has not been set yet by K8s,
+	// so we need to combine the fetched nodes with info from the cache as well.
+	// We cannot set the nodeName in client.CreatePod(), because then binding would fail.
+	if cachedNode, ok := bp.getCachedNode(schedDecision.NodeName); ok {
+		cachedPodsOnNode = cachedNode.Pods
+	}
 
 	wg.Wait()
 	if nodeFetchErr != nil {
@@ -163,19 +168,13 @@ func (bp *DefaultBindingPipeline) fetchNodeInfo(schedCtx pipeline.SchedulingCont
 		return nil, podsFetchErr
 	}
 
-	clusterNode := &client.ClusterNode{
-		Node:               node,
-		AvailableResources: util.CalculateNodeAvailableResources(node, podsOnNode),
-		TotalResources:     util.NewResourcesFromList(node.Status.Capacity),
-	}
-
+	podsOnNode := bp.combinePodsLists(fetchedPodsOnNode, cachedPodsOnNode)
+	clusterNode := client.NewClusterNodeWithPods(node, podsOnNode, nil)
 	return pipeline.NewNodeInfo(clusterClient.ClusterName(), clusterNode), nil
 }
 
 func (bp *DefaultBindingPipeline) fetchNodeInfoFromCache(schedDecision *client.ClusterSchedulingDecision) (*pipeline.NodeInfo, error) {
-	storeReader := bp.clusterAgentServices.NodesCache().Nodes().ReadLock()
-	defer storeReader.Unlock()
-	if cachedNode, ok := storeReader.GetByKey(schedDecision.NodeName); ok {
+	if cachedNode, ok := bp.getCachedNode(schedDecision.NodeName); ok {
 		// We recalculate the cachedNode's resources without the queuedPods.
 		// This avoids a race condition, where multiple goroutines add a queuedPod simultaneously
 		// before the goroutine that has locked the node can get its info from the cache.
@@ -185,6 +184,36 @@ func (bp *DefaultBindingPipeline) fetchNodeInfoFromCache(schedDecision *client.C
 		return pipeline.NewNodeInfo("", cachedNodeWithoutQueuedPods), nil
 	}
 	return nil, fmt.Errorf("cannot find node %s in the cache", schedDecision.NodeName)
+}
+
+func (bp *DefaultBindingPipeline) getCachedNode(nodeName string) (*client.ClusterNode, bool) {
+	storeReader := bp.clusterAgentServices.NodesCache().Nodes().ReadLock()
+	defer storeReader.Unlock()
+	return storeReader.GetByKey(nodeName)
+}
+
+func (bp *DefaultBindingPipeline) combinePodsLists(fetchedPods []core.Pod, cachedPods []*client.ClusterPod) []*client.ClusterPod {
+	podsByFullName := make(map[string]*client.ClusterPod, len(fetchedPods)+len(cachedPods))
+
+	for _, cachedPod := range cachedPods {
+		podsByFullName[getFullPodName(cachedPod.Namespace, cachedPod.Name)] = cachedPod
+	}
+
+	for i := range fetchedPods {
+		fetchedPod := &fetchedPods[i]
+		fullName := getFullPodName(fetchedPod.Namespace, fetchedPod.Name)
+		if _, ok := podsByFullName[fullName]; !ok {
+			podsByFullName[fullName] = client.NewClusterPod(fetchedPod)
+		}
+	}
+
+	pods := make([]*client.ClusterPod, len(podsByFullName))
+	i := 0
+	for _, pod := range podsByFullName {
+		pods[i] = pod
+		i++
+	}
+	return pods
 }
 
 func (bp *DefaultBindingPipeline) runCheckConflictsPlugins(schedCtx pipeline.SchedulingContext, decision *pipeline.SchedulingDecision) pipeline.Status {
@@ -231,4 +260,8 @@ func (bp *DefaultBindingPipeline) setTimings(result *client.CommitSchedulingDeci
 	result.Timings.FetchNodeInfo = stopwatches.FetchNodeInfo.Duration().Milliseconds()
 	result.Timings.BindingPipeline = stopwatches.BindingPipeline.Duration().Milliseconds()
 	result.Timings.CommitDecision = stopwatches.CommitDecision.Duration().Milliseconds()
+}
+
+func getFullPodName(namespace string, name string) string {
+	return namespace + "." + name
 }
