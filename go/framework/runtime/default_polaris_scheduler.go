@@ -337,10 +337,26 @@ func (ps *DefaultPolarisScheduler) executeDecisionPipelinePump(id int, decisionP
 	}
 }
 
+// Handles a failure status during the decision pipeline.
 func (ps *DefaultPolarisScheduler) handleFailureStatus(stage string, plugin pipeline.Plugin, schedCtx pipeline.SchedulingContext, podInfo *pipeline.PodInfo, status pipeline.Status) error {
 	pod := podInfo.Pod
 	fullyQualifiedPodName := pod.Namespace + "." + pod.Name
-	ps.logger.Info("FailedScheduling", "pod", fullyQualifiedPodName, "reason", status.Message())
+	retryScheduling := podInfo.SchedulingRetryCount < maxRetrySchedulingCount
+	ps.logger.Info(
+		"FailedScheduling",
+		"pod", fullyQualifiedPodName,
+		"reason", status.Message(),
+		"retryCount", podInfo.SchedulingRetryCount,
+		"retryingScheduling", retryScheduling,
+	)
+
+	if retryScheduling {
+		podToRetry := &pipeline.IncomingPod{
+			Pod:        podInfo.Pod,
+			ReceivedAt: time.Now(),
+		}
+		ps.addPodToQueue(podToRetry, podInfo.SchedulingRetryCount+1)
+	}
 
 	return nil
 }
