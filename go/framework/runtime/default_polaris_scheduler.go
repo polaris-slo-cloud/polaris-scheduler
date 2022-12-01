@@ -367,6 +367,7 @@ func (ps *DefaultPolarisScheduler) commitFirstPossibleSchedulingDecision(schedCt
 			"SchedulingSuccess",
 			"pod", fullPodName,
 			"targetNode", result.NodeName,
+			"unixTimestampMs", time.Now().UnixMilli(),
 			"queueTimeMs", queueStopwatch.Duration().Milliseconds(),
 			"samplingDurationMs", sampleNodesStopwatch.Duration().Milliseconds(),
 			"pipelineDurationMs", pipelineStopwatch.Duration().Milliseconds(),

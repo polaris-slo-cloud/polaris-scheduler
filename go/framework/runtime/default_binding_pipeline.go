@@ -1,6 +1,7 @@
 package runtime
 
 import (
+	"fmt"
 	"sync"
 
 	"github.com/go-logr/logr"
@@ -78,7 +79,7 @@ func (bp *DefaultBindingPipeline) CommitSchedulingDecision(schedCtx pipeline.Sch
 
 	// Fetch the NodeInfo.
 	stopwatches.FetchNodeInfo.Start()
-	updatedNodeInfo, err := bp.fetchNodeInfo(schedCtx, schedDecision.NodeName)
+	updatedNodeInfo, err := bp.fetchNodeInfo(schedCtx, schedDecision)
 	stopwatches.FetchNodeInfo.Stop()
 	if err != nil {
 		return nil, pipeline.NewStatus(pipeline.Unschedulable, "error fetching node information", err.Error())
@@ -113,8 +114,17 @@ func (bp *DefaultBindingPipeline) getStopwatches(schedCtx pipeline.SchedulingCon
 	return stopwatches
 }
 
-func (bp *DefaultBindingPipeline) fetchNodeInfo(schedCtx pipeline.SchedulingContext, nodeName string) (*pipeline.NodeInfo, error) {
+func (bp *DefaultBindingPipeline) fetchNodeInfo(schedCtx pipeline.SchedulingContext, schedDecision *client.ClusterSchedulingDecision) (*pipeline.NodeInfo, error) {
+	// If we cut off the binding pipeline before committing to the orchestrator
+	// (to evaluate the scheduler performance only, without the orchestrator commit latency),
+	// we need to get the node information from the cache, because the read requests from the
+	// orchestrator might also have a high latency, due to the latency induced by the write requests.
+	if bp.clusterAgentServices.Config().CutoffBeforeCommit {
+		return bp.fetchNodeInfoFromCache(schedDecision)
+	}
+
 	clusterClient := bp.clusterAgentServices.ClusterClient()
+	nodeName := schedDecision.NodeName
 	var node *core.Node
 	var podsOnNode []core.Pod
 	var nodeFetchErr, podsFetchErr error
@@ -149,6 +159,25 @@ func (bp *DefaultBindingPipeline) fetchNodeInfo(schedCtx pipeline.SchedulingCont
 	return pipeline.NewNodeInfo(clusterClient.ClusterName(), clusterNode), nil
 }
 
+func (bp *DefaultBindingPipeline) fetchNodeInfoFromCache(schedDecision *client.ClusterSchedulingDecision) (*pipeline.NodeInfo, error) {
+	storeReader := bp.clusterAgentServices.NodesCache().Nodes().ReadLock()
+	defer storeReader.Unlock()
+	if cachedNode, ok := storeReader.GetByKey(schedDecision.NodeName); ok {
+		// Since the cachedNode already considers the pod's resources as reserved,
+		// we need to unreserve them locally for the binding pipeline.
+		// To this end, we need to create a copy of the cached node and deep copy the AvailableResources,
+		// because cached nodes must be treated as immutable.
+		podResources := util.CalculateTotalPodResources(schedDecision.Pod)
+		cachedNodeCopy := cachedNode.ShallowCopy()
+		cachedNodeCopy.Pods = nil
+		cachedNodeCopy.QueuedPods = nil
+		cachedNodeCopy.AvailableResources = cachedNodeCopy.AvailableResources.DeepCopy()
+		cachedNodeCopy.AvailableResources.Add(podResources)
+		return pipeline.NewNodeInfo("", cachedNode), nil
+	}
+	return nil, fmt.Errorf("cannot find node %s in the cache", schedDecision.NodeName)
+}
+
 func (bp *DefaultBindingPipeline) runCheckConflictsPlugins(schedCtx pipeline.SchedulingContext, decision *pipeline.SchedulingDecision) pipeline.Status {
 	var status pipeline.Status
 
@@ -167,6 +196,17 @@ func (bp *DefaultBindingPipeline) commitSchedulingDecision(schedCtx pipeline.Sch
 	clusterSchedDecision := &client.ClusterSchedulingDecision{
 		Pod:      decision.Pod.Pod,
 		NodeName: decision.TargetNode.Node.Name,
+	}
+
+	if bp.clusterAgentServices.Config().CutoffBeforeCommit {
+		go bp.clusterAgentServices.ClusterClient().CommitSchedulingDecision(schedCtx.Context(), clusterSchedDecision)
+		result := &client.CommitSchedulingDecisionSuccess{
+			Namespace: decision.Pod.Pod.Namespace,
+			PodName:   decision.Pod.Pod.Name,
+			NodeName:  decision.TargetNode.Node.Name,
+			Timings:   &client.CommitSchedulingDecisionTimings{},
+		}
+		return result, pipeline.NewSuccessStatus()
 	}
 
 	result, err := bp.clusterAgentServices.ClusterClient().CommitSchedulingDecision(schedCtx.Context(), clusterSchedDecision)

@@ -73,6 +73,19 @@ func NewClusterNodeWithPods(node *core.Node, pods []*ClusterPod, queuedPods []*C
 	return cn
 }
 
+// Creates a shallow copy of this ClusterNode, i.e., a new object, whose fields point to the same
+// objects as the source object.
+func (cn *ClusterNode) ShallowCopy() *ClusterNode {
+	ret := &ClusterNode{
+		Node:               cn.Node,
+		Pods:               cn.Pods,
+		QueuedPods:         cn.QueuedPods,
+		AvailableResources: cn.AvailableResources,
+		TotalResources:     cn.TotalResources,
+	}
+	return ret
+}
+
 // Condensed information about an existing pod in a cluster.
 type ClusterPod struct {
 
