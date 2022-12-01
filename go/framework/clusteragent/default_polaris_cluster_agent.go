@@ -146,10 +146,8 @@ func (ca *DefaultPolarisClusterAgent) handlePostSchedulingDecision(c *gin.Contex
 		return
 	}
 
-	queuedPod := ca.nodesCache.QueuePodOnNode(schedDecision.Pod, schedDecision.NodeName)
 	result, status := ca.runBindingPipeline(&schedDecision)
 	if !pipeline.IsSuccessStatus(status) {
-		queuedPod.RemoveFromQueue()
 		err := status.Error()
 		if err == nil {
 			err = fmt.Errorf("SchedulingDecisionCommitFailed %v", status.Reasons())
@@ -159,12 +157,14 @@ func (ca *DefaultPolarisClusterAgent) handlePostSchedulingDecision(c *gin.Contex
 		c.JSON(http.StatusInternalServerError, agentError)
 		return
 	}
-	queuedPod.MarkAsCommitted()
 
 	c.JSON(http.StatusCreated, result)
 }
 
 func (ca *DefaultPolarisClusterAgent) runBindingPipeline(schedDecision *client.ClusterSchedulingDecision) (*client.CommitSchedulingDecisionSuccess, pipeline.Status) {
+	// The queuedPod is marked as committed or removed from the queue by CommitSchedulingDecision().
+	queuedPod := ca.nodesCache.QueuePodOnNode(schedDecision.Pod, schedDecision.NodeName)
+
 	stopwatches := runtime.NewBindingPipelineStopwatches()
 	stopwatches.QueueTime.Start()
 	schedCtx := pipeline.NewSchedulingContext(ca.ctx)
@@ -178,7 +178,7 @@ func (ca *DefaultPolarisClusterAgent) runBindingPipeline(schedDecision *client.C
 		ca.bindingPipelines <- bindingPipeline
 	}()
 
-	result, status := bindingPipeline.CommitSchedulingDecision(schedCtx, schedDecision)
+	result, status := bindingPipeline.CommitSchedulingDecision(schedCtx, schedDecision, queuedPod)
 	ca.logStopwatches(schedDecision, stopwatches, result, status)
 	return result, status
 }

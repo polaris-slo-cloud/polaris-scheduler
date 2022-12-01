@@ -91,7 +91,7 @@ func (c *KubernetesClusterClientImpl) CommitSchedulingDecision(ctx context.Conte
 	// ToDo: check if pod already exists, before trying to create it.
 	createPodStopwatch := util.NewStopwatch()
 	createPodStopwatch.Start()
-	pod, err := c.createPod(ctx, schedulingDecision.Pod)
+	pod, err := c.createPod(ctx, schedulingDecision)
 	createPodStopwatch.Stop()
 	if err != nil {
 		return nil, err
@@ -159,7 +159,8 @@ func (c *KubernetesClusterClientImpl) FetchPodsScheduledOnNode(ctx context.Conte
 	return podsList.Items, nil
 }
 
-func (c *KubernetesClusterClientImpl) createPod(ctx context.Context, pod *core.Pod) (*core.Pod, error) {
+func (c *KubernetesClusterClientImpl) createPod(ctx context.Context, schedulingDecision *client.ClusterSchedulingDecision) (*core.Pod, error) {
+	pod := schedulingDecision.Pod.DeepCopy()
 	pod.Spec.SchedulerName = polarisClusterAgentSchedulerName
 	return c.k8sClientSet.CoreV1().Pods(pod.Namespace).Create(ctx, pod, meta.CreateOptions{})
 }

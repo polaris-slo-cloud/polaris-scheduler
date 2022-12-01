@@ -261,5 +261,6 @@ type SamplingPipeline interface {
 type BindingPipeline interface {
 
 	// Runs the binding pipeline stages and, if all stages succeed, commits the scheduling decision to the cluster.
-	CommitSchedulingDecision(ctx SchedulingContext, schedDecision *client.ClusterSchedulingDecision) (*client.CommitSchedulingDecisionSuccess, Status)
+	// Depending on the outcome of the pipeline, the queuedPod is either committed or removed from the queue.
+	CommitSchedulingDecision(ctx SchedulingContext, schedDecision *client.ClusterSchedulingDecision, queuedPod client.PodQueuedOnNode) (*client.CommitSchedulingDecisionSuccess, Status)
 }

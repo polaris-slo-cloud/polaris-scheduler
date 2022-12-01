@@ -1,7 +1,7 @@
 version: "3.9"
 services:
   polaris-scheduler:
-    image: "polarissloc/polaris-scheduler:v2.0.0-beta.23"
+    image: "polarissloc/polaris-scheduler:v2.0.0-beta.25"
     ports:
       - "38080:8080"
     environment:

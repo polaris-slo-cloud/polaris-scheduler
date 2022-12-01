@@ -69,7 +69,16 @@ func NewBindingPipelineStopwatches() *BindingPipelineStopwatches {
 	return stopwatches
 }
 
-func (bp *DefaultBindingPipeline) CommitSchedulingDecision(schedCtx pipeline.SchedulingContext, schedDecision *client.ClusterSchedulingDecision) (*client.CommitSchedulingDecisionSuccess, pipeline.Status) {
+func (bp *DefaultBindingPipeline) CommitSchedulingDecision(schedCtx pipeline.SchedulingContext, schedDecision *client.ClusterSchedulingDecision, queuedPod client.PodQueuedOnNode) (*client.CommitSchedulingDecisionSuccess, pipeline.Status) {
+	var status pipeline.Status
+	defer func() {
+		if pipeline.IsSuccessStatus(status) {
+			queuedPod.MarkAsCommitted()
+		} else {
+			queuedPod.RemoveFromQueue()
+		}
+	}()
+
 	stopwatches := bp.getStopwatches(schedCtx)
 
 	stopwatches.NodeLockTime.Start()
@@ -91,14 +100,15 @@ func (bp *DefaultBindingPipeline) CommitSchedulingDecision(schedCtx pipeline.Sch
 
 	// Run the pipeline.
 	stopwatches.BindingPipeline.Start()
-	status := bp.runCheckConflictsPlugins(schedCtx, decision)
+	status = bp.runCheckConflictsPlugins(schedCtx, decision)
 	stopwatches.BindingPipeline.Stop()
 	if !pipeline.IsSuccessStatus(status) {
 		return nil, status
 	}
 
+	var result *client.CommitSchedulingDecisionSuccess
 	stopwatches.CommitDecision.Start()
-	result, status := bp.commitSchedulingDecision(schedCtx, decision)
+	result, status = bp.commitSchedulingDecision(schedCtx, decision)
 	stopwatches.CommitDecision.Stop()
 	if result != nil {
 		bp.setTimings(result, stopwatches)
@@ -138,6 +148,9 @@ func (bp *DefaultBindingPipeline) fetchNodeInfo(schedCtx pipeline.SchedulingCont
 	}()
 
 	go func() {
+		// ToDo: fetching pods will miss those pods, whose nodeName has not been set yet by K8s,
+		// so we need to combine this with info from the cache as well. We cannot set the nodeName in client.CreatePod(),
+		// because then binding would fail.
 		podsOnNode, podsFetchErr = clusterClient.FetchPodsScheduledOnNode(schedCtx.Context(), nodeName)
 		wg.Done()
 	}()
@@ -163,17 +176,13 @@ func (bp *DefaultBindingPipeline) fetchNodeInfoFromCache(schedDecision *client.C
 	storeReader := bp.clusterAgentServices.NodesCache().Nodes().ReadLock()
 	defer storeReader.Unlock()
 	if cachedNode, ok := storeReader.GetByKey(schedDecision.NodeName); ok {
-		// Since the cachedNode already considers the pod's resources as reserved,
-		// we need to unreserve them locally for the binding pipeline.
-		// To this end, we need to create a copy of the cached node and deep copy the AvailableResources,
-		// because cached nodes must be treated as immutable.
-		podResources := util.CalculateTotalPodResources(schedDecision.Pod)
-		cachedNodeCopy := cachedNode.ShallowCopy()
-		cachedNodeCopy.Pods = nil
-		cachedNodeCopy.QueuedPods = nil
-		cachedNodeCopy.AvailableResources = cachedNodeCopy.AvailableResources.DeepCopy()
-		cachedNodeCopy.AvailableResources.Add(podResources)
-		return pipeline.NewNodeInfo("", cachedNode), nil
+		// We recalculate the cachedNode's resources without the queuedPods.
+		// This avoids a race condition, where multiple goroutines add a queuedPod simultaneously
+		// before the goroutine that has locked the node can get its info from the cache.
+		// This would result in that goroutine possibly detecting a full node, even though
+		// no pod has been bound to it yet.
+		cachedNodeWithoutQueuedPods := client.NewClusterNodeWithPods(cachedNode.Node, cachedNode.Pods, nil)
+		return pipeline.NewNodeInfo("", cachedNodeWithoutQueuedPods), nil
 	}
 	return nil, fmt.Errorf("cannot find node %s in the cache", schedDecision.NodeName)
 }
