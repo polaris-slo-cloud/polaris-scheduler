@@ -9,6 +9,8 @@ import (
 )
 
 // Tracks and caches the full list of nodes in a cluster and their available resources.
+// All nodes obtained through the cache must be treated as IMMUTABLE, because they are shared objects.
+// If modifications need to be made to a node, a partially deep copy must be made.
 //
 // The node objects in the cache are always the most recent ones received through the watch.
 //

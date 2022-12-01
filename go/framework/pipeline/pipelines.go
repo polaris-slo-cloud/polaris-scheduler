@@ -89,6 +89,7 @@ type SampleNodesPlugin interface {
 	Plugin
 
 	// Samples nodes across the entire supercluster to act as hosting candidates for the pod.
+	// The podInfo object must be treated as immutable.
 	//
 	// Returns an array of NodeInfos that describe the sampled nodes and a Status.
 	SampleNodes(ctx SchedulingContext, podInfo *PodInfo) ([]*NodeInfo, Status)
@@ -100,6 +101,7 @@ type PreFilterPlugin interface {
 	Plugin
 
 	// PreFilter is called once per Pod and can be used to pre-compute information that will be needed by a FilterPlugin.
+	// The podInfo object must be treated as immutable.
 	//
 	// All PreFilterPlugins must return Success, otherwise the pod is marked as Unschedulable.
 	PreFilter(ctx SchedulingContext, podInfo *PodInfo) Status
@@ -114,6 +116,7 @@ type FilterPlugin interface {
 	Plugin
 
 	// Filter is called to determine if the pod described by podInfo can be hosted on the node described by NodeInfo.
+	// The podInfo and nodeInfo objects must be treated as immutable.
 	//
 	// Returns a "Success" Status is the node can host the pod, an "Unschedulable" Status if this is not the case,
 	// or an "InternalError" Status if an unexpected error occurred during evaluation.
@@ -127,6 +130,7 @@ type PreScorePlugin interface {
 
 	// PreScore is called once per Pod and can be used to pre-compute information that will be needed by a ScorePlugin.
 	// eligibleNodes contains all nodes that have been deemed suitable to host the pod by the Filter stage plugins.
+	// The podInfo and eligibleNodes objects must be treated as immutable.
 	//
 	// All PreScorePlugins must return Success, otherwise the pod is marked as Unschedulable.
 	PreScore(ctx SchedulingContext, podInfo *PodInfo, eligibleNodes []*NodeInfo) Status
@@ -136,6 +140,7 @@ type PreScorePlugin interface {
 type ScoreExtensions interface {
 	// Called to normalize the node scores returned by the associated ScorePlugin to a range between MinNodeScore and MaxNodeScore.
 	// This method should updated the scores list (without changing the order or the number of elements) and return a Success Status.
+	// The podInfo object must be treated as immutable.
 	NormalizeScores(ctx SchedulingContext, podInfo *PodInfo, scores []NodeScore) Status
 }
 
@@ -150,6 +155,7 @@ type ScorePlugin interface {
 	// Score needs to compute a score for the node that describes "how suitable" it is to host the pod.
 	// These scores are used to rank the nodes.
 	// All ScorePlugins must return a Success Status, otherwise the pod is rejected.
+	// The podInfo and nodeInfo objects must be treated as immutable.
 	Score(ctx SchedulingContext, podInfo *PodInfo, nodeInfo *NodeInfo) (int64, Status)
 
 	// Returns the ScoreExtensions, if they are implemented by this plugin, otherwise nil.
@@ -167,12 +173,14 @@ type ReservePlugin interface {
 	// It may be used to update 3rd party data structures.
 	// If any ReservePlugin returns a non Success Status, the pod will not be scheduled to that node and
 	// Unreserve will be called on all ReservePlugins.
+	// The podInfo object must be treated as immutable.
 	Reserve(ctx SchedulingContext, podInfo *PodInfo, targetNode *NodeInfo) Status
 
 	// Unreserve is called if an error occurs during the Reserve stage or if another ReservePlugin rejects the pod.
 	// It may be used to update 3rd party data structures.
 	// This method must be idempotent and may be called by the scheduling pipeline even if Reserve() was not
 	// previously called.
+	// The podInfo object must be treated as immutable.
 	Unreserve(ctx SchedulingContext, podInfo *PodInfo, targetNode *NodeInfo)
 }
 
@@ -188,6 +196,7 @@ type SamplingStrategyPlugin interface {
 	StrategyName() string
 
 	// Executes the sampling strategy and returns a sample of nodes and a status.
+	// The podInfo object must be treated as immutable.
 	//
 	// Important: This method may be called concurrently on multiple goroutines, so its implementation must be thread-safe.
 	SampleNodes(ctx SchedulingContext, podInfo *PodInfo, sampleSize int) ([]*NodeInfo, Status)
