@@ -18,10 +18,10 @@
           <boolProp name="LoopController.continue_forever">false</boolProp>
           <intProp name="LoopController.loops">-1</intProp>
         </elementProp>
-        <stringProp name="ThreadGroup.num_threads">4</stringProp>
+        <stringProp name="ThreadGroup.num_threads">15</stringProp>
         <stringProp name="ThreadGroup.ramp_time">0</stringProp>
         <boolProp name="ThreadGroup.scheduler">true</boolProp>
-        <stringProp name="ThreadGroup.duration">300</stringProp>
+        <stringProp name="ThreadGroup.duration">180</stringProp>
         <stringProp name="ThreadGroup.delay"></stringProp>
         <boolProp name="ThreadGroup.same_user_on_next_iteration">true</boolProp>
       </ThreadGroup>
@@ -92,7 +92,7 @@
         <hashTree/>
         <TestFragmentController guiclass="TestFragmentControllerGui" testclass="TestFragmentController" testname="Test Fragment" enabled="true"/>
         <hashTree>
-          <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="Create Pod 4CPU 8Gi" enabled="true">
+          <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="Create Pod 4CPU 4Gi" enabled="true">
             <boolProp name="HTTPSampler.postBodyRaw">true</boolProp>
             <elementProp name="HTTPsampler.Arguments" elementType="Arguments">
               <collectionProp name="Arguments.arguments">
@@ -116,7 +116,7 @@
                 &quot;resources&quot;: {&#xd;
                     &quot;limits&quot;: {&#xd;
                         &quot;polaris-slo-cloud.github.io/fake-cpu&quot;: &quot;4000m&quot;,&#xd;
-                        &quot;polaris-slo-cloud.github.io/fake-memory&quot;: &quot;8Gi&quot;&#xd;
+                        &quot;polaris-slo-cloud.github.io/fake-memory&quot;: &quot;4Gi&quot;&#xd;
                     }&#xd;
                 }&#xd;
             }&#xd;
@@ -149,7 +149,7 @@
             <stringProp name="HTTPSampler.response_timeout"></stringProp>
           </HTTPSamplerProxy>
           <hashTree/>
-          <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="Create Pod 2CPU 2Gi Vienna" enabled="true">
+          <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="Create Pod 2CPU 2Gi A" enabled="true">
             <boolProp name="HTTPSampler.postBodyRaw">true</boolProp>
             <elementProp name="HTTPsampler.Arguments" elementType="Arguments">
               <collectionProp name="Arguments.arguments">
@@ -162,9 +162,7 @@
         &quot;namespace&quot;: &quot;test&quot;,&#xd;
         &quot;name&quot;: &quot;${__UUID}&quot;,&#xd;
         &quot;labels&quot;: {&#xd;
-            &quot;name&quot;: &quot;myapp-01&quot;,&#xd;
-            &quot;polaris-slo-cloud.github.io/geo-location.target-location&quot;: &quot;48.15327005700937_16.20038278418631&quot;,&#xd;
-            &quot;polaris-slo-cloud.github.io/geo-location.max-distance-km&quot;: &quot;1&quot;&#xd;
+            &quot;name&quot;: &quot;myapp-01&quot;&#xd;
         }&#xd;
     },&#xd;
     &quot;spec&quot;: {&#xd;
@@ -174,8 +172,8 @@
                 &quot;image&quot;: &quot;gcr.io/google-containers/pause:3.2&quot;,&#xd;
                 &quot;resources&quot;: {&#xd;
                     &quot;limits&quot;: {&#xd;
-                        &quot;polaris-slo-cloud.github.io/fake-cpu&quot;: &quot;4000m&quot;,&#xd;
-                        &quot;polaris-slo-cloud.github.io/fake-memory&quot;: &quot;8Gi&quot;&#xd;
+                        &quot;polaris-slo-cloud.github.io/fake-cpu&quot;: &quot;2000m&quot;,&#xd;
+                        &quot;polaris-slo-cloud.github.io/fake-memory&quot;: &quot;2Gi&quot;&#xd;
                     }&#xd;
                 }&#xd;
             }&#xd;
@@ -208,7 +206,7 @@
             <stringProp name="HTTPSampler.response_timeout"></stringProp>
           </HTTPSamplerProxy>
           <hashTree/>
-          <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="Create Pod 2CPU 2Gi San Francisco" enabled="true">
+          <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="Create Pod 2CPU 2Gi B" enabled="true">
             <boolProp name="HTTPSampler.postBodyRaw">true</boolProp>
             <elementProp name="HTTPsampler.Arguments" elementType="Arguments">
               <collectionProp name="Arguments.arguments">
@@ -221,9 +219,7 @@
         &quot;namespace&quot;: &quot;test&quot;,&#xd;
         &quot;name&quot;: &quot;${__UUID}&quot;,&#xd;
         &quot;labels&quot;: {&#xd;
-            &quot;name&quot;: &quot;myapp-01&quot;,&#xd;
-            &quot;polaris-slo-cloud.github.io/geo-location.target-location&quot;: &quot;37.37719683363790_-122.1255449245963&quot;,&#xd;
-            &quot;polaris-slo-cloud.github.io/geo-location.max-distance-km&quot;: &quot;2&quot;&#xd;
+            &quot;name&quot;: &quot;myapp-01&quot;&#xd;
         }&#xd;
     },&#xd;
     &quot;spec&quot;: {&#xd;
@@ -233,8 +229,8 @@
                 &quot;image&quot;: &quot;gcr.io/google-containers/pause:3.2&quot;,&#xd;
                 &quot;resources&quot;: {&#xd;
                     &quot;limits&quot;: {&#xd;
-                        &quot;polaris-slo-cloud.github.io/fake-cpu&quot;: &quot;4000m&quot;,&#xd;
-                        &quot;polaris-slo-cloud.github.io/fake-memory&quot;: &quot;8Gi&quot;&#xd;
+                        &quot;polaris-slo-cloud.github.io/fake-cpu&quot;: &quot;2000m&quot;,&#xd;
+                        &quot;polaris-slo-cloud.github.io/fake-memory&quot;: &quot;2Gi&quot;&#xd;
                     }&#xd;
                 }&#xd;
             }&#xd;
@@ -267,7 +263,7 @@
             <stringProp name="HTTPSampler.response_timeout"></stringProp>
           </HTTPSamplerProxy>
           <hashTree/>
-          <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="Create Pod 2CPU 2Gi 70% battery" enabled="true">
+          <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="Create Pod 1CPU 1Gi 70% battery" enabled="true">
             <boolProp name="HTTPSampler.postBodyRaw">true</boolProp>
             <elementProp name="HTTPsampler.Arguments" elementType="Arguments">
               <collectionProp name="Arguments.arguments">
@@ -291,8 +287,8 @@
                 &quot;image&quot;: &quot;gcr.io/google-containers/pause:3.2&quot;,&#xd;
                 &quot;resources&quot;: {&#xd;
                     &quot;limits&quot;: {&#xd;
-                        &quot;polaris-slo-cloud.github.io/fake-cpu&quot;: &quot;4000m&quot;,&#xd;
-                        &quot;polaris-slo-cloud.github.io/fake-memory&quot;: &quot;8Gi&quot;&#xd;
+                        &quot;polaris-slo-cloud.github.io/fake-cpu&quot;: &quot;1000m&quot;,&#xd;
+                        &quot;polaris-slo-cloud.github.io/fake-memory&quot;: &quot;1Gi&quot;&#xd;
                     }&#xd;
                 }&#xd;
             }&#xd;
@@ -327,7 +323,7 @@
           <hashTree/>
         </hashTree>
         <ConstantTimer guiclass="ConstantTimerGui" testclass="ConstantTimer" testname="Constant Timer" enabled="true">
-          <stringProp name="ConstantTimer.delay">60</stringProp>
+          <stringProp name="ConstantTimer.delay">10</stringProp>
         </ConstantTimer>
         <hashTree/>
       </hashTree>
