@@ -20,7 +20,7 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: {{ .polarisTemplate.fakeNodeType }}
-  namespace: kube-system
+  namespace: fake-kubelet
   labels:
     app: {{ .polarisTemplate.fakeNodeType }}
 data:
@@ -179,7 +179,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: {{ .polarisTemplate.fakeNodeType }}
-  namespace: kube-system
+  namespace: fake-kubelet
 spec:
   replicas: 1
   selector:
@@ -188,7 +188,7 @@ spec:
   template:
     metadata:
       name: {{ .polarisTemplate.fakeNodeType }}
-      namespace: kube-system
+      namespace: fake-kubelet
       labels:
         app: {{ .polarisTemplate.fakeNodeType }}
     spec:

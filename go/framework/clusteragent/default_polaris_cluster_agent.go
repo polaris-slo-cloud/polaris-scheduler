@@ -146,7 +146,7 @@ func (ca *DefaultPolarisClusterAgent) handlePostSchedulingDecision(c *gin.Contex
 		return
 	}
 
-	status := ca.runBindingPipeline(&schedDecision)
+	result, status := ca.runBindingPipeline(&schedDecision)
 	if !pipeline.IsSuccessStatus(status) {
 		err := status.Error()
 		if err == nil {
@@ -158,10 +158,13 @@ func (ca *DefaultPolarisClusterAgent) handlePostSchedulingDecision(c *gin.Contex
 		return
 	}
 
-	c.JSON(http.StatusCreated, &schedDecision)
+	c.JSON(http.StatusCreated, result)
 }
 
-func (ca *DefaultPolarisClusterAgent) runBindingPipeline(schedDecision *client.ClusterSchedulingDecision) pipeline.Status {
+func (ca *DefaultPolarisClusterAgent) runBindingPipeline(schedDecision *client.ClusterSchedulingDecision) (*client.CommitSchedulingDecisionSuccess, pipeline.Status) {
+	// The queuedPod is marked as committed or removed from the queue by CommitSchedulingDecision().
+	queuedPod := ca.nodesCache.QueuePodOnNode(schedDecision.Pod, schedDecision.NodeName)
+
 	stopwatches := runtime.NewBindingPipelineStopwatches()
 	stopwatches.QueueTime.Start()
 	schedCtx := pipeline.NewSchedulingContext(ca.ctx)
@@ -175,13 +178,25 @@ func (ca *DefaultPolarisClusterAgent) runBindingPipeline(schedDecision *client.C
 		ca.bindingPipelines <- bindingPipeline
 	}()
 
-	status := bindingPipeline.CommitSchedulingDecision(schedCtx, schedDecision)
-	ca.logStopwatches(schedDecision, stopwatches, status)
-	return status
+	result, status := bindingPipeline.CommitSchedulingDecision(schedCtx, schedDecision, queuedPod)
+	ca.logStopwatches(schedDecision, stopwatches, result, status)
+	return result, status
 }
 
-func (ca *DefaultPolarisClusterAgent) logStopwatches(schedDecision *client.ClusterSchedulingDecision, stopwatches *runtime.BindingPipelineStopwatches, status pipeline.Status) {
+func (ca *DefaultPolarisClusterAgent) logStopwatches(
+	schedDecision *client.ClusterSchedulingDecision,
+	stopwatches *runtime.BindingPipelineStopwatches,
+	commitResult *client.CommitSchedulingDecisionSuccess,
+	status pipeline.Status,
+) {
 	fullPodName := fmt.Sprintf("%s.%s", schedDecision.Pod.Namespace, schedDecision.Pod.Name)
+	var createPodMs int64 = -1
+	var createBindingMs int64 = -1
+	if commitResult != nil {
+		createPodMs = commitResult.Timings.CreatePod
+		createBindingMs = commitResult.Timings.CreateBinding
+	}
+
 	ca.logger.Info(
 		"BindingComplete",
 		"pod", fullPodName,
@@ -191,6 +206,8 @@ func (ca *DefaultPolarisClusterAgent) logStopwatches(schedDecision *client.Clust
 		"nodeLockTimeMs", stopwatches.NodeLockTime.Duration().Milliseconds(),
 		"fetchNodeMs", stopwatches.FetchNodeInfo.Duration().Milliseconds(),
 		"bindingPipelineMs", stopwatches.BindingPipeline.Duration().Milliseconds(),
+		"createPodMs", createPodMs,
+		"createBindingMs", createBindingMs,
 		"commitMs", stopwatches.CommitDecision.Duration().Milliseconds(),
 	)
 }

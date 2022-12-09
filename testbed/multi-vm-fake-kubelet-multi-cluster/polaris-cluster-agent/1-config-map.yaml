@@ -1,0 +1,89 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: polaris
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: polaris-cluster-agent-config
+  namespace: polaris
+data:
+  polaris-cluster-agent-config.yaml: |
+    # The list of addresses and ports that the cluster-agent should listen on
+    # in the format "<IP>:<PORT>"
+    #
+    # Default: [ "0.0.0.0:8081" ]
+    listenOn:
+      - "0.0.0.0:8081"
+
+    # The update interval for the nodes cache in milliseconds.
+    #
+    # Default: 200
+    nodesCacheUpdateIntervalMs: 200
+
+    # The size of the update queue in the nodes cache.
+    # The update queue caches watch events that arrive between the update intervals.
+    #
+    # Default: 1000
+    nodesCacheUpdateQueueSize: 1000
+
+    # The number of Sampling Pipelines to run in parallel.
+    #
+    # Default: 0 (number of CPU cores * 10)
+    parallelSamplingPipelines: 100
+
+    # The number of Binding Pipelines to run in parallel.
+    #
+    # Default: 0 (number of CPU cores * 10)
+    parallelBindingPipelines: 100
+
+    # If true, a CommitSchedulingDecision request is considered successful and "cut off" after the binding pipeline completes successfully
+    # and before the actual commit operation (creation of the pod and the binding) starts.
+    # The commit operation will be executed asynchronously after the CommitSchedulingDecision response is sent back to the scheduler.
+    #
+    # This should be set to true to allow evaluating the performance of polaris-scheduler without bias from a slow orchestrator.
+    #
+    # Default: false
+    cutoffBeforeCommit: true
+
+    # The list of plugins for the sampling pipeline.
+    samplingPlugins:
+      # Only one sampling strategy is used for a pod in the sampling pipeline.
+      # However, multiple sampling strategy plugins can be configured, which will then be exposed
+      # as different sampling endpoints.
+      samplingStrategies:
+        - name: RandomSamplingStrategy
+        - name: RoundRobinSamplingStrategy
+
+      preFilter:
+        - name: ResourcesFit
+        - name: GeoLocation
+        - name: BatteryLevel
+
+      filter:
+        - name: ResourcesFit
+        - name: GeoLocation
+        - name: BatteryLevel
+
+      # preScore:
+      #   - name: Plugin1
+      #   - name: Plugin2
+
+      score:
+        - name: ResourcesFit
+          weight: 1
+        - name: GeoLocation
+          weight: 1
+
+    # The list of plugins for the binding pipeline.
+    bindingPlugins:
+      checkConflicts:
+        - name: ResourcesFit
+
+    # (optional) Allows specifying configuration parameters for each plugin.
+    pluginsConfig:
+      - name: ResourcesFit
+        config:
+          scoringMode: LeastAllocated
+

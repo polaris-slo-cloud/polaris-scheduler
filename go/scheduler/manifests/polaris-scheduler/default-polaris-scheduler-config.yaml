@@ -23,6 +23,14 @@ parallelDecisionPipelines: 0
 # Default: 1000
 incomingPodsBufferSize: 1000
 
+# The number of candidate nodes that will be picked at the end of the scoring phase.
+# The scheduler will try to commit the scheduling decision to the highest scored node.
+# If this fails, it will proceed to the node with the second highest score.
+# Only after the commit for all these nodes has failed, the pod will be considered as having a scheduling conflict.
+#
+# Default: 3
+commitCandidateNodes: 3
+
 # Defines the mode ("singleCluster" or "multiCluster") in which to operate the scheduler.
 #
 #   - In "singleCluster" mode, the scheduler connects directly interacts with cluster's orchestrator to
@@ -101,6 +109,8 @@ pluginsConfig:
       samplingStrategy: random
       # These requests apply to each instance of the RemoteNodesSampler plugin (see parallelNodeSamplers).
       maxConcurrentRequestsPerInstance: 50
+      # Specifies how many clusters should be sampled for a pod (percentage value from 1-100).
+      percentageOfClustersToSample: 33
 
   - name: Plugin1
     config:

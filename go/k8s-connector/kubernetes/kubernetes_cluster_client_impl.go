@@ -16,6 +16,7 @@ import (
 	"k8s.io/client-go/tools/record"
 
 	"polaris-slo-cloud.github.io/polaris-scheduler/v2/framework/client"
+	"polaris-slo-cloud.github.io/polaris-scheduler/v2/framework/util"
 )
 
 const (
@@ -86,11 +87,14 @@ func (c *KubernetesClusterClientImpl) EventRecorder() record.EventRecorder {
 	return c.eventRecorder
 }
 
-func (c *KubernetesClusterClientImpl) CommitSchedulingDecision(ctx context.Context, schedulingDecision *client.ClusterSchedulingDecision) error {
+func (c *KubernetesClusterClientImpl) CommitSchedulingDecision(ctx context.Context, schedulingDecision *client.ClusterSchedulingDecision) (*client.CommitSchedulingDecisionSuccess, error) {
 	// ToDo: check if pod already exists, before trying to create it.
-	pod, err := c.createPod(ctx, schedulingDecision.Pod)
+	createPodStopwatch := util.NewStopwatch()
+	createPodStopwatch.Start()
+	pod, err := c.createPod(ctx, schedulingDecision)
+	createPodStopwatch.Stop()
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	binding := &core.Binding{
@@ -105,16 +109,36 @@ func (c *KubernetesClusterClientImpl) CommitSchedulingDecision(ctx context.Conte
 		},
 	}
 
+	createBindingStopwatch := util.NewStopwatch()
+	createBindingStopwatch.Start()
 	err = c.k8sClientSet.CoreV1().Pods(pod.Namespace).Bind(ctx, binding, meta.CreateOptions{})
+	createBindingStopwatch.Stop()
 	if err != nil {
 		c.logger.Error(err, "could not bind Pod", "pod", pod, "binding", binding)
 		c.eventRecorder.Eventf(pod, core.EventTypeWarning, "FailedScheduling", "Could not bind pod to node %s", &binding.Target.Name)
-		return err
+		return nil, err
+	}
+
+	result := &client.CommitSchedulingDecisionSuccess{
+		Namespace: pod.Namespace,
+		PodName:   pod.Name,
+		NodeName:  schedulingDecision.NodeName,
+		Timings: &client.CommitSchedulingDecisionTimings{
+			CreatePod:     createPodStopwatch.Duration().Milliseconds(),
+			CreateBinding: createBindingStopwatch.Duration().Milliseconds(),
+		},
 	}
 
 	fullyQualifiedPodName := pod.Namespace + "." + pod.Name
-	c.logger.Info("PodBindingSuccess", "pod", fullyQualifiedPodName, "cluster", c.clusterName, "node", binding.Target.Name)
-	return nil
+	c.logger.Info(
+		"PodBindingSuccess",
+		"pod", fullyQualifiedPodName,
+		"cluster", c.clusterName,
+		"node", binding.Target.Name,
+		"createPodDurationMs", result.Timings.CreatePod,
+		"createBindingDurationMs", result.Timings.CreateBinding,
+	)
+	return result, nil
 }
 
 func (c *KubernetesClusterClientImpl) FetchNode(ctx context.Context, name string) (*core.Node, error) {
@@ -135,7 +159,8 @@ func (c *KubernetesClusterClientImpl) FetchPodsScheduledOnNode(ctx context.Conte
 	return podsList.Items, nil
 }
 
-func (c *KubernetesClusterClientImpl) createPod(ctx context.Context, pod *core.Pod) (*core.Pod, error) {
+func (c *KubernetesClusterClientImpl) createPod(ctx context.Context, schedulingDecision *client.ClusterSchedulingDecision) (*core.Pod, error) {
+	pod := schedulingDecision.Pod.DeepCopy()
 	pod.Spec.SchedulerName = polarisClusterAgentSchedulerName
 	return c.k8sClientSet.CoreV1().Pods(pod.Namespace).Create(ctx, pod, meta.CreateOptions{})
 }

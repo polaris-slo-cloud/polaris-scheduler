@@ -36,8 +36,11 @@ function startCluster() {
     # Deploy the cluster agent.
     (
         source "$configPath"
-        # Set the kubectl context according to the cluster name.
-        CONTEXT="kind-${kindClusterName}"
+
+        if [ "${skipKindClusterSetup}" != true ]; then
+            # Set the kubectl context according to the cluster name.
+            CONTEXT="kind-${kindClusterName}"
+        fi
 
         kubectl --context $CONTEXT apply -f "$CLUSTER_AGENT_DEPLOYMENT_YAML"
     )

@@ -43,6 +43,15 @@ type ClusterAgentConfig struct {
 	// Default: number of CPUs * 10
 	ParallelBindingPipelines uint32 `json:"parallelBindingPipelines" yaml:"parallelBindingPipelines"`
 
+	// If true, a CommitSchedulingDecision request is considered successful and "cut off" after the binding pipeline completes successfully
+	// and before the actual commit operation (creation of the pod and the binding) starts.
+	// The commit operation will be executed asynchronously after the CommitSchedulingDecision response is sent back to the scheduler.
+	//
+	// This should be set to true to allow evaluating the performance of polaris-scheduler without bias from a slow orchestrator.
+	//
+	// Default: false
+	CutoffBeforeCommit bool `json:"cutoffBeforeCommit" yaml:"cutoffBeforeCommit"`
+
 	// The list of plugins for the sampling pipeline.
 	SamplingPlugins SamplingPluginsList `json:"samplingPlugins" yaml:"samplingPlugins"`
 

@@ -1,6 +1,7 @@
 package runtime
 
 import (
+	"math"
 	"math/rand"
 	"sort"
 	"time"
@@ -24,6 +25,11 @@ type DefaultDecisionPipeline struct {
 
 // Creates a new instance of the DefaultDecisionPipeline.
 func NewDefaultDecisionPipeline(id int, plugins *pipeline.DecisionPipelinePlugins, scheduler pipeline.PolarisScheduler) *DefaultDecisionPipeline {
+	// ToDo: ReservePlugin_MultiBind - Remove this check once we have modified ReservePlugin for the MultiBind mechanism.
+	if len(plugins.Reserve) > 0 {
+		panic("ToDo: Modify ReservePlugin to account for the new MultiBinding mechanism. Currently the ReserveStage is disabled. Search for 'ReservePlugin_MultiBind' in the code.")
+	}
+
 	decisionPipeline := DefaultDecisionPipeline{
 		id:             id,
 		plugins:        plugins,
@@ -34,7 +40,7 @@ func NewDefaultDecisionPipeline(id int, plugins *pipeline.DecisionPipelinePlugin
 	return &decisionPipeline
 }
 
-func (dp *DefaultDecisionPipeline) SchedulePod(podInfo *pipeline.SampledPodInfo) (*pipeline.SchedulingDecision, pipeline.Status) {
+func (dp *DefaultDecisionPipeline) DecideCommitCandidates(podInfo *pipeline.SampledPodInfo, commitCandidatesCount int) ([]*pipeline.SchedulingDecision, pipeline.Status) {
 	schedCtx := podInfo.Ctx
 
 	status := dp.pipelineHelper.RunPreFilterPlugins(schedCtx, dp.plugins.PreFilter, podInfo.PodInfo)
@@ -62,18 +68,17 @@ func (dp *DefaultDecisionPipeline) SchedulePod(podInfo *pipeline.SampledPodInfo)
 	}
 	finalScores := dp.combineScores(dp.plugins.Score, allScores, eligibleNodes)
 
-	targetNode := dp.pickBestNode(finalScores)
-	status = dp.runReservePlugins(schedCtx, podInfo.PodInfo, targetNode)
-	if !pipeline.IsSuccessStatus(status) {
-		dp.runUnreservePlugins(schedCtx, podInfo.PodInfo, targetNode)
-		return nil, status
-	}
+	commitCandidateNodes := dp.pickBestNodes(finalScores, commitCandidatesCount)
+	// ToDo: ReservePlugin_MultiBind
+	// status = dp.runReservePlugins(schedCtx, podInfo.PodInfo, commitCandidateNodes)
+	// if !pipeline.IsSuccessStatus(status) {
+	// 	dp.runUnreservePlugins(schedCtx, podInfo.PodInfo, commitCandidateNodes)
+	// 	return nil, status
+	// }
 
-	decision := pipeline.SchedulingDecision{
-		Pod:        podInfo.PodInfo,
-		TargetNode: targetNode,
-	}
-	return &decision, pipeline.NewSuccessStatus()
+	commitCandidateDecisions := dp.createSchedulingDecisions(podInfo.PodInfo, commitCandidateNodes)
+
+	return commitCandidateDecisions, pipeline.NewSuccessStatus()
 }
 
 // Aggregates the scores for each node and computes an average.
@@ -117,7 +122,11 @@ func (dp *DefaultDecisionPipeline) combineScores(scorePlugins []*pipeline.ScoreP
 	return nodeScores
 }
 
-func (dp *DefaultDecisionPipeline) pickBestNode(finalScores []pipeline.NodeScore) *pipeline.NodeInfo {
+// Picks the 'numNodesToPick' top nodes from the list.
+func (dp *DefaultDecisionPipeline) pickBestNodes(finalScores []pipeline.NodeScore, numNodesToPick int) []*pipeline.NodeInfo {
+	numNodesToPick = int(math.Min(float64(numNodesToPick), float64(len(finalScores))))
+	pickedNodes := make([]*pipeline.NodeInfo, numNodesToPick)
+
 	sort.Slice(
 		finalScores,
 		func(i int, j int) bool {
@@ -127,21 +136,24 @@ func (dp *DefaultDecisionPipeline) pickBestNode(finalScores []pipeline.NodeScore
 
 	topScore := finalScores[0].Score
 	topScoreCount := 0
-	for i := range finalScores {
-		if finalScores[i].Score == topScore {
+	for i := 0; i < numNodesToPick; i++ {
+		currNodeScore := finalScores[i]
+		pickedNodes[i] = currNodeScore.Node
+		if currNodeScore.Score == topScore {
 			topScoreCount++
-		} else {
-			break
 		}
 	}
 
-	// If more than one node have the same top score, we pick a random one from them.
-	selectedIndex := 0
+	// If more than one node have the same top score, shuffle these nodes in the slice.
 	if topScoreCount > 1 {
-		selectedIndex = dp.random.Intn(topScoreCount)
+		rand.Shuffle(topScoreCount, func(i int, j int) {
+			temp := pickedNodes[i]
+			pickedNodes[i] = pickedNodes[j]
+			pickedNodes[j] = temp
+		})
 	}
 
-	return finalScores[selectedIndex].Node
+	return pickedNodes
 }
 
 func (dp *DefaultDecisionPipeline) runReservePlugins(ctx pipeline.SchedulingContext, podInfo *pipeline.PodInfo, targetNode *pipeline.NodeInfo) pipeline.Status {
@@ -159,4 +171,15 @@ func (dp *DefaultDecisionPipeline) runUnreservePlugins(ctx pipeline.SchedulingCo
 	for _, plugin := range dp.plugins.Reserve {
 		plugin.Unreserve(ctx, podInfo, targetNode)
 	}
+}
+
+func (dp *DefaultDecisionPipeline) createSchedulingDecisions(podInfo *pipeline.PodInfo, commitCandidateNodes []*pipeline.NodeInfo) []*pipeline.SchedulingDecision {
+	commitCandidateDecisions := make([]*pipeline.SchedulingDecision, len(commitCandidateNodes))
+	for i, commitCandidateNode := range commitCandidateNodes {
+		commitCandidateDecisions[i] = &pipeline.SchedulingDecision{
+			Pod:        podInfo,
+			TargetNode: commitCandidateNode,
+		}
+	}
+	return commitCandidateDecisions
 }

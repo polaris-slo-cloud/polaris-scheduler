@@ -27,6 +27,9 @@ const (
 	// Default size of the incoming pods buffer.
 	DefaultIncomingPodsBufferSize uint32 = 1000
 
+	// Default number of commit candidate nodes.
+	DefaultCommitCandidateNodes uint32 = 3
+
 	// Default operating mode of the scheduler.
 	DefaultSchedulerOperatingMode SchedulerOperatingMode = MultiCluster
 
@@ -69,6 +72,14 @@ type SchedulerConfig struct {
 	//
 	// Default: 1000
 	IncomingPodsBufferSize uint32 `json:"incomingPodsBufferSize" yaml:"incomingPodsBufferSize"`
+
+	// The number of candidate nodes that will be picked at the end of the scoring phase.
+	// The scheduler will try to commit the scheduling decision to the highest scored node.
+	// If this fails, it will proceed to the node with the second highest score.
+	// Only after the commit for all these nodes has failed, the pod will be considered as having a scheduling conflict.
+	//
+	// Default: 3
+	CommitCandidateNodes uint32 `json:"commitCandidateNodes" yaml:"commitCandidateNodes"`
 
 	// Defines the mode ("singleCluster" or "multiCluster") in which to operate the scheduler.
 	//
@@ -124,6 +135,10 @@ func SetDefaultsSchedulerConfig(config *SchedulerConfig) {
 
 	if config.IncomingPodsBufferSize == 0 {
 		config.IncomingPodsBufferSize = DefaultIncomingPodsBufferSize
+	}
+
+	if config.CommitCandidateNodes == 0 {
+		config.CommitCandidateNodes = DefaultCommitCandidateNodes
 	}
 
 	if config.OperatingMode == "" {

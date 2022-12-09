@@ -12,7 +12,7 @@ type ClusterClient interface {
 	ClusterName() string
 
 	// Commits the scheduling decision to the cluster.
-	CommitSchedulingDecision(ctx context.Context, schedulingDecision *ClusterSchedulingDecision) error
+	CommitSchedulingDecision(ctx context.Context, schedulingDecision *ClusterSchedulingDecision) (*CommitSchedulingDecisionSuccess, error)
 
 	// ToDo: Add generic methods for accessing arbitrary cluster objects? or at least a defined subset?
 

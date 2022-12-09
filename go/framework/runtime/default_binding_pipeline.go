@@ -1,6 +1,7 @@
 package runtime
 
 import (
+	"fmt"
 	"sync"
 
 	"github.com/go-logr/logr"
@@ -68,7 +69,16 @@ func NewBindingPipelineStopwatches() *BindingPipelineStopwatches {
 	return stopwatches
 }
 
-func (bp *DefaultBindingPipeline) CommitSchedulingDecision(schedCtx pipeline.SchedulingContext, schedDecision *client.ClusterSchedulingDecision) pipeline.Status {
+func (bp *DefaultBindingPipeline) CommitSchedulingDecision(schedCtx pipeline.SchedulingContext, schedDecision *client.ClusterSchedulingDecision, queuedPod client.PodQueuedOnNode) (*client.CommitSchedulingDecisionSuccess, pipeline.Status) {
+	var status pipeline.Status
+	defer func() {
+		if pipeline.IsSuccessStatus(status) {
+			queuedPod.MarkAsCommitted()
+		} else {
+			queuedPod.RemoveFromQueue()
+		}
+	}()
+
 	stopwatches := bp.getStopwatches(schedCtx)
 
 	stopwatches.NodeLockTime.Start()
@@ -78,10 +88,10 @@ func (bp *DefaultBindingPipeline) CommitSchedulingDecision(schedCtx pipeline.Sch
 
 	// Fetch the NodeInfo.
 	stopwatches.FetchNodeInfo.Start()
-	updatedNodeInfo, err := bp.fetchNodeInfo(schedCtx, schedDecision.NodeName)
+	updatedNodeInfo, err := bp.fetchNodeInfo(schedCtx, schedDecision)
 	stopwatches.FetchNodeInfo.Stop()
 	if err != nil {
-		return pipeline.NewStatus(pipeline.Unschedulable, "error fetching node information", err.Error())
+		return nil, pipeline.NewStatus(pipeline.Unschedulable, "error fetching node information", err.Error())
 	}
 	decision := &pipeline.SchedulingDecision{
 		Pod:        &pipeline.PodInfo{Pod: schedDecision.Pod},
@@ -90,16 +100,20 @@ func (bp *DefaultBindingPipeline) CommitSchedulingDecision(schedCtx pipeline.Sch
 
 	// Run the pipeline.
 	stopwatches.BindingPipeline.Start()
-	status := bp.runCheckConflictsPlugins(schedCtx, decision)
+	status = bp.runCheckConflictsPlugins(schedCtx, decision)
 	stopwatches.BindingPipeline.Stop()
 	if !pipeline.IsSuccessStatus(status) {
-		return status
+		return nil, status
 	}
 
+	var result *client.CommitSchedulingDecisionSuccess
 	stopwatches.CommitDecision.Start()
-	status = bp.commitSchedulingDecision(schedCtx, decision)
+	result, status = bp.commitSchedulingDecision(schedCtx, decision)
 	stopwatches.CommitDecision.Stop()
-	return status
+	if result != nil {
+		bp.setTimings(result, stopwatches)
+	}
+	return result, status
 }
 
 func (bp *DefaultBindingPipeline) getStopwatches(schedCtx pipeline.SchedulingContext) *BindingPipelineStopwatches {
@@ -110,10 +124,20 @@ func (bp *DefaultBindingPipeline) getStopwatches(schedCtx pipeline.SchedulingCon
 	return stopwatches
 }
 
-func (bp *DefaultBindingPipeline) fetchNodeInfo(schedCtx pipeline.SchedulingContext, nodeName string) (*pipeline.NodeInfo, error) {
+func (bp *DefaultBindingPipeline) fetchNodeInfo(schedCtx pipeline.SchedulingContext, schedDecision *client.ClusterSchedulingDecision) (*pipeline.NodeInfo, error) {
+	// If we cut off the binding pipeline before committing to the orchestrator
+	// (to evaluate the scheduler performance only, without the orchestrator commit latency),
+	// we need to get the node information from the cache, because the read requests from the
+	// orchestrator might also have a high latency, due to the latency induced by the write requests.
+	if bp.clusterAgentServices.Config().CutoffBeforeCommit {
+		return bp.fetchNodeInfoFromCache(schedDecision)
+	}
+
 	clusterClient := bp.clusterAgentServices.ClusterClient()
+	nodeName := schedDecision.NodeName
 	var node *core.Node
-	var podsOnNode []core.Pod
+	var fetchedPodsOnNode []core.Pod
+	var cachedPodsOnNode []*client.ClusterPod
 	var nodeFetchErr, podsFetchErr error
 
 	wg := sync.WaitGroup{}
@@ -125,9 +149,16 @@ func (bp *DefaultBindingPipeline) fetchNodeInfo(schedCtx pipeline.SchedulingCont
 	}()
 
 	go func() {
-		podsOnNode, podsFetchErr = clusterClient.FetchPodsScheduledOnNode(schedCtx.Context(), nodeName)
+		fetchedPodsOnNode, podsFetchErr = clusterClient.FetchPodsScheduledOnNode(schedCtx.Context(), nodeName)
 		wg.Done()
 	}()
+
+	// Fetching pods may miss those pods, whose nodeName has not been set yet by K8s,
+	// so we need to combine the fetched nodes with info from the cache as well.
+	// We cannot set the nodeName in client.CreatePod(), because then binding would fail.
+	if cachedNode, ok := bp.getCachedNode(schedDecision.NodeName); ok {
+		cachedPodsOnNode = cachedNode.Pods
+	}
 
 	wg.Wait()
 	if nodeFetchErr != nil {
@@ -137,13 +168,52 @@ func (bp *DefaultBindingPipeline) fetchNodeInfo(schedCtx pipeline.SchedulingCont
 		return nil, podsFetchErr
 	}
 
-	clusterNode := &client.ClusterNode{
-		Node:               node,
-		AvailableResources: util.CalculateNodeAvailableResources(node, podsOnNode),
-		TotalResources:     util.NewResourcesFromList(node.Status.Capacity),
+	podsOnNode := bp.combinePodsLists(fetchedPodsOnNode, cachedPodsOnNode)
+	clusterNode := client.NewClusterNodeWithPods(node, podsOnNode, nil)
+	return pipeline.NewNodeInfo(clusterClient.ClusterName(), clusterNode), nil
+}
+
+func (bp *DefaultBindingPipeline) fetchNodeInfoFromCache(schedDecision *client.ClusterSchedulingDecision) (*pipeline.NodeInfo, error) {
+	if cachedNode, ok := bp.getCachedNode(schedDecision.NodeName); ok {
+		// We recalculate the cachedNode's resources without the queuedPods.
+		// This avoids a race condition, where multiple goroutines add a queuedPod simultaneously
+		// before the goroutine that has locked the node can get its info from the cache.
+		// This would result in that goroutine possibly detecting a full node, even though
+		// no pod has been bound to it yet.
+		cachedNodeWithoutQueuedPods := client.NewClusterNodeWithPods(cachedNode.Node, cachedNode.Pods, nil)
+		return pipeline.NewNodeInfo("", cachedNodeWithoutQueuedPods), nil
+	}
+	return nil, fmt.Errorf("cannot find node %s in the cache", schedDecision.NodeName)
+}
+
+func (bp *DefaultBindingPipeline) getCachedNode(nodeName string) (*client.ClusterNode, bool) {
+	storeReader := bp.clusterAgentServices.NodesCache().Nodes().ReadLock()
+	defer storeReader.Unlock()
+	return storeReader.GetByKey(nodeName)
+}
+
+func (bp *DefaultBindingPipeline) combinePodsLists(fetchedPods []core.Pod, cachedPods []*client.ClusterPod) []*client.ClusterPod {
+	podsByFullName := make(map[string]*client.ClusterPod, len(fetchedPods)+len(cachedPods))
+
+	for _, cachedPod := range cachedPods {
+		podsByFullName[getFullPodName(cachedPod.Namespace, cachedPod.Name)] = cachedPod
 	}
 
-	return pipeline.NewNodeInfo(clusterClient.ClusterName(), clusterNode), nil
+	for i := range fetchedPods {
+		fetchedPod := &fetchedPods[i]
+		fullName := getFullPodName(fetchedPod.Namespace, fetchedPod.Name)
+		if _, ok := podsByFullName[fullName]; !ok {
+			podsByFullName[fullName] = client.NewClusterPod(fetchedPod)
+		}
+	}
+
+	pods := make([]*client.ClusterPod, len(podsByFullName))
+	i := 0
+	for _, pod := range podsByFullName {
+		pods[i] = pod
+		i++
+	}
+	return pods
 }
 
 func (bp *DefaultBindingPipeline) runCheckConflictsPlugins(schedCtx pipeline.SchedulingContext, decision *pipeline.SchedulingDecision) pipeline.Status {
@@ -160,14 +230,38 @@ func (bp *DefaultBindingPipeline) runCheckConflictsPlugins(schedCtx pipeline.Sch
 	return status
 }
 
-func (bp *DefaultBindingPipeline) commitSchedulingDecision(schedCtx pipeline.SchedulingContext, decision *pipeline.SchedulingDecision) pipeline.Status {
+func (bp *DefaultBindingPipeline) commitSchedulingDecision(schedCtx pipeline.SchedulingContext, decision *pipeline.SchedulingDecision) (*client.CommitSchedulingDecisionSuccess, pipeline.Status) {
 	clusterSchedDecision := &client.ClusterSchedulingDecision{
 		Pod:      decision.Pod.Pod,
 		NodeName: decision.TargetNode.Node.Name,
 	}
 
-	if err := bp.clusterAgentServices.ClusterClient().CommitSchedulingDecision(schedCtx.Context(), clusterSchedDecision); err != nil {
-		return pipeline.NewStatus(pipeline.Unschedulable, "error committing scheduling decision", err.Error())
+	if bp.clusterAgentServices.Config().CutoffBeforeCommit {
+		go bp.clusterAgentServices.ClusterClient().CommitSchedulingDecision(schedCtx.Context(), clusterSchedDecision)
+		result := &client.CommitSchedulingDecisionSuccess{
+			Namespace: decision.Pod.Pod.Namespace,
+			PodName:   decision.Pod.Pod.Name,
+			NodeName:  decision.TargetNode.Node.Name,
+			Timings:   &client.CommitSchedulingDecisionTimings{},
+		}
+		return result, pipeline.NewSuccessStatus()
 	}
-	return pipeline.NewSuccessStatus()
+
+	result, err := bp.clusterAgentServices.ClusterClient().CommitSchedulingDecision(schedCtx.Context(), clusterSchedDecision)
+	if err != nil {
+		return nil, pipeline.NewStatus(pipeline.Unschedulable, "error committing scheduling decision", err.Error())
+	}
+	return result, pipeline.NewSuccessStatus()
+}
+
+func (bp *DefaultBindingPipeline) setTimings(result *client.CommitSchedulingDecisionSuccess, stopwatches *BindingPipelineStopwatches) {
+	result.Timings.QueueTime = stopwatches.QueueTime.Duration().Milliseconds()
+	result.Timings.NodeLockTime = stopwatches.NodeLockTime.Duration().Milliseconds()
+	result.Timings.FetchNodeInfo = stopwatches.FetchNodeInfo.Duration().Milliseconds()
+	result.Timings.BindingPipeline = stopwatches.BindingPipeline.Duration().Milliseconds()
+	result.Timings.CommitDecision = stopwatches.CommitDecision.Duration().Milliseconds()
+}
+
+func getFullPodName(namespace string, name string) string {
+	return namespace + "." + name
 }
