@@ -6,6 +6,8 @@ import (
 	"os"
 	"time"
 
+	"polaris-slo-cloud.github.io/polaris-scheduler/v2/contextawareness/plugins/batterylevel"
+	"polaris-slo-cloud.github.io/polaris-scheduler/v2/contextawareness/plugins/geolocation"
 	"polaris-slo-cloud.github.io/polaris-scheduler/v2/framework/pipeline"
 	"polaris-slo-cloud.github.io/polaris-scheduler/v2/framework/plugins/prioritysort"
 	"polaris-slo-cloud.github.io/polaris-scheduler/v2/framework/plugins/remotesampler"
@@ -22,6 +24,8 @@ func main() {
 		prioritysort.PluginName:  prioritysort.NewPrioritySortPlugin,
 		remotesampler.PluginName: remotesampler.NewRemoteNodesSamplerPlugin,
 		resourcesfit.PluginName:  resourcesfit.NewResourcesFitSchedulingPlugin,
+		geolocation.PluginName:   resourcesfit.NewResourcesFitSchedulingPlugin,
+		batterylevel.PluginName:  batterylevel.NewBatteryLevelSchedulingPlugin,
 	})
 
 	schedulerCmd := cmd.NewPolarisSchedulerCmd(ctx, pluginsRegistry)
