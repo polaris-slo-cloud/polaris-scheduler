@@ -24,7 +24,7 @@ func main() {
 		prioritysort.PluginName:  prioritysort.NewPrioritySortPlugin,
 		remotesampler.PluginName: remotesampler.NewRemoteNodesSamplerPlugin,
 		resourcesfit.PluginName:  resourcesfit.NewResourcesFitSchedulingPlugin,
-		geolocation.PluginName:   resourcesfit.NewResourcesFitSchedulingPlugin,
+		geolocation.PluginName:   geolocation.NewGeoLocationSchedulingPlugin,
 		batterylevel.PluginName:  batterylevel.NewBatteryLevelSchedulingPlugin,
 	})
 

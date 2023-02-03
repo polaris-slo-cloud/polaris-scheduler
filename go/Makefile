@@ -17,7 +17,7 @@
 COMMONENVVAR=GOOS=$(shell uname -s | tr A-Z a-z) GOARCH=$(subst x86_64,amd64,$(patsubst i%86,386,$(shell uname -m)))
 BUILDENVVAR=CGO_ENABLED=0
 
-PROJECT_VERSION=2.0.0-beta.28
+PROJECT_VERSION=2.0.0-beta.29
 
 # RELEASE_REGISTRY is the container registry to push into.
 RELEASE_REGISTRY?=polarissloc

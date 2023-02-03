@@ -24,7 +24,7 @@ func main() {
 		randomsampling.PluginName:     randomsampling.NewRandomSamplingStrategy,
 		roundrobinsampling.PluginName: roundrobinsampling.NewRoundRobinSamplingStrategy,
 		resourcesfit.PluginName:       resourcesfit.NewResourcesFitClusterAgentPlugin,
-		geolocation.PluginName:        resourcesfit.NewResourcesFitClusterAgentPlugin,
+		geolocation.PluginName:        geolocation.NewGeoLocationClusterAgentPlugin,
 		batterylevel.PluginName:       batterylevel.NewBatteryLevelClusterAgentPlugin,
 	})
 
