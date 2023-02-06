@@ -3,6 +3,11 @@
 set -o errexit
 set -m
 
+# To change the Kubernetes version, either set the MICRO_K8S_CHANNEL environment variable or modify the assignment below.
+if [ "$MICRO_K8S_CHANNEL" == "" ]; then
+    MICRO_K8S_CHANNEL="1.25/stable"
+fi
+
 # This script must be run with administrator privileges.
 if [ "$SUDO_USER" == "" ]; then
     echo "This script must be run with sudo."
@@ -11,7 +16,7 @@ fi
 userHome=$(eval echo ~$SUDO_USER)
 
 # Install MicroK8s
-snap install microk8s --classic
+snap install microk8s --channel=$MICRO_K8S_CHANNEL --classic
 
 # Wait for MicroK8s to be up and running
 microk8s status --wait-ready
@@ -20,7 +25,7 @@ microk8s status --wait-ready
 microk8s enable dns ingress rbac
 
 # Install kubectl and export the MicroK8s kubeconfig
-snap install kubectl --classic
+snap install kubectl --channel=$MICRO_K8S_CHANNEL --classic
 mkdir -p "${userHome}/.kube"
 microk8s config > "${userHome}/.kube/config"
 kubectl completion bash | tee /etc/bash_completion.d/kubectl > /dev/null
