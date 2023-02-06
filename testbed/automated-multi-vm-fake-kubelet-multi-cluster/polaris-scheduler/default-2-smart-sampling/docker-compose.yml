@@ -1,0 +1,10 @@
+version: "3.9"
+services:
+  polaris-scheduler:
+    image: "polarissloc/polaris-scheduler:v2.0.0-beta.30"
+    ports:
+      - "38080:8080"
+    environment:
+      - GIN_MODE=release
+    volumes:
+      - ${PWD}/polaris-scheduler-config.yaml:/usr/apps/polaris-scheduler/polaris-scheduler-config.yaml:ro
