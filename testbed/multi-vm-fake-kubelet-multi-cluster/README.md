@@ -3,6 +3,18 @@
 This testbed sets up a multi-cluster environment, consisting of 10 clusters, using multiple VMs.
 Each VM will run one cluster with nodes simulated using fake-kubelet.
 
+By default, the 2-Smart Sampling mechanism is enabled, thus the following plugins are configured in the scheduler and the cluster-agents:
+
+* [Polaris-Cluster-Agent](polaris-cluster-agent/1-config-map.yaml)
+    * ResourcesFit (PreFilter, Filter, Score, CheckConflicts)
+    * GeoLocation (PreFilter, Filter, Score)
+    * BatteryLevel (PreFilter, Filter)
+* [Polaris-Scheduler](./polaris-scheduler/polaris-scheduler-config.yaml)
+    * RemoteNodesSampler
+
+There is an alternative configuration (the `pure-random-sampling` subfolder of the [polaris-cluster-agent](./polaris-cluster-agent) and [polaris-scheduler](./polaris-scheduler) directories), which moves all but the CheckConflicts plugin from the cluster agent to the scheduler to simulate pure random sampling.
+To use this configuration, please adapt the paths in the cluster configuration files for deploying the cluster agent and the path of the docker-compose file used to start the scheduler.
+
 
 ## Prerequisites
 
