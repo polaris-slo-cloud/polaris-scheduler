@@ -8,6 +8,7 @@ import (
 
 	"polaris-slo-cloud.github.io/polaris-scheduler/v2/framework/collections"
 	"polaris-slo-cloud.github.io/polaris-scheduler/v2/framework/pipeline"
+	"polaris-slo-cloud.github.io/polaris-scheduler/v2/framework/util"
 )
 
 var (
@@ -42,6 +43,9 @@ func NewDefaultDecisionPipeline(id int, plugins *pipeline.DecisionPipelinePlugin
 
 func (dp *DefaultDecisionPipeline) DecideCommitCandidates(podInfo *pipeline.SampledPodInfo, commitCandidatesCount int) ([]*pipeline.SchedulingDecision, pipeline.Status) {
 	schedCtx := podInfo.Ctx
+	nodeEligibilityStats := &util.NodeEligibilityStats{
+		SampledNodesCount: len(podInfo.SampledNodes),
+	}
 
 	status := dp.pipelineHelper.RunPreFilterPlugins(schedCtx, dp.plugins.PreFilter, podInfo.PodInfo)
 	if !pipeline.IsSuccessStatus(status) {
@@ -56,6 +60,8 @@ func (dp *DefaultDecisionPipeline) DecideCommitCandidates(podInfo *pipeline.Samp
 	}
 	eligibleNodes := collections.ConvertToSlice[*pipeline.NodeInfo](candidateNodesList)
 	candidateNodesList = nil
+	nodeEligibilityStats.EligibleNodesCount = len(eligibleNodes)
+	schedCtx.Write(util.NodeEligibilityStatsInfoStateKey, nodeEligibilityStats)
 
 	status = dp.pipelineHelper.RunPreScorePlugins(schedCtx, dp.plugins.PreScore, podInfo.PodInfo, eligibleNodes)
 	if !pipeline.IsSuccessStatus(status) {
