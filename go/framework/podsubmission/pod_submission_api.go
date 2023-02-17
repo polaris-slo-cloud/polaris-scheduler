@@ -37,6 +37,12 @@ func (ps *PodSubmissionApi) RegisterSubmitPodEndpoint(relativePath string, ginEn
 	return nil
 }
 
+// Registers the status endpoint (relative to the engine's root path).
+func (ps *PodSubmissionApi) RegisterStatusEndpoint(relativePath string, ginEngine *gin.Engine) error {
+	ginEngine.GET(relativePath, ps.handleStatusRequest)
+	return nil
+}
+
 func (ps *PodSubmissionApi) handleSubmitPodRequest(c *gin.Context) {
 	var pod core.Pod
 
@@ -53,4 +59,12 @@ func (ps *PodSubmissionApi) handleSubmitPodRequest(c *gin.Context) {
 
 	ps.incomingPods <- incomingPod
 	c.JSON(http.StatusCreated, &pod)
+}
+
+func (ps *PodSubmissionApi) handleStatusRequest(c *gin.Context) {
+	status := map[string]string{
+		"application": "polaris-scheduler",
+		"status":      "ok",
+	}
+	c.JSON(http.StatusOK, status)
 }

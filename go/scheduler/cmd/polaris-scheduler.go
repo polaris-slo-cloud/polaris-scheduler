@@ -125,13 +125,11 @@ func setUpSubmitPodApiPodSource(schedConfig *config.SchedulerConfig, logger *log
 	ginEngine := gin.Default()
 	ginEngine.SetTrustedProxies(nil)
 
-	// ToDo: Add status endpoint
-	// ginEngine.GET("/status", func(c *gin.Context) {
-	// 	sampler.handleStatusRequest(c)
-	// })
-
 	submitPodApi := podsubmission.NewPodSubmissionApi(schedConfig)
 	if err := submitPodApi.RegisterSubmitPodEndpoint("/pods", ginEngine); err != nil {
+		return nil, err
+	}
+	if err := submitPodApi.RegisterStatusEndpoint("/status", ginEngine); err != nil {
 		return nil, err
 	}
 
