@@ -103,11 +103,13 @@ function startClusters() {
 # Runs a single experiment iteration. This MUST be run in a subshell.
 # Parameters:
 # $1 - the name of the experiment iteration
+# $2 - the experiment counter (used as an informative counter only)
 function runExperimentIteration() {
     local iterationName="$1"
+    local experimentCounter="$2"
     local iterationFile=${EXPERIMENT_ITERATIONS[$iterationName]}
     iterationFile="$SCRIPT_DIR/$iterationFile"
-    logMsg "Running experiment iteration: $iterationName"
+    logMsg "Running experiment iteration: $iterationName ($experimentCounter of ${#EXPERIMENT_ITERATIONS[@]})"
     if [ "$iterationFile" == "$SCRIPT_DIR" ] || [ ! -f "$iterationFile" ]; then
         echo "The experiment iteration file \"$iterationFile\" could not be found."
         exit 1
@@ -181,11 +183,13 @@ portForwardingSshPid=$RET
     logMsg "Starting experiments"
     logMsg ""
     expStartTime="$(date +%s)"
+    expCounter="0"
 
     mkdir -p "$SCRIPT_DIR/$RESULTS_ROOT"
 
     for expIterationName in "${!EXPERIMENT_ITERATIONS[@]}"; do
-        (runExperimentIteration "$expIterationName")
+        expCounter=$(( $expCounter+1))
+        (runExperimentIteration "$expIterationName" "$expCounter")
     done
 
     copyResults
