@@ -58,7 +58,7 @@ function checkSshConnections() {
 # Sets $RET to the PID of the ssh process.
 function forwardPortToSchedulerVM() {
     logMsg "Forwarding local port $SCHEDULER_LOCAL_PORT to port $SCHEDULER_REMOTE_PORT on the scheduler VM to allow access to the scheduler's REST API."
-    ssh -L $SCHEDULER_LOCAL_PORT:localhost:$SCHEDULER_REMOTE_PORT $SCHEDULER_VM &
+    ssh -N -L $SCHEDULER_LOCAL_PORT:localhost:$SCHEDULER_REMOTE_PORT $SCHEDULER_VM &
     RET=$!
 }
 
