@@ -18,7 +18,7 @@ set -m
 # locally used variables that need to be declared globally (using declare).
 ###############################################################################
 
-DEBUG=1
+# DEBUG=1
 
 SCRIPT_DIR=$(realpath $(dirname "${BASH_SOURCE}"))
 
