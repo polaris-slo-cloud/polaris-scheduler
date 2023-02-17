@@ -35,14 +35,35 @@ CLUSTER_AGENT_NODE_PORT=30033
 # Checks the experiment iteration files.
 function checkExperimentIterationFiles() {
     logMsg "Checking experiment configuration files"
-    for _iterationFile in "${EXPERIMENT_ITERATIONS[@]}"; do
+    local _iterationFile=""
+    for _iterationName in "${!EXPERIMENT_ITERATIONS[@]}"; do
         (
-            _iterationFile="$SCRIPT_DIR/$_iterationFile"
+            _iterationFile="$SCRIPT_DIR/${EXPERIMENT_ITERATIONS[$_iterationName]}"
             if [ "$_iterationFile" == "$SCRIPT_DIR" ] || [ ! -f "$_iterationFile" ]; then
-                echo "The experiment iteration file \"$_iterationFile\" could not be found."
+                printError "$_iterationName: The experiment iteration file \"$_iterationFile\" could not be found."
                 exit 1
             fi
             source "$_iterationFile"
+
+            if [ ! -d "$SCRIPT_DIR/$SCHEDULER_DOCKER_COMPOSE_DIR" ]; then
+                printError "$_iterationName: The SCHEDULER_DOCKER_COMPOSE_DIR could not be found"
+                exit 1
+            fi
+            if [ ! -d "$SCRIPT_DIR/$CLUSTER_AGENT_DEPLOYMENT_YAML_DIR" ]; then
+                printError "$_iterationName: The CLUSTER_AGENT_DEPLOYMENT_YAML_DIR could not be found"
+                exit 1
+            fi
+            if [ ! -f "$SCRIPT_DIR/$JMETER_TEST_PLAN" ]; then
+                printError "$_iterationName: The JMETER_TEST_PLAN file could not be found"
+                exit 1
+            fi
+
+            for clusterConfig in "${CLUSTER_CONFIGS[@]}"; do
+                if [ ! -f "$SCRIPT_DIR/$clusterConfig" ]; then
+                    printError "$_iterationName: The cluster config $clusterConfig could not be found"
+                    exit 1
+                fi
+            done
         )
     done
 }

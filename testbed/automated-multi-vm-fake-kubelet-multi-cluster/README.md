@@ -259,3 +259,6 @@ kubectl get pods -A | grep Terminating | awk '{print $2 " --namespace=" $1}' | x
 # Quickly add all VMs to your known_hosts file (without checking)
 parallel-ssh -O StrictHostKeyChecking=no -h ./test-hosts.txt -i hostname
 ```
+
+
+./run-experiments.sh 2>&1 | tee experiments.log

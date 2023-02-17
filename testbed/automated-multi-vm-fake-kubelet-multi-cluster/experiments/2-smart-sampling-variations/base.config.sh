@@ -2,9 +2,6 @@
 
 # IMPORTANT: All paths MUST be relative to $TESTBED_PATH_IN_REPO configured in the root experiment.config.sh file.
 
-# The path of the directory containing the scheduler docker-compose files and config.
-SCHEDULER_DOCKER_COMPOSE_DIR="./polaris-scheduler/default-2-smart-sampling"
-
 # The path of the directory containing the cluster agent deployment YAML files.
 CLUSTER_AGENT_DEPLOYMENT_YAML_DIR="./polaris-cluster-agent/default-2-smart-sampling"
 
@@ -23,4 +20,4 @@ CLUSTER_CONFIGS=(
 )
 
 # Path of the JMeter test plan file.
-JMETER_TEST_PLAN="./jmeter-test-plans/heterogeneous-pods/polaris-scheduler-250ms-5threads.jmx"
+JMETER_TEST_PLAN="./jmeter-test-plans/heterogeneous-pods/polaris-scheduler-10ms-30threads.jmx"
