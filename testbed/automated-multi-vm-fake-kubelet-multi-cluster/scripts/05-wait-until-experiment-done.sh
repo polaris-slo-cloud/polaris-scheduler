@@ -25,9 +25,9 @@ function printUsage() {
     echo "Waits until the polaris-scheduler container has finished processing all pods,"
     echo "i.e., until the experiment is finished."
     echo "Usage:"
-    echo "./05-wait-until-experiment-done.sh <absolute path of the polaris-scheduler docker-compose directory>"
+    echo "./05-wait-until-experiment-done.sh <absolute path of the polaris-scheduler docker-compose directory> <sleep duration for busy waiting>"
     echo "Example:"
-    echo "./05-wait-until-experiment-done.sh \"\$(pwd)/polaris-scheduler/default-config\""
+    echo "./05-wait-until-experiment-done.sh \"\$(pwd)/polaris-scheduler/default-config\" 20s"
 }
 
 function getContainerLogLength() {
@@ -59,6 +59,10 @@ if [ "$1" == "" ] || [ ! -d "$1" ]; then
     printUsage
     exit 1
 fi
+if [ "$2" == "" ]; then
+    printUsage
+    exit 1
+fi
 
 cd "$1"
-waitUntilDone "checkExperimentDone" "$MEDIUM_SLEEP"
+waitUntilDone "checkExperimentDone" "$2"

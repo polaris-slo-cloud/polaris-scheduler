@@ -51,7 +51,7 @@ validateSchedulerComposeDirOrExit
 cd "$SCHEDULER_COMPOSE_DIR"
 docker compose up -d
 
-("$WAIT_UNTIL_LOGS_DO_NOT_CHANGE_SH" "$SCHEDULER_COMPOSE_DIR")
+("$WAIT_UNTIL_LOGS_DO_NOT_CHANGE_SH" "$SCHEDULER_COMPOSE_DIR" "$MEDIUM_SLEEP")
 
 echo "Successfully started polaris-scheduler."
 

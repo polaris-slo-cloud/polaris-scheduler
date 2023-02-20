@@ -131,7 +131,7 @@ function runExperimentIteration() {
     ("$SCRIPT_DIR/$SCRIPTS_ROOT/04-run-load-generator.sh" "$SCRIPT_DIR/$JMETER_TEST_PLAN" "$SCRIPT_DIR/$RESULTS_ROOT" "$iterationName")
 
     logMsg "$iterationName Step 5: Waiting for experiment to finish"
-    sshRunCmd "$SCHEDULER_VM" "\"$SCRIPTS_ROOT_SCHEDULER_VM/05-wait-until-experiment-done.sh\" \"$TESTBED_PATH_SCHEDULER_VM/$SCHEDULER_DOCKER_COMPOSE_DIR\""
+    sshRunCmd "$SCHEDULER_VM" "\"$SCRIPTS_ROOT_SCHEDULER_VM/05-wait-until-experiment-done.sh\" \"$TESTBED_PATH_SCHEDULER_VM/$SCHEDULER_DOCKER_COMPOSE_DIR\" $LONG_SLEEP"
 
     logMsg "$iterationName Step 6: Exporting scheduler logs"
     sshRunCmd "$SCHEDULER_VM" "\"$SCRIPTS_ROOT_SCHEDULER_VM/06-export-scheduler-logs-and-stop-scheduler.sh\" \"$TESTBED_PATH_SCHEDULER_VM/$SCHEDULER_DOCKER_COMPOSE_DIR\" \"$RESULTS_ROOT_SCHEDULER_VM\" \"$iterationName\""
