@@ -58,7 +58,7 @@ function validateOutFile() {
 }
 
 function writeHeaderRow() {
-    local headerRow='"Experiment","Total Pods","Scheduling Successes","Scheduling Failures (incl. retries)","Scheduling Failures (final - no more retries)","Scheduling Conflicts","Scheduling Conflicts if no MultiBinding","Avg queuing time (successes and failures)","Avg sampling duration (successes and failures)","Avg sampled nodes","Avg eligible nodes","Avg commit duration (successes)","Avg E2E duration (successes)"'
+    local headerRow='"Experiment","Total Pods","Scheduling Successes","Scheduling Failures (incl. retries)","Scheduling Failures (final - no more retries)","Scheduling Conflicts","Scheduling Conflicts if no MultiBinding","Avg queuing time (successes and failures)","Avg sampling duration (successes and failures)","Avg sampled nodes","Avg eligible nodes","Avg commit duration (successes)","Avg E2E duration (successes)","First Successful Pod Timestamp","Last Successful Pod Timestamp"'
     echo "$headerRow" > "$OUT_FILE"
 }
 
@@ -127,6 +127,18 @@ function extractAvgCommitDuration() {
 function extractAvgE2EDuration() {
     local schedulerLogFile=$1
     RET=$(grep -E '"SchedulingSuccess"' "$schedulerLogFile" | awk '{match($0, /^.+e2eDurationMs"=([0-9]+)\s.+/, arr); print arr[1];}' | jq -s add/length)
+}
+
+# Extracts the timestamp of the first pod from the scheduler log file in $1 and stores the result in $RET.
+function extractFirstPodTimestamp() {
+    local schedulerLogFile=$1
+    RET=$(head -n 1000 "$schedulerLogFile" | awk '{match($0, /^.+unixTimestampMs"=([0-9]+)\s.+/, arr); print arr[1];}' | grep -E '[0-9]+' | head -n 1)
+}
+
+# Extracts the timestamp of the last pod from the scheduler log file in $1 and stores the result in $RET.
+function extractLastPodTimestamp() {
+    local schedulerLogFile=$1
+    RET=$(cat "$schedulerLogFile" | awk '{match($0, /^.+unixTimestampMs"=([0-9]+)\s.+/, arr); print arr[1];}' | grep -E '[0-9]+' | tail -n 1)
 }
 
 ###############################################################################
@@ -201,6 +213,14 @@ for jmeterLog in "${allLogs[@]}"; do
 
     # Avg E2E duration (successes)
     extractAvgE2EDuration "$schedulerLog"
+    CURR_LINE="${CURR_LINE},\"$RET\""
+
+    # First Successful Pod Timestamp
+    extractFirstPodTimestamp "$schedulerLog"
+    CURR_LINE="${CURR_LINE},\"$RET\""
+
+    # Last Successful Pod Timestamp
+    extractLastPodTimestamp "$schedulerLog"
     CURR_LINE="${CURR_LINE},\"$RET\""
 
     echo "$CURR_LINE" >> "$OUT_FILE"
