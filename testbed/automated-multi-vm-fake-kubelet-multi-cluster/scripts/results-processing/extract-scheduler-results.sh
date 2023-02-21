@@ -58,7 +58,7 @@ function validateOutFile() {
 }
 
 function writeHeaderRow() {
-    local headerRow='"Experiment","Total Pods","Scheduling Successes","Scheduling Failures (incl. retries)","Scheduling Failures (final - no more retries)","Scheduling Conflicts","Scheduling Conflicts if no MultiBinding","Avg queuing time (successes and failures)","Avg sampling duration (successes and failures)","Avg sampled nodes","Avg eligible nodes","Avg commit duration (successes)","Avg E2E duration (successes)","First Successful Pod Timestamp","Last Successful Pod Timestamp"'
+    local headerRow='"Experiment","Total Pods","JMeter Test Duration","Scheduling Successes","Scheduling Failures (incl. retries)","Scheduling Failures (final - no more retries)","Scheduling Conflicts","Scheduling Conflicts if no MultiBinding","Avg queuing time (successes and failures)","Avg sampling duration (successes and failures)","Avg sampled nodes","Avg eligible nodes","Avg commit duration (successes)","Avg E2E duration (successes)","First Successful Pod Timestamp","Last Successful Pod Timestamp"'
     echo "$headerRow" > "$OUT_FILE"
 }
 
@@ -74,6 +74,12 @@ function extractExperimentName() {
 function getTotalPods() {
     local jmeterLogFile=$1
     RET=$(cat "$jmeterLogFile" | awk '{match($0, /^.+summary =\s+([0-9]+)\s.+/, arr); print arr[1];}' | tail -n 1)
+}
+
+# Gets duration of the JMeter test, i.e., how long it took to submit all pods, from the JMeter log file specified in $1 and stores the result in $RET.
+function getJMeterDuration() {
+    local jmeterLogFile=$1
+    RET=$(cat "$jmeterLogFile" | awk '{match($0, /^.+summary =\s+[0-9]+\s+in\s+([0-9:]+)\s.+/, arr); print arr[1];}' | grep -E '[0-9:]+' | tail -n 1)
 }
 
 # Counts the matches of the regex in $1 within the file $2 and stores the result in $RET
@@ -174,6 +180,10 @@ for jmeterLog in "${allLogs[@]}"; do
 
     # Total Pods
     getTotalPods "$jmeterLog"
+    CURR_LINE="${CURR_LINE},\"$RET\""
+
+    # JMeter Test Duration
+    getJMeterDuration "$jmeterLog"
     CURR_LINE="${CURR_LINE},\"$RET\""
 
     # Scheduling Successes
