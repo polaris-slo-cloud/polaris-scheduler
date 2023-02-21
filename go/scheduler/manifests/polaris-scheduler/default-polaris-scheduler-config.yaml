@@ -56,14 +56,14 @@ submitPodListenOn:
 # Example:
 # remoteClusters:
 #   clusterA:
-#     baseUri: "http://sampler.cluster-a:8081/v1"
+#     baseUri: "http://sampler.cluster-a:8081"
 #   clusterB":
-#     baseUri: "https://sampler.cluster-b:8888/v1"
+#     baseUri: "https://sampler.cluster-b:8888"
 remoteClusters:
   clusterA:
-    baseUri: "http://sampler.cluster-a:8081/v1"
+    baseUri: "http://sampler.cluster-a:8081"
   clusterB":
-    baseUri: "https://sampler.cluster-b:8888/v1"
+    baseUri: "https://sampler.cluster-b:8888"
 
 # The list of plugins for the scheduling pipeline.
 plugins:

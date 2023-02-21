@@ -139,7 +139,7 @@ type PreScorePlugin interface {
 // Allows defining optional actions supported by a ScorePlugin
 type ScoreExtensions interface {
 	// Called to normalize the node scores returned by the associated ScorePlugin to a range between MinNodeScore and MaxNodeScore.
-	// This method should updated the scores list (without changing the order or the number of elements) and return a Success Status.
+	// This method should update the scores list (without changing the order or the number of elements) and return a Success Status.
 	// The podInfo object must be treated as immutable.
 	NormalizeScores(ctx SchedulingContext, podInfo *PodInfo, scores []NodeScore) Status
 }
