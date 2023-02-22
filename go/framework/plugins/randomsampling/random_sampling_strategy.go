@@ -2,11 +2,11 @@ package randomsampling
 
 import (
 	"fmt"
-	"math/rand"
 
 	"polaris-slo-cloud.github.io/polaris-scheduler/v2/framework/client"
 	"polaris-slo-cloud.github.io/polaris-scheduler/v2/framework/config"
 	"polaris-slo-cloud.github.io/polaris-scheduler/v2/framework/pipeline"
+	"polaris-slo-cloud.github.io/polaris-scheduler/v2/framework/util"
 )
 
 const (
@@ -26,20 +26,19 @@ const (
 type RandomSamplingStrategy struct {
 	clusterAgentServices pipeline.ClusterAgentServices
 
-	// A pool of rand.Rand objects, each of them to be used by a single goroutine.
-	// rand.Rand is not thread-safe and the global rand.Int() function uses a mutex to sync access to a single Rand.
-	randPool chan *rand.Rand
+	// A pool of util.Random objects, each of them to be used by a single goroutine,
+	// because util.Random is not guaranteed to be thread-safe.
+	randPool chan util.Random
 }
 
 func NewRandomSamplingStrategy(pluginConfig config.PluginConfig, clusterAgentServices pipeline.ClusterAgentServices) (pipeline.Plugin, error) {
 	rs := &RandomSamplingStrategy{
 		clusterAgentServices: clusterAgentServices,
-		randPool:             make(chan *rand.Rand, randomPoolSize),
+		randPool:             make(chan util.Random, randomPoolSize),
 	}
 
 	for i := 0; i < randomPoolSize; i++ {
-		seed := rand.Int63()
-		rs.randPool <- rand.New(rand.NewSource(seed))
+		rs.randPool <- util.NewDefaultRandom()
 	}
 
 	return rs, nil
@@ -67,7 +66,7 @@ func (rs *RandomSamplingStrategy) SampleNodes(ctx pipeline.SchedulingContext, po
 	return nodeInfos, pipeline.NewSuccessStatus()
 }
 
-func (rs *RandomSamplingStrategy) sampleNodesInternal(podInfo *pipeline.PodInfo, reqNodesCount int, random *rand.Rand) []*client.ClusterNode {
+func (rs *RandomSamplingStrategy) sampleNodesInternal(podInfo *pipeline.PodInfo, reqNodesCount int, random util.Random) []*client.ClusterNode {
 	storeReader := rs.clusterAgentServices.NodesCache().Nodes().ReadLock()
 	defer storeReader.Unlock()
 
@@ -82,7 +81,7 @@ func (rs *RandomSamplingStrategy) sampleNodesInternal(podInfo *pipeline.PodInfo,
 	for i := 0; i < reqNodesCount; i++ {
 		var randIndex int
 		for {
-			randIndex = random.Intn(totalNodesCount)
+			randIndex = random.Int(totalNodesCount)
 			if _, exists := chosenIndices[randIndex]; !exists {
 				break
 			}

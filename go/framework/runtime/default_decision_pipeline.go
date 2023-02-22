@@ -4,7 +4,6 @@ import (
 	"math"
 	"math/rand"
 	"sort"
-	"time"
 
 	"polaris-slo-cloud.github.io/polaris-scheduler/v2/framework/collections"
 	"polaris-slo-cloud.github.io/polaris-scheduler/v2/framework/pipeline"
@@ -21,7 +20,6 @@ type DefaultDecisionPipeline struct {
 	plugins        *pipeline.DecisionPipelinePlugins
 	pipelineHelper *PipelineHelper
 	scheduler      pipeline.PolarisScheduler
-	random         *rand.Rand
 }
 
 // Creates a new instance of the DefaultDecisionPipeline.
@@ -36,7 +34,6 @@ func NewDefaultDecisionPipeline(id int, plugins *pipeline.DecisionPipelinePlugin
 		plugins:        plugins,
 		pipelineHelper: NewPipelineHelper(),
 		scheduler:      scheduler,
-		random:         rand.New(rand.NewSource(time.Now().UnixNano())),
 	}
 	return &decisionPipeline
 }
