@@ -387,6 +387,7 @@ func (ps *DefaultPolarisScheduler) commitFirstPossibleSchedulingDecision(schedCt
 			"unixTimestampMs", time.Now().UnixMilli(),
 			"sampledNodes", eligibilityStats.SampledNodesCount,
 			"eligibleNodes", eligibilityStats.EligibleNodesCount,
+			"multiBindCandidates", ps.serializeMultiBindCandidates(candidateDecisions),
 			"queueTimeMs", queueStopwatch.Duration().Milliseconds(),
 			"samplingDurationMs", sampleNodesStopwatch.Duration().Milliseconds(),
 			"pipelineDurationMs", pipelineStopwatch.Duration().Milliseconds(),
@@ -497,4 +498,16 @@ func (ps *DefaultPolarisScheduler) getNodeEligibilityStats(schedCtx pipeline.Sch
 		panic("could not read NodeEligibilityStats from SchedulingContext")
 	}
 	return eligibilityStats
+}
+
+func (ps *DefaultPolarisScheduler) serializeMultiBindCandidates(candidateDecisions []*pipeline.SchedulingDecision) string {
+	ret := "[ "
+	for i, decision := range candidateDecisions {
+		if i > 0 {
+			ret += ", "
+		}
+		ret += decision.TargetNode.ClusterName + "." + decision.TargetNode.Node.Name
+	}
+	ret += " ]"
+	return ret
 }
