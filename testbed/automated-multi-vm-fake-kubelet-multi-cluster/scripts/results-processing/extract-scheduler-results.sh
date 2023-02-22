@@ -58,7 +58,7 @@ function validateOutFile() {
 }
 
 function writeHeaderRow() {
-    local headerRow='"Experiment","Total Pods","JMeter Test Duration","Scheduling Successes","Scheduling Failures (incl. retries)","Scheduling Failures (final - no more retries)","Scheduling Conflicts","Scheduling Conflicts if no MultiBinding","Avg queuing time (successes and failures)","Avg sampling duration (successes and failures)","Avg sampled nodes","Avg eligible nodes","Avg commit duration (successes)","Avg E2E duration (successes)","First Successful Pod Timestamp","Last Successful Pod Timestamp"'
+    local headerRow='"Experiment","Total Pods","JMeter Test Duration","Scheduling Successes","Scheduling Failures (incl. retries)","Scheduling Failures (final - no more retries)","Scheduling Conflicts","Scheduling Conflicts if no MultiBinding","Avg queuing time (all)","Avg queuing time (successes)","Avg sampling duration (all)","Avg sampling duration (successes)","Avg sampled nodes","Avg eligible nodes","Avg commit duration (successes)","Avg E2E duration (successes)","Avg E2E (no queueing) duration (successes)","First Successful Pod Timestamp","Last Successful Pod Timestamp"'
     echo "$headerRow" > "$OUT_FILE"
 }
 
@@ -99,10 +99,16 @@ function countAndAppendMatches() {
 }
 
 # Extracts the average sampling duration from the scheduler log file in $1 and stores the result in $RET.
-function extractAvgSamplingDuration() {
+function extractAvgSamplingDurationAll() {
     local schedulerLogFile=$1
     # Note about jq: -s (--slurp) creates an array for the input lines after parsing each line as JSON, or as a number in this case.
     RET=$(cat "$schedulerLogFile" | awk '{match($0, /^.+samplingDurationMs"=([0-9]+)\s.+/, arr); print arr[1];}' | grep -E '[0-9]+' | jq -s add/length)
+}
+
+# Extracts the average sampling duration (successes only) from the scheduler log file in $1 and stores the result in $RET.
+function extractAvgSamplingDurationSuccesses() {
+    local schedulerLogFile=$1
+    RET=$(grep -E '"SchedulingSuccess"' "$schedulerLogFile" | awk '{match($0, /^.+samplingDurationMs"=([0-9]+)\s.+/, arr); print arr[1];}' | grep -E '[0-9]+' | jq -s add/length)
 }
 
 # Extracts the average number of sampled nodes from the scheduler log file in $1 and stores the result in $RET.
@@ -118,9 +124,15 @@ function extractAvgEligibleNodes() {
 }
 
 # Extracts the queuing time from the scheduler log file in $1 and stores the result in $RET.
-function extractAvgQueuingTime() {
+function extractAvgQueuingTimeAll() {
     local schedulerLogFile=$1
     RET=$(cat "$schedulerLogFile" | awk '{match($0, /^.+queueTimeMs"=([0-9]+)\s.+/, arr); print arr[1];}' | grep -E '[0-9]+' | jq -s add/length)
+}
+
+# Extracts the queuing time (successes only) from the scheduler log file in $1 and stores the result in $RET.
+function extractAvgQueuingTimeSuccesses() {
+    local schedulerLogFile=$1
+    RET=$(grep -E '"SchedulingSuccess"' "$schedulerLogFile" | awk '{match($0, /^.+queueTimeMs"=([0-9]+)\s.+/, arr); print arr[1];}' | grep -E '[0-9]+' | jq -s add/length)
 }
 
 # Extracts the commit duration (successes only) from the scheduler log file in $1 and stores the result in $RET.
@@ -201,12 +213,21 @@ for jmeterLog in "${allLogs[@]}"; do
     # Scheduling Conflicts if no MultiBinding
     countAndAppendMatches '"SchedulingSuccess".+"commitRetries"=[1-3]' "$schedulerLog"
 
-    # Avg queuing time (successes and failures)
-    extractAvgQueuingTime "$schedulerLog"
+    # Avg queuing time (all)
+    extractAvgQueuingTimeAll "$schedulerLog"
     CURR_LINE="${CURR_LINE},\"$RET\""
 
-    # Avg sampling duration (successes and failures)
-    extractAvgSamplingDuration "$schedulerLog"
+    # Avg queuing time (successes)
+    extractAvgQueuingTimeSuccesses "$schedulerLog"
+    CURR_LINE="${CURR_LINE},\"$RET\""
+    avgQueueingTimeSuccesses=$RET
+
+    # Avg sampling duration (all)
+    extractAvgSamplingDurationAll "$schedulerLog"
+    CURR_LINE="${CURR_LINE},\"$RET\""
+
+    # Avg sampling duration (successes)
+    extractAvgSamplingDurationSuccesses "$schedulerLog"
     CURR_LINE="${CURR_LINE},\"$RET\""
 
     # Avg sampled nodes
@@ -224,6 +245,11 @@ for jmeterLog in "${allLogs[@]}"; do
     # Avg E2E duration (successes)
     extractAvgE2EDuration "$schedulerLog"
     CURR_LINE="${CURR_LINE},\"$RET\""
+    avgE2eTimeSuccesses=$RET
+
+    # "Avg E2E (no queueing) duration (successes)"
+    avgE2eTimeNoQueueing=$(echo "$avgE2eTimeSuccesses $avgQueueingTimeSuccesses" | awk '{print $1-$2}')
+    CURR_LINE="${CURR_LINE},\"$avgE2eTimeNoQueueing\""
 
     # First Successful Pod Timestamp
     extractFirstPodTimestamp "$schedulerLog"
