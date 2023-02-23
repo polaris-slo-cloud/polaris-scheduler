@@ -156,10 +156,13 @@ function copyResults() {
 
     local length="${#CLUSTER_VMS[@]}"
     local clusterVm=""
+    local clusterName=""
     for (( i=0; i<${length}; i++ )); do
         clusterVm="${CLUSTER_VMS[$i]}"
 
-        scp -r "$clusterVm:$RESULTS_ROOT_NODE_VMS" "$SCRIPT_DIR/$RESULTS_ROOT/cluster-$i"
+        clusterName=$((i+1))
+        clusterName=$(printf "cluster-%02d" $clusterName)
+        scp -r "$clusterVm:$RESULTS_ROOT_NODE_VMS" "$SCRIPT_DIR/$RESULTS_ROOT/$clusterName"
     done
 }
 
