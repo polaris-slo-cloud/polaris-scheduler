@@ -42,7 +42,7 @@ declare -A fakeNodeTypes=(
     ["cloud-large"]="20"
 )
 
-# Each node's CPUs are configured as `cpu` and `polaris-slo-cloud.github.io/fake-cpu`.
+# Each node's CPUs are configured as `cpu` and `polaris-slo-cloud.github.io/fake-milli-cpu`.
 declare -A fakeNodeTypeCpus=(
     ["cloud-small"]="2000m"
     ["cloud-medium"]="4000m"

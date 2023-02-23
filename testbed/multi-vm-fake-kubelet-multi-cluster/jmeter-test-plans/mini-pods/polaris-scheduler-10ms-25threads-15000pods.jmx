@@ -115,7 +115,7 @@
                 &quot;image&quot;: &quot;gcr.io/google-containers/pause:3.2&quot;,&#xd;
                 &quot;resources&quot;: {&#xd;
                     &quot;limits&quot;: {&#xd;
-                        &quot;polaris-slo-cloud.github.io/fake-cpu&quot;: &quot;100m&quot;,&#xd;
+                        &quot;polaris-slo-cloud.github.io/fake-milli-cpu&quot;: &quot;100&quot;,&#xd;
                         &quot;polaris-slo-cloud.github.io/fake-memory&quot;: &quot;128Mi&quot;&#xd;
                     }&#xd;
                 }&#xd;
@@ -172,7 +172,7 @@
                 &quot;image&quot;: &quot;gcr.io/google-containers/pause:3.2&quot;,&#xd;
                 &quot;resources&quot;: {&#xd;
                     &quot;limits&quot;: {&#xd;
-                        &quot;polaris-slo-cloud.github.io/fake-cpu&quot;: &quot;100m&quot;,&#xd;
+                        &quot;polaris-slo-cloud.github.io/fake-milli-cpu&quot;: &quot;100&quot;,&#xd;
                         &quot;polaris-slo-cloud.github.io/fake-memory&quot;: &quot;128Mi&quot;&#xd;
                     }&#xd;
                 }&#xd;
@@ -229,7 +229,7 @@
                 &quot;image&quot;: &quot;gcr.io/google-containers/pause:3.2&quot;,&#xd;
                 &quot;resources&quot;: {&#xd;
                     &quot;limits&quot;: {&#xd;
-                        &quot;polaris-slo-cloud.github.io/fake-cpu&quot;: &quot;100m&quot;,&#xd;
+                        &quot;polaris-slo-cloud.github.io/fake-milli-cpu&quot;: &quot;100&quot;,&#xd;
                         &quot;polaris-slo-cloud.github.io/fake-memory&quot;: &quot;128Mi&quot;&#xd;
                     }&#xd;
                 }&#xd;
@@ -286,7 +286,7 @@
                 &quot;image&quot;: &quot;gcr.io/google-containers/pause:3.2&quot;,&#xd;
                 &quot;resources&quot;: {&#xd;
                     &quot;limits&quot;: {&#xd;
-                        &quot;polaris-slo-cloud.github.io/fake-cpu&quot;: &quot;100m&quot;,&#xd;
+                        &quot;polaris-slo-cloud.github.io/fake-milli-cpu&quot;: &quot;100&quot;,&#xd;
                         &quot;polaris-slo-cloud.github.io/fake-memory&quot;: &quot;128Mi&quot;&#xd;
                     }&#xd;
                 }&#xd;

@@ -6,6 +6,8 @@
 # - .polarisTemplate.fakeNodeType - The name of the fake node type (this is also used for naming the ConfigMap and the fake-kubelet deployment).
 # - .polarisTemplate.fakeNodesCount - The number of fake nodes of this type that should be created.
 # - .polarisTemplate.fakeCPUs - The quantity of available CPUs.
+# - .polarisTemplate.fakeMilliCPUs - The quantity of available milliCPUs (needed, because the generic treatment of extended resources by the scheduler does not allow
+#                                    `m` suffix to be used; this is because 100m = 0.1 and extended resources are normally assumed to have a minimum value of 1).
 # - .polarisTemplate.fakeMemory - The quantity of available memory.
 # - .polarisTemplate.extraNodeLabels - An list of extra node labels (may be "").
 # - .polarisTemplate.extendedResources - A list of extended resources (may be "").
@@ -147,14 +149,14 @@ data:
       cpu: {{ .polarisTemplate.fakeCPUs }}
       memory: {{ .polarisTemplate.fakeMemory }}
       pods: 1M
-      polaris-slo-cloud.github.io/fake-cpu: {{ .polarisTemplate.fakeCPUs }}
+      polaris-slo-cloud.github.io/fake-milli-cpu: {{ .polarisTemplate.fakeMilliCPUs }}
       polaris-slo-cloud.github.io/fake-memory: {{ .polarisTemplate.fakeMemory }}{{ .polarisTemplate.extendedResources }}
 
     capacity:
       cpu: {{ .polarisTemplate.fakeCPUs }}
       memory: {{ .polarisTemplate.fakeMemory }}
       pods: 1M
-      polaris-slo-cloud.github.io/fake-cpu: {{ .polarisTemplate.fakeCPUs }}
+      polaris-slo-cloud.github.io/fake-milli-cpu: {{ .polarisTemplate.fakeMilliCPUs }}
       polaris-slo-cloud.github.io/fake-memory: {{ .polarisTemplate.fakeMemory }}{{ .polarisTemplate.extendedResources }}
 
     {{ with .nodeInfo }}

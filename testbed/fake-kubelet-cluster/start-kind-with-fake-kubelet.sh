@@ -81,6 +81,16 @@ function startLocalCluster() {
     fi
 }
 
+# Calculates the milliCPUs based on $1 and stores the result in $RET.
+function calculateMilliCpus() {
+    local fakeCpus="$1"
+    if [[ "$fakeCpus" != *"m" ]]; then
+        echo "Error reading fakeCpus value \"$fakeCpus\". This value must be specified as milliCPUs, e.g., \"4000m\"."
+        exit 1
+    fi
+    RET=$(grep -E -o '[0-9]+' <<< "$fakeCpus")
+}
+
 # Deploys fake-kubelet to simulate nodes.
 function deployFakeKubelet() {
     kubectl --context $CONTEXT apply -f "${SCRIPT_DIR}/fake-kubelet/fake-kubelet-base.yaml"
@@ -91,6 +101,8 @@ function deployFakeKubelet() {
     for fakeNodeType in "${!fakeNodeTypes[@]}"; do
         local fakeNodesCount="${fakeNodeTypes[$fakeNodeType]}"
         local fakeCpus="${fakeNodeTypeCpus[$fakeNodeType]}"
+        calculateMilliCpus "$fakeCpus"
+        local fakeMilliCpus="${RET}"
         local fakeMemory="${fakeNodeTypeMemory[$fakeNodeType]}"
         getExtraNodeLabels "${fakeNodeType}"
         local extraLabels="${RET}"
@@ -108,6 +120,7 @@ function deployFakeKubelet() {
         local nodeTypeYaml=$(echo "${nodesTemplateBase}" | sed -e "s/{{ \.polarisTemplate\.fakeNodeType }}/${fakeNodeType}/" -)
         nodeTypeYaml=$(echo "${nodeTypeYaml}" | sed -e "s/{{ \.polarisTemplate\.fakeNodesCount }}/${fakeNodesCount}/" -)
         nodeTypeYaml=$(echo "${nodeTypeYaml}" | sed -e "s/{{ \.polarisTemplate\.fakeCPUs }}/${fakeCpus}/" -)
+        nodeTypeYaml=$(echo "${nodeTypeYaml}" | sed -e "s/{{ \.polarisTemplate\.fakeMilliCPUs }}/${fakeMilliCpus}/" -)
         nodeTypeYaml=$(echo "${nodeTypeYaml}" | sed -e "s/{{ \.polarisTemplate\.fakeMemory }}/${fakeMemory}/" -)
         nodeTypeYaml=$(echo "${nodeTypeYaml}" | sed -e "s/{{ \.polarisTemplate\.extraNodeLabels }}/${extraLabels}/" -)
         nodeTypeYaml=$(echo "${nodeTypeYaml}" | sed -e "s/{{ \.polarisTemplate\.extendedResources }}/${extendedResourcesYaml}/" -)
