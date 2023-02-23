@@ -75,6 +75,11 @@ func (rs *RandomSamplingStrategy) sampleNodesInternal(podInfo *pipeline.PodInfo,
 		return make([]*client.ClusterNode, 0)
 	}
 
+	// Ensure that we do not need to sample more nodes that there are in the cache (which might have changed in the meantime).
+	if reqNodesCount > totalNodesCount {
+		reqNodesCount = totalNodesCount
+	}
+
 	sampledNodes := make([]*client.ClusterNode, reqNodesCount)
 	chosenIndices := make(map[int]bool, reqNodesCount)
 

@@ -72,6 +72,12 @@ func (rr *RoundRobinSamplingStrategy) computeSampleRange(
 	storeReader collections.ConcurrentObjectStoreReader[*client.ClusterNode],
 ) roundRobinSampleRange {
 	totalNodesCount := storeReader.Len()
+
+	// Ensure that we do not need to sample more nodes that there are in the cache (which might have changed in the meantime).
+	if sampleSize > totalNodesCount {
+		sampleSize = totalNodesCount
+	}
+
 	ret := roundRobinSampleRange{
 		requiredNodesCount: sampleSize,
 	}
@@ -111,7 +117,7 @@ func (rr *RoundRobinSamplingStrategy) getNodesSample(
 	var firstLoopEnd int
 	if sampleRange.endIndex < sampleRange.startIndex {
 		// We need to wrap around to the beginning of the list at some point.
-		firstLoopEnd = storeReader.Len()
+		firstLoopEnd = storeReader.Len() - 1
 	} else {
 		// We can go straight from firstIndex to lastIndex
 		firstLoopEnd = sampleRange.endIndex
