@@ -163,7 +163,7 @@ function extractLastPodTimestamp() {
 # Script Start
 ###############################################################################
 
-source "$SCRIPT_DIR/../lib/util.sh"
+source "$SCRIPT_DIR/scripts/lib/util.sh"
 
 validateResultsDir
 validateOutFile
