@@ -58,7 +58,7 @@ function validateOutFile() {
 }
 
 function writeHeaderRow() {
-    local headerRow='"Experiment","Total Pods","JMeter Test Duration","Scheduling Successes","Scheduling Failures (incl. retries)","Scheduling Failures (final - no more retries)","Scheduling Conflicts","Scheduling Conflicts if no MultiBinding","Avg queuing time (all)","Avg queuing time (successes)","Avg sampling duration (all)","Avg sampling duration (successes)","Avg sampled nodes","Avg eligible nodes","Avg commit duration (successes)","Avg E2E duration (successes)","Avg E2E (no queueing) duration (successes)","First Successful Pod Timestamp","Last Successful Pod Timestamp"'
+    local headerRow='"Experiment","Total Pods","JMeter Test Duration","Scheduling Successes","Scheduling Failures, e.g., no samples (incl. retries)","Scheduling Failures, e.g., no samples (final - no more retries)","Scheduling Conflicts","Scheduling Conflicts if no MultiBinding","Avg queuing time (all)","Avg queuing time (successes)","Avg sampling duration (all)","Avg sampling duration (successes)","Avg sampled nodes","Avg eligible nodes","Avg commit duration (successes)","Avg E2E duration (successes)","Avg E2E (no queueing) duration (successes)","First Successful Pod Timestamp","Last Successful Pod Timestamp"'
     echo "$headerRow" > "$OUT_FILE"
 }
 
@@ -201,10 +201,10 @@ for jmeterLog in "${allLogs[@]}"; do
     # Scheduling Successes
     countAndAppendMatches '"SchedulingSuccess"' "$schedulerLog"
 
-    # Scheduling Failures (incl. retries)
+    # Scheduling Failures, e.g., no samples (incl. retries)
     countAndAppendMatches '"FailedScheduling".+"reason"=' "$schedulerLog"
 
-    # Scheduling Failures (final - no more retries)
+    # Scheduling Failures, e.g., no samples (final - no more retries)
     countAndAppendMatches '"FailedScheduling".+"reason"=.+"retryingScheduling"=false' "$schedulerLog"
 
     # Scheduling Conflicts
