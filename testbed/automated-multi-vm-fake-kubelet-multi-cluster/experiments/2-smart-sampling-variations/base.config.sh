@@ -20,4 +20,4 @@ CLUSTER_CONFIGS=(
 )
 
 # Path of the JMeter test plan file.
-JMETER_TEST_PLAN="./jmeter-test-plans/mini-pods/polaris-scheduler-10ms-30threads-15000pods.jmx"
+JMETER_TEST_PLAN="./jmeter-test-plans/4cpu-4gi-pods/polaris-scheduler-10ms-25threads-11200pods.jmx"
