@@ -50,6 +50,8 @@ declare -A SSH_PORTS=(
 )
 
 # The list of experiment iteration config files, relative to the run-experiments.sh file.
+# The key of each entry is used as a folder name in the results director and the value is the path of the configuration file
+# of the experiment.
 declare -A EXPERIMENT_ITERATIONS=(
     # 2-smart sampling tuning
     ["2-smart-10p-clusters-4p-samples"]="./experiments/2-smart-sampling-tuning/10p-clusters-4p-samples.config.sh"

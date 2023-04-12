@@ -29,9 +29,9 @@ CURR_LINE=""
 function printUsage() {
     echo "This script extracts various results from the JMeter and scheduler log files."
     echo "Usage:"
-    echo "./scripts/extract-scheduler-results.sh <results directory> <csv output directory>"
+    echo "./extract-scheduler-results.sh <results directory> <csv output file>"
     echo "Example: "
-    echo "./scripts/extract-scheduler-results.sh ./scheduler-results ./output.csv"
+    echo "./extract-scheduler-results.sh ./results ./output.csv"
 }
 
 function validateResultsDir() {
