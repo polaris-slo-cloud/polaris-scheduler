@@ -4,10 +4,10 @@ import (
 	"math"
 	"math/rand"
 	"sort"
-	"time"
 
 	"polaris-slo-cloud.github.io/polaris-scheduler/v2/framework/collections"
 	"polaris-slo-cloud.github.io/polaris-scheduler/v2/framework/pipeline"
+	"polaris-slo-cloud.github.io/polaris-scheduler/v2/framework/util"
 )
 
 var (
@@ -20,7 +20,6 @@ type DefaultDecisionPipeline struct {
 	plugins        *pipeline.DecisionPipelinePlugins
 	pipelineHelper *PipelineHelper
 	scheduler      pipeline.PolarisScheduler
-	random         *rand.Rand
 }
 
 // Creates a new instance of the DefaultDecisionPipeline.
@@ -35,13 +34,15 @@ func NewDefaultDecisionPipeline(id int, plugins *pipeline.DecisionPipelinePlugin
 		plugins:        plugins,
 		pipelineHelper: NewPipelineHelper(),
 		scheduler:      scheduler,
-		random:         rand.New(rand.NewSource(time.Now().UnixNano())),
 	}
 	return &decisionPipeline
 }
 
 func (dp *DefaultDecisionPipeline) DecideCommitCandidates(podInfo *pipeline.SampledPodInfo, commitCandidatesCount int) ([]*pipeline.SchedulingDecision, pipeline.Status) {
 	schedCtx := podInfo.Ctx
+	nodeEligibilityStats := &util.NodeEligibilityStats{
+		SampledNodesCount: len(podInfo.SampledNodes),
+	}
 
 	status := dp.pipelineHelper.RunPreFilterPlugins(schedCtx, dp.plugins.PreFilter, podInfo.PodInfo)
 	if !pipeline.IsSuccessStatus(status) {
@@ -56,6 +57,8 @@ func (dp *DefaultDecisionPipeline) DecideCommitCandidates(podInfo *pipeline.Samp
 	}
 	eligibleNodes := collections.ConvertToSlice[*pipeline.NodeInfo](candidateNodesList)
 	candidateNodesList = nil
+	nodeEligibilityStats.EligibleNodesCount = len(eligibleNodes)
+	schedCtx.Write(util.NodeEligibilityStatsInfoStateKey, nodeEligibilityStats)
 
 	status = dp.pipelineHelper.RunPreScorePlugins(schedCtx, dp.plugins.PreScore, podInfo.PodInfo, eligibleNodes)
 	if !pipeline.IsSuccessStatus(status) {

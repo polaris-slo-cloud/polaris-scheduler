@@ -85,6 +85,9 @@ func (sp *DefaultSamplingPipeline) SampleNodes(
 }
 
 func (sp *DefaultSamplingPipeline) calcRequiredNodesCount(nodesToSampleBp int) int {
+	if nodesToSampleBp > 10000 {
+		panic(fmt.Sprintf("Invalid nodesToSampleBp value: %v", nodesToSampleBp))
+	}
 	storeReader := sp.nodeSampler.NodesCache().Nodes().ReadLock()
 	defer storeReader.Unlock()
 

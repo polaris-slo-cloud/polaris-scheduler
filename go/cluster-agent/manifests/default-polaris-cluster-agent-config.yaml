@@ -57,14 +57,16 @@ samplingPlugins:
     - name: BatteryLevel
 
   # preScore:
-  #   - name: Plugin1
-  #   - name: Plugin2
+  #   - name: LeastRecentlyUsedNode
 
   score:
     - name: ResourcesFit
       weight: 1
     - name: GeoLocation
       weight: 1
+    # Use either ResourcesFit or LeastRecentlyUsedNode
+    # - name: LeastRecentlyUsedNode
+    #   weight: 1
 
 # The list of plugins for the binding pipeline.
 bindingPlugins:

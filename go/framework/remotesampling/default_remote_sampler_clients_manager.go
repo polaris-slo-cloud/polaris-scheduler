@@ -3,11 +3,11 @@ package remotesampling
 import (
 	"context"
 	"math"
-	"math/rand"
 	"sync"
 
 	"github.com/go-logr/logr"
 	"polaris-slo-cloud.github.io/polaris-scheduler/v2/framework/config"
+	"polaris-slo-cloud.github.io/polaris-scheduler/v2/framework/util"
 )
 
 var (
@@ -34,7 +34,7 @@ type DefaultRemoteSamplerClientsManager struct {
 	remoteSamplersList    []RemoteSamplerClient
 	maxConcurrentRequests int
 	samplingReqQueue      chan *queuedSamplingRequest
-	random                *rand.Rand
+	random                util.Random
 	logger                *logr.Logger
 }
 
@@ -74,7 +74,7 @@ func NewDefaultRemoteSamplerClientsManager(
 		remoteSamplers:        remoteSamplers,
 		remoteSamplersList:    remoteSamplersList,
 		maxConcurrentRequests: maxConcurrentRequests,
-		random:                rand.New(rand.NewSource(rand.Int63())),
+		random:                util.NewDefaultRandom(),
 		logger:                logger,
 	}
 
@@ -120,7 +120,7 @@ func (scm *DefaultRemoteSamplerClientsManager) compileClusterSamplersList(percen
 	for i := 0; i < reqSamplersCount; i++ {
 		var randIndex int
 		for {
-			randIndex = scm.random.Intn(totalClustersCount)
+			randIndex = scm.random.Int(totalClustersCount)
 			if _, exists := chosenIndices[randIndex]; !exists {
 				break
 			}

@@ -67,7 +67,7 @@ data:
         - name: BatteryLevel
 
       # preScore:
-      #   - name: Plugin1
+      #   - name: LeastRecentlyUsedNode
       #   - name: Plugin2
 
       score:
@@ -75,6 +75,9 @@ data:
           weight: 1
         - name: GeoLocation
           weight: 1
+        # Use either ResourcesFit or LeastRecentlyUsedNode
+        # - name: LeastRecentlyUsedNode
+        #   weight: 1
 
     # The list of plugins for the binding pipeline.
     bindingPlugins:

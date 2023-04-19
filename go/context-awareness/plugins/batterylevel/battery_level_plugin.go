@@ -39,6 +39,10 @@ type nodeBatteryInfo struct {
 	batteryCapacityMilliAmpereHours int64
 }
 
+func NewBatteryLevelSchedulingPlugin(configMap config.PluginConfig, scheduler pipeline.PolarisScheduler) (pipeline.Plugin, error) {
+	return &BatteryLevelPlugin{}, nil
+}
+
 func NewBatteryLevelClusterAgentPlugin(configMap config.PluginConfig, clusterAgentServices pipeline.ClusterAgentServices) (pipeline.Plugin, error) {
 	return &BatteryLevelPlugin{}, nil
 }

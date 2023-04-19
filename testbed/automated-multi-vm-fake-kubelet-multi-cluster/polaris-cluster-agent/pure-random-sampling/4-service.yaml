@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: Service
+metadata:
+  namespace: polaris
+  name: polaris-cluster-agent
+spec:
+  selector:
+    component: polaris-cluster-agent
+    tier: control-plane
+  type: NodePort
+  ports:
+    - port: 8081
+      targetPort: 8081
+      nodePort: 30033

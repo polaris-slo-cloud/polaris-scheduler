@@ -231,7 +231,7 @@ func (knc *KubernetesNodesCache) createUpdatedClusterNode(updatedNode *core.Node
 
 	if oldClusterNode, ok := storeReader.GetByKey(updatedNode.Name); ok {
 		// No need to copy the pods slices, because the ClusterNodes should be treated as immutable anyway.
-		updatedClusterNode = client.NewClusterNodeWithPods(updatedNode, oldClusterNode.Pods, oldClusterNode.QueuedPods)
+		updatedClusterNode = client.NewClusterNodeWithPods(updatedNode, oldClusterNode.Pods, oldClusterNode.QueuedPods, oldClusterNode.LastPodAddedTimestamp)
 	} else {
 		updatedClusterNode = client.NewClusterNode(updatedNode)
 	}
@@ -264,13 +264,21 @@ func (knc *KubernetesNodesCache) applyPodUpdate(cacheUpdate *nodesCacheUpdate, s
 // We unify addition and update in one method, because if the pod was previously a PodQueuedOnNode and marked as committed,
 // it will already be present in the node's list of pods.
 // If removeFromQueuedPods is true, the pod will also be removed from the QueuedPods list.
+//
+// The LastPodAddedTimestamp of the node is only updated if the pod is a new pod and removeFromQueuedPods is false,
+// because otherwise the pod just updates an existing pod's info or the pod is just moved from the queuedPods list to the pods list
+// (in both cases the LastPodAddedTimestamp has previously already been updated for this pod).
 func (knc *KubernetesNodesCache) addOrUpdatePodOnNode(oldNode *client.ClusterNode, pod *core.Pod, removeFromQueuedPods bool) *client.ClusterNode {
 	clusterPod := client.NewClusterPod(pod)
+	lastPodAddedTimestamp := oldNode.LastPodAddedTimestamp
 
 	newPods := make([]*client.ClusterPod, len(oldNode.Pods), len(oldNode.Pods)+1)
 	podUpdated := copyPodsAndUpdateItem(newPods, oldNode.Pods, clusterPod)
 	if !podUpdated {
 		newPods = append(newPods, clusterPod)
+		if !removeFromQueuedPods {
+			lastPodAddedTimestamp = time.Now().Unix()
+		}
 	}
 
 	newQueuedPods := oldNode.QueuedPods
@@ -279,17 +287,18 @@ func (knc *KubernetesNodesCache) addOrUpdatePodOnNode(oldNode *client.ClusterNod
 		copyPodsAndRemoveItem(newQueuedPods, oldNode.QueuedPods, pod)
 	}
 
-	return client.NewClusterNodeWithPods(oldNode.Node, newPods, newQueuedPods)
+	return client.NewClusterNodeWithPods(oldNode.Node, newPods, newQueuedPods, lastPodAddedTimestamp)
 }
 
 // Removes the specified pod to a copy of the clusterNode and returns that updated copy.
 func (knc *KubernetesNodesCache) removePodFromNode(oldNode *client.ClusterNode, podToRemove *core.Pod) *client.ClusterNode {
 	updatedNode := &client.ClusterNode{
-		Node:               oldNode.Node,
-		AvailableResources: oldNode.AvailableResources.DeepCopy(),
-		TotalResources:     oldNode.TotalResources.DeepCopy(),
-		Pods:               make([]*client.ClusterPod, len(oldNode.Pods)-1),
-		QueuedPods:         oldNode.QueuedPods,
+		Node:                  oldNode.Node,
+		AvailableResources:    oldNode.AvailableResources.DeepCopy(),
+		TotalResources:        oldNode.TotalResources.DeepCopy(),
+		Pods:                  make([]*client.ClusterPod, len(oldNode.Pods)-1),
+		QueuedPods:            oldNode.QueuedPods,
+		LastPodAddedTimestamp: oldNode.LastPodAddedTimestamp,
 	}
 
 	removedPod := copyPodsAndRemoveItem(updatedNode.Pods, oldNode.Pods, podToRemove)
@@ -309,11 +318,12 @@ func (knc *KubernetesNodesCache) addQueuedPodToNode(nodeName string, pod *core.P
 	}
 
 	updatedNode := &client.ClusterNode{
-		Node:               oldNode.Node,
-		AvailableResources: oldNode.AvailableResources.DeepCopy(),
-		TotalResources:     oldNode.TotalResources.DeepCopy(),
-		Pods:               oldNode.Pods,
-		QueuedPods:         make([]*client.ClusterPod, len(oldNode.QueuedPods), len(oldNode.QueuedPods)+1),
+		Node:                  oldNode.Node,
+		AvailableResources:    oldNode.AvailableResources.DeepCopy(),
+		TotalResources:        oldNode.TotalResources.DeepCopy(),
+		Pods:                  oldNode.Pods,
+		QueuedPods:            make([]*client.ClusterPod, len(oldNode.QueuedPods), len(oldNode.QueuedPods)+1),
+		LastPodAddedTimestamp: time.Now().Unix(),
 	}
 	copy(updatedNode.QueuedPods, oldNode.QueuedPods)
 
@@ -413,11 +423,12 @@ func (p *podQueuedOnNode) RemoveFromQueue() {
 	}
 
 	updatedNode := &client.ClusterNode{
-		Node:               oldNode.Node,
-		AvailableResources: oldNode.AvailableResources.DeepCopy(),
-		TotalResources:     oldNode.TotalResources.DeepCopy(),
-		Pods:               oldNode.Pods,
-		QueuedPods:         make([]*client.ClusterPod, len(oldNode.QueuedPods)-1),
+		Node:                  oldNode.Node,
+		AvailableResources:    oldNode.AvailableResources.DeepCopy(),
+		TotalResources:        oldNode.TotalResources.DeepCopy(),
+		Pods:                  oldNode.Pods,
+		QueuedPods:            make([]*client.ClusterPod, len(oldNode.QueuedPods)-1),
+		LastPodAddedTimestamp: oldNode.LastPodAddedTimestamp,
 	}
 
 	removedPod := copyPodsAndRemoveItem(updatedNode.QueuedPods, oldNode.QueuedPods, p.nativePod)

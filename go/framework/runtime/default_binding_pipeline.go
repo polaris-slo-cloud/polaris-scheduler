@@ -169,7 +169,7 @@ func (bp *DefaultBindingPipeline) fetchNodeInfo(schedCtx pipeline.SchedulingCont
 	}
 
 	podsOnNode := bp.combinePodsLists(fetchedPodsOnNode, cachedPodsOnNode)
-	clusterNode := client.NewClusterNodeWithPods(node, podsOnNode, nil)
+	clusterNode := client.NewClusterNodeWithPods(node, podsOnNode, nil, 0)
 	return pipeline.NewNodeInfo(clusterClient.ClusterName(), clusterNode), nil
 }
 
@@ -180,7 +180,7 @@ func (bp *DefaultBindingPipeline) fetchNodeInfoFromCache(schedDecision *client.C
 		// before the goroutine that has locked the node can get its info from the cache.
 		// This would result in that goroutine possibly detecting a full node, even though
 		// no pod has been bound to it yet.
-		cachedNodeWithoutQueuedPods := client.NewClusterNodeWithPods(cachedNode.Node, cachedNode.Pods, nil)
+		cachedNodeWithoutQueuedPods := client.NewClusterNodeWithPods(cachedNode.Node, cachedNode.Pods, nil, cachedNode.LastPodAddedTimestamp)
 		return pipeline.NewNodeInfo("", cachedNodeWithoutQueuedPods), nil
 	}
 	return nil, fmt.Errorf("cannot find node %s in the cache", schedDecision.NodeName)

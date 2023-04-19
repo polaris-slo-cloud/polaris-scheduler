@@ -38,6 +38,10 @@ type ClusterNode struct {
 
 	// The total amount of resources that are available on the node.
 	TotalResources *util.Resources `json:"totalResources" yaml:"totalResources"`
+
+	// The Unix timestamp that indicates when the last pod was added to this node.
+	// If no pods are scheduled on the node, this value is 0.
+	LastPodAddedTimestamp int64 `json:"lastPodAddedTimestamp" yaml:"lastPodAddedTimestamp"`
 }
 
 // Creates a new cluster node, based on the specified node object, assuming that no pods are scheduled on it yet.
@@ -45,22 +49,24 @@ func NewClusterNode(node *core.Node) *ClusterNode {
 	cn := &ClusterNode{
 		Node: node,
 		// A new node does not have any pods yet, so both resources are set to the total amount that is allocatable.
-		AvailableResources: util.NewResourcesFromList(node.Status.Allocatable),
-		TotalResources:     util.NewResourcesFromList(node.Status.Allocatable),
-		Pods:               make([]*ClusterPod, 0),
-		QueuedPods:         make([]*ClusterPod, 0),
+		AvailableResources:    util.NewResourcesFromList(node.Status.Allocatable),
+		TotalResources:        util.NewResourcesFromList(node.Status.Allocatable),
+		Pods:                  make([]*ClusterPod, 0),
+		QueuedPods:            make([]*ClusterPod, 0),
+		LastPodAddedTimestamp: 0,
 	}
 	return cn
 }
 
 // Creates a new cluster node, based on the specified node object and the pods that are already scheduled and queued on it.
-func NewClusterNodeWithPods(node *core.Node, pods []*ClusterPod, queuedPods []*ClusterPod) *ClusterNode {
+func NewClusterNodeWithPods(node *core.Node, pods []*ClusterPod, queuedPods []*ClusterPod, lastPodAddedTimestamp int64) *ClusterNode {
 	cn := &ClusterNode{
-		Node:               node,
-		AvailableResources: util.NewResourcesFromList(node.Status.Allocatable),
-		TotalResources:     util.NewResourcesFromList(node.Status.Allocatable),
-		Pods:               pods,
-		QueuedPods:         queuedPods,
+		Node:                  node,
+		AvailableResources:    util.NewResourcesFromList(node.Status.Allocatable),
+		TotalResources:        util.NewResourcesFromList(node.Status.Allocatable),
+		Pods:                  pods,
+		QueuedPods:            queuedPods,
+		LastPodAddedTimestamp: lastPodAddedTimestamp,
 	}
 
 	for _, pod := range pods {
@@ -77,11 +83,12 @@ func NewClusterNodeWithPods(node *core.Node, pods []*ClusterPod, queuedPods []*C
 // objects as the source object.
 func (cn *ClusterNode) ShallowCopy() *ClusterNode {
 	ret := &ClusterNode{
-		Node:               cn.Node,
-		Pods:               cn.Pods,
-		QueuedPods:         cn.QueuedPods,
-		AvailableResources: cn.AvailableResources,
-		TotalResources:     cn.TotalResources,
+		Node:                  cn.Node,
+		Pods:                  cn.Pods,
+		QueuedPods:            cn.QueuedPods,
+		AvailableResources:    cn.AvailableResources,
+		TotalResources:        cn.TotalResources,
+		LastPodAddedTimestamp: cn.LastPodAddedTimestamp,
 	}
 	return ret
 }

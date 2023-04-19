@@ -377,6 +377,7 @@ func (ps *DefaultPolarisScheduler) commitFirstPossibleSchedulingDecision(schedCt
 	result, commitErrors := ps.tryCommitFirstPossibleSchedulingDecision(schedCtx, candidateDecisions)
 	commitStopwatch.Stop()
 	e2eStopwatch := ps.stopStopwatch(schedCtx, endToEndStopwatchStateKey)
+	eligibilityStats := ps.getNodeEligibilityStats(schedCtx)
 
 	if result != nil {
 		ps.logger.Info(
@@ -384,6 +385,9 @@ func (ps *DefaultPolarisScheduler) commitFirstPossibleSchedulingDecision(schedCt
 			"pod", fullPodName,
 			"targetNode", result.NodeName,
 			"unixTimestampMs", time.Now().UnixMilli(),
+			"sampledNodes", eligibilityStats.SampledNodesCount,
+			"eligibleNodes", eligibilityStats.EligibleNodesCount,
+			"multiBindCandidates", ps.serializeMultiBindCandidates(candidateDecisions),
 			"queueTimeMs", queueStopwatch.Duration().Milliseconds(),
 			"samplingDurationMs", sampleNodesStopwatch.Duration().Milliseconds(),
 			"pipelineDurationMs", pipelineStopwatch.Duration().Milliseconds(),
@@ -404,6 +408,8 @@ func (ps *DefaultPolarisScheduler) commitFirstPossibleSchedulingDecision(schedCt
 		ps.logger.Info(
 			"FailedScheduling",
 			"pod", fullPodName,
+			"sampledNodes", eligibilityStats.SampledNodesCount,
+			"eligibleNodes", eligibilityStats.EligibleNodesCount,
 			"queueTimeMs", queueStopwatch.Duration().Milliseconds(),
 			"samplingDurationMs", sampleNodesStopwatch.Duration().Milliseconds(),
 			"pipelineDurationMs", pipelineStopwatch.Duration().Milliseconds(),
@@ -484,4 +490,24 @@ func (ps *DefaultPolarisScheduler) stopStopwatch(schedCtx pipeline.SchedulingCon
 	stopwatch := ps.getStopwatch(schedCtx, stateKey)
 	stopwatch.Stop()
 	return stopwatch
+}
+
+func (ps *DefaultPolarisScheduler) getNodeEligibilityStats(schedCtx pipeline.SchedulingContext) *util.NodeEligibilityStats {
+	eligibilityStats, ok, err := pipeline.ReadTypedStateData[*util.NodeEligibilityStats](schedCtx, util.NodeEligibilityStatsInfoStateKey)
+	if !ok || err != nil {
+		panic("could not read NodeEligibilityStats from SchedulingContext")
+	}
+	return eligibilityStats
+}
+
+func (ps *DefaultPolarisScheduler) serializeMultiBindCandidates(candidateDecisions []*pipeline.SchedulingDecision) string {
+	ret := "[ "
+	for i, decision := range candidateDecisions {
+		if i > 0 {
+			ret += ", "
+		}
+		ret += decision.TargetNode.ClusterName + "." + decision.TargetNode.Node.Name
+	}
+	ret += " ]"
+	return ret
 }
