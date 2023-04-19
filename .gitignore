@@ -6,6 +6,9 @@ _output/
 _artifacts/
 junit-report.xml
 
+# gh-pages
+gh-pages/
+
 # IDEs and editors
 **/.idea
 .project
