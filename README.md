@@ -2,6 +2,8 @@
 
 Polaris Scheduler is an SLO-aware Kubernetes scheduler.
 
+**Note**: The distributed, orchestrator-independent version of Polaris Scheduler (originally called polaris-scheduler v2) has been forked into a new project, called [Vela Scheduler](https://github.com/polaris-slo-cloud/vela-scheduler) and this repository has been reset to the Polaris Scheduler v1 state.
+
 
 ## Documentation
 
